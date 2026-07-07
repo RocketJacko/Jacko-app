@@ -3,9 +3,10 @@ import React, { useState } from "react";
 interface ViewSlotProps {
   isActive: boolean;
   children: React.ReactNode;
+  className?: string;
 }
 
-export function ViewSlot({ isActive, children }: ViewSlotProps) {
+export function ViewSlot({ isActive, children, className }: ViewSlotProps) {
   // Montamos el slot en el primer render activo; después permanece montado.
   // Inicializamos a false para evitar copiar directamente el prop en useState (Bugs: Prop derived into useState).
   const [hasBeenActivated, setHasBeenActivated] = useState(false);
@@ -23,7 +24,7 @@ export function ViewSlot({ isActive, children }: ViewSlotProps) {
   return (
     <div
       className={
-        isActive ? "view-slot view-slot--active" : "view-slot view-slot--hidden"
+        `${isActive ? "view-slot view-slot--active" : "view-slot view-slot--hidden"}${className ? ` ${className}` : ""}`
       }
     >
       {children}

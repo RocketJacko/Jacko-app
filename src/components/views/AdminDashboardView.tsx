@@ -1722,9 +1722,18 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
                 </button>
               </header>
               <div className="modal-body">
-                <div className="user-profile-header" style={{ marginBottom: '16px' }}>
-                  <h4 style={{ margin: 0, color: 'var(--brown-dark)' }}>{selectedUser.full_name || 'Usuario'}</h4>
-                  <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', opacity: 0.7 }}>{selectedUser.email}</p>
+                <div className="modal-user-profile">
+                  <div className="sidebar-avatar" style={{ margin: 0 }}>
+                    {(selectedUser.full_name || selectedUser.email || 'U').slice(0, 2).toUpperCase()}
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <h4 style={{ margin: 0, fontWeight: 800, color: 'var(--brown-dark)' }}>
+                      {selectedUser.full_name || 'Usuario'}
+                    </h4>
+                    <p style={{ margin: '2px 0 0 0', fontSize: '0.82rem', opacity: 0.6, fontWeight: 600 }}>
+                      {selectedUser.email}
+                    </p>
+                  </div>
                 </div>
                 <div className="form-group">
                   <label htmlFor="roleSelect" style={{ fontWeight: '700', color: 'var(--brown-dark)', display: 'block', marginBottom: '6px' }}>
@@ -1734,12 +1743,7 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
                     id="roleSelect"
                     value={selectedRole}
                     onChange={(e) => setSelectedRole(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '10px',
-                      borderRadius: '8px',
-                      border: '1px solid var(--beige-dark)',
-                    }}
+                    className="modal-select"
                   >
                     <option value="user">Usuario Regular (user)</option>
                     <option value="admin">Administrador (admin)</option>
@@ -1812,11 +1816,18 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
                 </button>
               </header>
               <div className="modal-body">
-                <div className="user-profile-header" style={{ marginBottom: '16px' }}>
-                  <h4 style={{ margin: 0, color: 'var(--brown-dark)' }}>
-                    {selectedUserForPermissions.full_name || 'Usuario'}
-                  </h4>
-                  <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', opacity: 0.7 }}>{selectedUserForPermissions.email}</p>
+                <div className="modal-user-profile">
+                  <div className="sidebar-avatar" style={{ margin: 0 }}>
+                    {(selectedUserForPermissions.full_name || selectedUserForPermissions.email || 'U').slice(0, 2).toUpperCase()}
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <h4 style={{ margin: 0, fontWeight: 800, color: 'var(--brown-dark)' }}>
+                      {selectedUserForPermissions.full_name || 'Usuario'}
+                    </h4>
+                    <p style={{ margin: '2px 0 0 0', fontSize: '0.82rem', opacity: 0.6, fontWeight: 600 }}>
+                      {selectedUserForPermissions.email}
+                    </p>
+                  </div>
                 </div>
                 {isPermissionsLoading ? (
                   <div style={{ padding: '2rem 0', textAlign: 'center' }}>
@@ -1832,7 +1843,7 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
                       Permisos del Usuario:
                     </label>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      <label style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', cursor: 'pointer' }}>
+                      <label className="permission-checkbox-card">
                         <input
                           id="perm-invite-checkbox"
                           type="checkbox"
@@ -1844,13 +1855,12 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
                               setUserPermissions(userPermissions.filter((p) => p !== 'access_invited_products'));
                             }
                           }}
-                          style={{ marginTop: '4px' }}
                         />
                         <div>
-                          <span style={{ fontWeight: '500', display: 'block', color: 'var(--brown-dark)' }}>
+                          <span style={{ fontWeight: '700', display: 'block', color: 'var(--brown-dark)' }}>
                             Acceso a Productos de Invitado (Platzi/Actividades)
                           </span>
-                          <span style={{ fontSize: '0.75rem', opacity: 0.6, display: 'block', marginTop: '2px' }}>
+                          <span style={{ fontSize: '0.78rem', opacity: 0.6, display: 'block', marginTop: '2px', lineHeight: 1.4 }}>
                             Permite al usuario visualizar y canjear los productos marcados como exclusivos.
                           </span>
                         </div>

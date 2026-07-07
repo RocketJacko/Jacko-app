@@ -284,7 +284,7 @@ export default function App() {
 
         {/* Admin — requiere sesión activa + permisos de staff */}
         {session && isStaff && (
-          <ViewSlot isActive={currentView === 'admin'}>
+          <ViewSlot isActive={currentView === 'admin'} className="admin-view-slot">
             <ErrorBoundary>
               <Suspense fallback={<ViewFallback />}>
                 <AdminDashboardView

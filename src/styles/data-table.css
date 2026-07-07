@@ -737,6 +737,8 @@ table.dt-table tbody td:last-child {
   }
   .dt-filter-bar {
     padding: 10px 12px;
+    flex-direction: column;
+    align-items: stretch;
   }
   .dt-table-footer {
     padding: 8px 12px;
