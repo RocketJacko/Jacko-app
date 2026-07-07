@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+
+    <!-- PWA & Icons -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+
+    <!-- Viewport -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+
+    <!-- Primary Meta -->
+    <title>JACKO™ | Ideas en Movimiento</title>
+    <meta name="description" content="JACKO™ es la plataforma donde las ideas toman vida. Completa tareas, acumula puntos y accede a productos exclusivos." />
+    <meta name="keywords" content="JACKO, skate, lifestyle, puntos, recompensas, Colombia" />
+    <meta name="author" content="JACKO™" />
+    <meta name="robots" content="index, follow" />
+
+    <!-- Theme -->
+    <meta name="theme-color" content="#0a0a0f" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="JACKO™" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="JACKO™" />
+    <meta property="og:title" content="JACKO™ | Ideas en Movimiento" />
+    <meta property="og:description" content="JACKO™ es la plataforma donde las ideas toman vida. Completa tareas, acumula puntos y accede a productos exclusivos." />
+    <meta property="og:url" content="https://jacko.com/" />
+    <meta property="og:locale" content="es_CO" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@jacko" />
+    <meta name="twitter:title" content="JACKO™ | Ideas en Movimiento" />
+    <meta name="twitter:description" content="JACKO™ es la plataforma donde las ideas toman vida. Completa tareas, acumula puntos y accede a productos exclusivos." />
+
+    <!-- Security -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@300;400;600;800&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      window.__SUPABASE_CONFIG__ = {
+        supabaseUrl: "%VITE_SUPABASE_URL%",
+        supabaseAnonKey: "%VITE_SUPABASE_ANON_KEY%"
+      };
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

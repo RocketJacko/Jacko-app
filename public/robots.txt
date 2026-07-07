@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+# Bloquear rutas del dashboard (no deben indexarse)
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /api/
+
+# Sitemap
+Sitemap: https://jacko.com/sitemap.xml

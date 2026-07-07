@@ -1,0 +1,50 @@
+.jacko-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 1.25rem 2rem;
+  background: #2d1a0c; 
+  border: none !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  z-index: 100;
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.footer-content {
+  max-width: 1200px;
+  width: 100%;
+}
+
+.footer-brand .logo-text {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  color: var(--beige-light); /* Texto claro sobre fondo oscuro */
+  display: block;
+  margin-bottom: 0.1rem;
+  letter-spacing: 0.08em;
+}
+
+.footer-brand .tagline {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  color: var(--beige-light);
+  opacity: 0.7;
+  margin-bottom: 0.5rem;
+}
+
+.footer-copyright {
+  font-size: 0.75rem;
+  color: var(--beige-light);
+  opacity: 0.4;
+  letter-spacing: 0.08em;
+}
+
+@media (max-width: 767px) {
+  .jacko-footer {
+    display: none !important;
+  }
+}

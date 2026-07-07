@@ -1,0 +1,55 @@
+.register-section {
+  height: 100%;
+  width: 100%;
+  background-color: var(--beige-light);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px 20px;
+  position: relative;
+  overflow-y: auto;
+  overscroll-behavior: contain; /* Evita que el scroll del form mueva el canvas exterior */
+}
+
+.register-container {
+  width: 100%;
+  margin: auto; /* Centra vertical y horizontalmente de forma segura en caso de desbordamiento */
+}
+
+.register-form-wrapper {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.selected-plan-notice {
+  text-align: center;
+  background: rgba(212, 98, 26, 0.08);
+  border: 1px solid rgba(212, 98, 26, 0.15);
+  color: var(--orange-base);
+  padding: 10px 16px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+@media (min-width: 768px) {
+  .register-section {
+    padding-top: 80px; /* Reducido para eliminar espacio superior excesivo */
+    padding-bottom: 140px; /* Reducido para ajustarse mejor a la altura del footer */
+  }
+}
+
+@media (min-width: 1024px) {
+  .register-section {
+    overflow-y: auto; /* Permitir scroll para ver los planes completos */
+  }
+}
+
+@media (max-width: 600px) {
+  .register-section {
+    padding: 24px 10px;
+  }
+}

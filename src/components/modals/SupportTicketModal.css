@@ -1,0 +1,292 @@
+/* ========================================================
+   JACKO™ SUPPORT TICKET MODAL STYLES
+   ======================================================== */
+
+.support-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(42, 26, 10, 0.45); /* --brown-dark with transparency */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 20px;
+}
+
+.support-modal-card {
+  width: 460px;
+  max-width: 100%;
+  max-height: 90vh;
+  background: rgba(245, 240, 230, 0.95); /* --white-warm/beige blend */
+  border: 2px solid var(--brown-dark);
+  border-radius: 20px;
+  box-shadow: 0 20px 50px rgba(42, 26, 10, 0.3);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: var(--font-body), 'Nunito', sans-serif;
+}
+
+/* Modal Header */
+.support-modal-header {
+  padding: 16px 24px;
+  background-color: var(--brown-dark);
+  color: var(--white-warm);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 2px solid var(--brown-dark);
+}
+
+.support-header-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.support-logo-dot {
+  width: 8px;
+  height: 8px;
+  background-color: var(--orange-bright);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--orange-base);
+}
+
+.support-modal-header h3 {
+  margin: 0;
+  font-family: var(--font-display), 'Fredoka One', cursive;
+  font-size: 1.15rem;
+  letter-spacing: 0.03em;
+}
+
+.support-modal-close-btn {
+  background: none;
+  border: none;
+  color: var(--beige-base);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s, transform 0.2s;
+}
+
+.support-modal-close-btn:hover {
+  color: var(--white-warm);
+  transform: rotate(90deg);
+}
+
+/* Modal Body */
+.support-modal-body {
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.form-intro {
+  margin: 0 0 20px 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--brown-dark);
+  opacity: 0.85;
+}
+
+/* Form Groups */
+.support-form-group {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.support-form-group label {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--brown-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.field-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--beige-dark);
+  pointer-events: none;
+}
+
+.input-with-icon input,
+.input-with-icon select {
+  padding-left: 40px !important;
+}
+
+.support-form-group input,
+.support-form-group select,
+.support-form-group textarea {
+  width: 100%;
+  padding: 12px 14px;
+  background-color: var(--white-warm);
+  border: 1.5px solid var(--beige-dark);
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-family: var(--font-body), sans-serif;
+  color: var(--brown-dark);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.support-form-group textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.support-form-group input:focus,
+.support-form-group select:focus,
+.support-form-group textarea:focus {
+  outline: none;
+  border-color: var(--orange-base);
+  box-shadow: 0 0 0 3px rgba(212, 98, 26, 0.12);
+}
+
+.support-form-group select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232A1A0A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+}
+
+.support-form-group input:disabled {
+  background-color: var(--beige-light);
+  color: var(--beige-dark);
+  cursor: not-allowed;
+}
+
+/* Status Alert */
+.support-form-status {
+  padding: 12px 14px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+.support-form-status.error {
+  background-color: rgba(239, 68, 68, 0.08);
+  border: 1.5px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+/* Action Buttons */
+.support-action-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+  border: 2px solid transparent;
+}
+
+.support-action-btn.primary {
+  background-color: var(--orange-base);
+  color: var(--white-warm);
+  border-color: var(--brown-dark);
+  box-shadow: 0 4px 12px rgba(212, 98, 26, 0.25);
+}
+
+.support-action-btn.primary:hover:not(:disabled) {
+  background-color: var(--orange-light);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(212, 98, 26, 0.35);
+}
+
+.support-action-btn.primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.support-action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ─── Success View ─── */
+.support-success-view {
+  text-align: center;
+  padding: 10px 0;
+}
+
+.success-icon-container {
+  width: 72px;
+  height: 72px;
+  background-color: rgba(43, 138, 62, 0.1);
+  color: #2b8a3e;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px auto;
+  border: 2.5px solid #2b8a3e;
+}
+
+.support-success-view h3 {
+  margin: 0 0 16px 0;
+  font-family: var(--font-display), 'Fredoka One', sans-serif;
+  color: var(--brown-dark);
+}
+
+.success-ticket-label {
+  margin: 0 0 6px 0;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--beige-dark);
+  text-transform: uppercase;
+}
+
+.ticket-number-badge {
+  font-family: var(--font-display), cursive;
+  font-size: 1.7rem;
+  color: var(--orange-deep);
+  background-color: var(--white-warm);
+  border: 2px dashed var(--orange-base);
+  padding: 10px 24px;
+  border-radius: 12px;
+  display: inline-block;
+  margin-bottom: 20px;
+}
+
+.success-desc {
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--brown-dark);
+  opacity: 0.9;
+  margin: 0 0 24px 0;
+}
+
+/* Spinner mini */
+.spinner-mini {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-left-color: var(--orange-base);
+  animation: spin-anim 1s linear infinite;
+}
+
+@keyframes spin-anim {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

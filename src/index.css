@@ -1,0 +1,132 @@
+@import "tailwindcss";
+
+:root {
+  /* Paleta JACKO™ */
+  --beige-base: #d4c4a8;
+  --beige-light: #e8ddc8;
+  --beige-dark: #b8a888;
+  --orange-base: #d4621a;
+  --orange-light: #e8762a;
+  --orange-bright: #ff8c3a;
+  --orange-deep: #b84a0a;
+  --white-warm: #faf6f0;
+  --brown-dark: #2a1a0a;
+
+  /* Nueva paleta de modernización */
+  --modern-bg: #F8F7F4;
+  --modern-card: #FFFFFF;
+  --modern-border: #E6E2DA;
+  --modern-text-primary: #1E1E1E;
+  --modern-text-secondary: #6B7280;
+
+  /* Tipografía */
+  --font-display: 'Fredoka One', cursive;
+  --font-body: 'Nunito', sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  overscroll-behavior: none;
+}
+
+body {
+  margin: 0;
+  background-color: #ffffff; /* Blanco puro para fusionarse al 100% con la imagen */
+  color: var(--brown-dark);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100vh;
+  min-height: 100dvh; /* Para navegadores móviles */
+}
+
+.no-scroll {
+  overflow: hidden !important;
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* El scroll se maneja dinámicamente, pero permitiremos que el Nav maneje su propia visibilidad */
+
+/* --- GRID BASE SYSTEM (12-Column Fluid Layout) --- */
+:root {
+  --space-xs: 0.5rem;
+  --space-sm: 1rem;
+  --space-md: 1.5rem;
+  --space-lg: 2rem;
+  --space-xl: 3.5rem;
+}
+
+.grid-base {
+  display: grid;
+  grid-template-columns: repeat(var(--grid-cols, 12), 1fr);
+  gap: var(--grid-gap, var(--space-md));
+  padding-inline: var(--grid-padding, var(--space-lg));
+  width: 100%;
+}
+
+/* Breakpoints reactivos de columnas */
+@media (max-width: 639px) {
+  .grid-base {
+    --grid-cols: 2;
+    --grid-gap: var(--space-sm);
+    --grid-padding: var(--space-sm);
+  }
+}
+@media (min-width: 640px) and (max-width: 1023px) {
+  .grid-base {
+    --grid-cols: 4;
+    --grid-gap: var(--space-md);
+    --grid-padding: var(--space-md);
+  }
+}
+@media (min-width: 1024px) and (max-width: 1439px) {
+  .grid-base {
+    --grid-cols: 8;
+    --grid-gap: var(--space-md);
+    --grid-padding: var(--space-lg);
+  }
+}
+@media (min-width: 1440px) {
+  .grid-base {
+    --grid-cols: 12;
+    --grid-gap: var(--space-lg);
+    --grid-padding: var(--space-lg);
+  }
+}
+
+/* Clases de utilidad para abarcar columnas (Spans) */
+.col-span-1 { grid-column: span 1; }
+.col-span-2 { grid-column: span 2; }
+.col-span-3 { grid-column: span 3; }
+.col-span-4 { grid-column: span 4; }
+.col-span-6 { grid-column: span 6; }
+.col-span-8 { grid-column: span 8; }
+.col-span-12 { grid-column: span 12; }
+
+/* Responsive spans para ajustes finos */
+@media (max-width: 639px) {
+  .col-span-sm-full { grid-column: span 2; }
+}
+@media (min-width: 640px) and (max-width: 1023px) {
+  .col-span-md-half { grid-column: span 2; }
+  .col-span-md-full { grid-column: span 4; }
+}
+@media (min-width: 1024px) {
+  .col-span-lg-third { grid-column: span 4; } /* 3 columnas en desktop (12/4) */
+  .col-span-lg-fourth { grid-column: span 3; } /* 4 columnas en desktop (12/3) */
+  .col-span-lg-half { grid-column: span 6; }
+}
+

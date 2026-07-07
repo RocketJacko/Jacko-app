@@ -1,0 +1,9 @@
+{
+  "project": "infinity-landing",
+  "constitution": ".specify/memory/constitution.md",
+  "templates": {
+    "spec": "specs/templates/spec.md",
+    "plan": "specs/templates/plan.md",
+    "tasks": "specs/templates/tasks.md"
+  }
+}

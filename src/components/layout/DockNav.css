@@ -1,0 +1,62 @@
+/* Barra superior centrada */
+.dock-nav-top-bar {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: row;
+  background: rgba(45, 26, 12, 0.95);
+  backdrop-filter: blur(25px);
+  padding: 8px 12px;
+  border-radius: 24px;
+  border: 1px solid rgba(232, 221, 200, 0.2);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  z-index: 9999;
+  transition: all 0.3s ease-in-out;
+}
+
+.dock-links-container-top {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  align-items: center;
+}
+
+.dock-btn-top {
+  width: 50px;
+  height: 50px;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 14px;
+  background: transparent;
+  border: none;
+  color: var(--orange-main, #d4621a);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dock-btn-top.active {
+  background: rgba(212, 98, 26, 0.25) !important;
+  border: 1px solid var(--orange-base) !important;
+  color: #fff !important;
+}
+
+.dock-btn-top:hover {
+  background: rgba(232, 221, 200, 0.1);
+  transform: translateY(-4px) scale(1.1);
+}
+
+.dock-btn-top svg {
+  width: 26px;
+  height: 26px;
+}
+
+/* Ocultar el nav en celulares, solo visible desde tablets en adelante */
+@media (max-width: 767px) {
+  #dock-nav-top {
+    display: none !important;
+  }
+}

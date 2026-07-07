@@ -1,0 +1,20 @@
+{
+  "name": "JACKO™",
+  "short_name": "JACKO",
+  "description": "Ideas en Movimiento — La plataforma JACKO",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#d4c4a8",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["lifestyle", "entertainment"],
+  "lang": "es"
+}

@@ -1,0 +1,13 @@
+---
+description: Convenciones de animación scroll-scrub y Motion
+globs: src/components/ScrollEscudoFase2Bridge.{tsx,css},src/hooks/use*.ts,src/lib/drawCover.ts,src/lib/canvasDpr.ts,src/pages/HomePage.tsx
+alwaysApply: false
+---
+
+# Animaciones
+
+- Scroll hero: `useScroll` + `useSpring` + `useMotionValueEvent` para canvas; no reimplementar con scroll listeners manuales salvo `useScrollSectionProgress` en otros componentes.
+- Frames: `useImageSequence`; sincronizar con `npm run sync:personaje`.
+- Canvas: `drawCover` + DPR cap; re-pintar en resize.
+- Motion imports desde `motion/react`; variants con `as const` en literales `type`/`ease`.
+- Preservar `onComplete` al >0.95 para mostrar `DockNav`.
