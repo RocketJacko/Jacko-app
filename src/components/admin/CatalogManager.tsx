@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { invalidateCacheByPrefix } from '../../lib/queryCache';
 import { 
   Plus, Pencil, Trash2, RefreshCw, AlertTriangle, 
-  ShoppingBag, FolderPlus, Key, Upload, ChevronLeft, Search,
+  ShoppingBag, FolderPlus, Search,
   CreditCard, ChevronDown
 } from 'lucide-react';
 import { PaymentMethodsManager } from './PaymentMethodsManager';
@@ -65,14 +65,6 @@ export interface Product {
   } | null;
 }
 
-interface Credential {
-  id: string;
-  created_at: string;
-  email: string;
-  status: 'unassigned' | 'assigned' | 'blocked';
-  assigned_user_id?: string | null;
-  plan_id?: string | null;
-}
 
 export function CatalogManager() {
   const [activeSubTab, setActiveSubTab] = useState<'products' | 'categories' | 'payments'>('products');
@@ -80,11 +72,11 @@ export function CatalogManager() {
   const [products, setProducts] = useState<Product[]>([]);
   
   const [isLoading, setIsLoading] = useState(true);
+  const [isBackgroundLoading, setIsBackgroundLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   
   // Modals / Editors
   const [editingProduct, setEditingProduct] = useState<Product | 'new' | null>(null);
-  const [editingPoolProduct, setEditingPoolProduct] = useState<Product | null>(null);
 
   // New filters and selection states
   const [searchQuery, setSearchQuery] = useState('');
@@ -119,8 +111,9 @@ export function CatalogManager() {
     }
   }, []);
 
-  const loadData = useCallback(async () => {
-    setIsLoading(true);
+  const loadData = useCallback(async (isSilent = false) => {
+    if (!isSilent) setIsLoading(true);
+    else setIsBackgroundLoading(true);
     setErrorMsg('');
     try {
       await Promise.all([fetchCategories(), fetchProducts()]);
@@ -128,6 +121,7 @@ export function CatalogManager() {
       setErrorMsg(err instanceof Error ? err.message : 'Error al cargar los datos.');
     } finally {
       setIsLoading(false);
+      setIsBackgroundLoading(false);
     }
   }, [fetchCategories, fetchProducts]);
 
@@ -136,7 +130,7 @@ export function CatalogManager() {
     const fetchAsync = async () => {
       await Promise.resolve();
       if (active) {
-        await loadData();
+        await loadData(false);
       }
     };
     fetchAsync();
@@ -377,11 +371,6 @@ export function CatalogManager() {
           onSave={handleSaveProduct}
           onCancel={() => setEditingProduct(null)}
         />
-      ) : editingPoolProduct !== null ? (
-        <CredentialsPoolManager
-          product={editingPoolProduct}
-          onBack={() => setEditingPoolProduct(null)}
-        />
       ) : (
         <>
           <div className="catalog-subnav">
@@ -420,15 +409,15 @@ export function CatalogManager() {
               selectedCategorySlug={selectedCategorySlug}
               searchQuery={searchQuery}
               isLoading={isLoading}
+              isRefreshing={isBackgroundLoading}
               onCategoryChange={setSelectedCategorySlug}
               onSearchChange={setSearchQuery}
               onNewProduct={() => setEditingProduct('new')}
               onDeleteMultiple={handleDeleteMultipleProducts}
-              onRefresh={loadData}
+              onRefresh={() => loadData(true)}
               onSelectAll={handleSelectAll}
               onSelectOne={handleSelectOne}
               onToggleActive={handleToggleActiveProduct}
-              onEditPool={setEditingPoolProduct}
               onEditProduct={setEditingProduct}
               onDeleteProduct={handleDeleteProduct}
             />
@@ -437,7 +426,7 @@ export function CatalogManager() {
               categories={categories} 
               onSaveCategory={handleSaveCategory}
               onDeleteCategory={handleDeleteCategory}
-              isLoading={isLoading}
+              isLoading={isLoading || isBackgroundLoading}
             />
           ) : (
             <PaymentMethodsManager />
@@ -457,6 +446,7 @@ interface ProductsSectionProps {
   selectedCategorySlug: string;
   searchQuery: string;
   isLoading: boolean;
+  isRefreshing?: boolean;
   onCategoryChange: (slug: string) => void;
   onSearchChange: (query: string) => void;
   onNewProduct: () => void;
@@ -465,16 +455,15 @@ interface ProductsSectionProps {
   onSelectAll: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onSelectOne: (id: string, checked: boolean) => void;
   onToggleActive: (prod: Product) => void;
-  onEditPool: (prod: Product) => void;
   onEditProduct: (prod: Product) => void;
   onDeleteProduct: (id: string, title: string) => void;
 }
 
 function ProductsSection({
   categories, filteredProducts, selectedProducts, selectedCategorySlug,
-  searchQuery, isLoading, onCategoryChange, onSearchChange, onNewProduct,
+  searchQuery, isLoading, isRefreshing, onCategoryChange, onSearchChange, onNewProduct,
   onDeleteMultiple, onRefresh, onSelectAll, onSelectOne,
-  onToggleActive, onEditPool, onEditProduct, onDeleteProduct,
+  onToggleActive, onEditProduct, onDeleteProduct,
 }: ProductsSectionProps) {
   return (
     <div className="products-admin-section">
@@ -519,8 +508,8 @@ function ProductsSection({
                 <Trash2 size={16} /> Eliminar ({selectedProducts.length})
               </button>
             )}
-            <button type="button" className="refresh-btn" onClick={onRefresh} disabled={isLoading} title="Refrescar">
-              <RefreshCw className={isLoading ? 'spin' : ''} size={16} />
+            <button type="button" className="refresh-btn" onClick={onRefresh} disabled={isLoading || isRefreshing} title="Refrescar">
+              <RefreshCw className={isLoading || isRefreshing ? 'spin' : ''} size={16} />
             </button>
           </div>
         </div>
@@ -625,9 +614,6 @@ function ProductsSection({
                       </td>
                       <td className="col-prod-actions-cell">
                         <div className="row-actions-group">
-                          <button type="button" className="row-action-btn edit" onClick={() => onEditPool(prod)} title="Gestionar Pool de Credenciales">
-                            <Key size={14} />
-                          </button>
                           <button type="button" className="row-action-btn edit" onClick={() => onEditProduct(prod)} title="Editar Producto">
                             <Pencil size={14} />
                           </button>
@@ -762,440 +748,3 @@ function CategoriesSection({ categories, onSaveCategory, onDeleteCategory, isLoa
   );
 }
 
-
-// Administrador de Pool de Credenciales
-interface PoolProps {
-  product: Product;
-  onBack: () => void;
-}
-
-function CredentialsPoolManager({ product, onBack }: PoolProps) {
-  const [pool, setPool] = useState<Credential[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  
-  // Carga individual vs masiva (CSV)
-  const [isBulk, setIsBulk] = useState(false);
-  const [singleEmail, setSingleEmail] = useState('');
-  const [selectedPlanId, setSelectedPlanId] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Seguridad Super Admin
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-  const [isCheckingRole, setIsCheckingRole] = useState(true);
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const fetchPool = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('email_pool')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-
-      // Filtrar en memoria por los planes del producto
-      const planIds = product.plans ? product.plans.map(p => p.id) : [];
-      const filtered = (data || []).filter(item => 
-        !item.plan_id || planIds.includes(item.plan_id)
-      );
-      setPool(filtered);
-    } catch (err: unknown) {
-      console.error(err);
-      alert('Error al cargar la piscina de correos.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [product.plans]);
-
-  useEffect(() => {
-    let active = true;
-    const fetchAsync = async () => {
-      await Promise.resolve();
-      if (active) {
-        await fetchPool();
-      }
-    };
-    fetchAsync();
-    return () => {
-      active = false;
-    };
-  }, [fetchPool]);
-
-  // Verificar rol de Super Admin
-  useEffect(() => {
-    let active = true;
-    const checkRole = async () => {
-      try {
-        const { data, error } = await supabase.rpc('get_my_access');
-        if (error) throw error;
-        if (active && data && data.length > 0) {
-          setIsSuperAdmin(!!data[0].is_super_admin);
-        }
-      } catch (err) {
-        console.error('Error al verificar rol de usuario:', err);
-      } finally {
-        if (active) setIsCheckingRole(false);
-      }
-    };
-    checkRole();
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  // Carga Individual
-  const handleAddSingle = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const emailStr = singleEmail.trim();
-    if (!emailStr || !emailStr.includes('@')) {
-      alert('Ingresa un correo electrónico válido.');
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      // Validar si ya existe para evitar errores de restricción única
-      const { data: existing } = await supabase
-        .from('email_pool')
-        .select('id')
-        .eq('email', emailStr)
-        .maybeSingle();
-
-      if (existing) {
-        alert(`El correo "${emailStr}" ya se encuentra registrado en el pool.`);
-        setIsSubmitting(false);
-        return;
-      }
-
-      const payload = {
-        email: emailStr,
-        plan_id: selectedPlanId || null,
-        status: 'unassigned' as const,
-      };
-
-      const { error } = await supabase.from('email_pool').insert([payload]);
-      if (error) throw error;
-
-      await supabase.rpc('admin_log_action', {
-        _action: 'add_pool_correo_individual',
-        _target_table: 'email_pool',
-        _target_id: null,
-        _payload: payload
-      });
-
-      setSingleEmail('');
-      await fetchPool();
-    } catch (err: unknown) {
-      console.error(err);
-      alert('Error al agregar el correo.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Carga Masiva CSV (Columna única de emails)
-  const handleCSVUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = async (evt) => {
-      const text = evt.target?.result as string;
-      if (!text) return;
-
-      // Separar por líneas
-      const lines = text.split(/\r?\n/);
-      const emails: string[] = [];
-
-      for (let line of lines) {
-        line = line.trim();
-        if (!line) continue;
-
-        // Extraer primera columna
-        const parts = line.split(/[,;]/);
-        const email = parts[0].trim().toLowerCase();
-
-        // Validar formato de email simple
-        if (email && email.includes('@')) {
-          emails.push(email);
-        }
-      }
-
-      if (emails.length === 0) {
-        alert('No se encontraron correos electrónicos válidos en el archivo CSV.');
-        if (fileInputRef.current) fileInputRef.current.value = '';
-        return;
-      }
-
-      setIsSubmitting(true);
-      try {
-        // Consultar los que ya existen para filtrarlos
-        const { data: existingRows, error: checkError } = await supabase
-          .from('email_pool')
-          .select('email')
-          .in('email', emails);
-
-        if (checkError) throw checkError;
-
-        const existingEmails = new Set(existingRows?.map(r => r.email) || []);
-        const newEmails = emails.filter(email => !existingEmails.has(email));
-
-        if (newEmails.length === 0) {
-          alert('Todos los correos del archivo CSV ya existen en el pool.');
-          if (fileInputRef.current) fileInputRef.current.value = '';
-          setIsSubmitting(false);
-          return;
-        }
-
-        const payloads = newEmails.map(email => ({
-          email,
-          plan_id: selectedPlanId || null,
-          status: 'unassigned' as const
-        }));
-
-        const { error: insertError } = await supabase.from('email_pool').insert(payloads);
-        if (insertError) throw insertError;
-
-        await supabase.rpc('admin_log_action', {
-          _action: 'bulk_upload_emails',
-          _target_table: 'email_pool',
-          _target_id: null,
-          _payload: { count: payloads.length, plan_id: selectedPlanId || null }
-        });
-
-        alert(`Carga completada:\n- Nuevos correos agregados: ${newEmails.length}\n- Duplicados omitidos: ${emails.length - newEmails.length}`);
-        
-        if (fileInputRef.current) fileInputRef.current.value = '';
-        await fetchPool();
-      } catch (err: unknown) {
-        console.error(err);
-        alert('Error al realizar la carga masiva.');
-      } finally {
-        setIsSubmitting(false);
-      }
-    };
-    reader.readAsText(file);
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('¿Estás seguro de eliminar este correo del pool?')) return;
-    setIsLoading(true);
-    try {
-      const { error } = await supabase.from('email_pool').delete().eq('id', id);
-      if (error) throw error;
-
-      await supabase.rpc('admin_log_action', {
-        _action: 'delete_pool_correo',
-        _target_table: 'email_pool',
-        _target_id: null,
-        _payload: { deleted_correo_id: id }
-      });
-
-      await fetchPool();
-    } catch (err: unknown) {
-      console.error(err);
-      alert('Error al eliminar correo.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const availableCount = pool.filter((c) => c.status === 'unassigned').length;
-
-  return (
-    <div className="credentials-pool-manager">
-      <div className="admin-action-bar" style={{ marginBottom: '1.5rem' }}>
-        <button type="button" className="btn-admin-secondary" onClick={onBack}>
-          <ChevronLeft size={16} /> Volver a Productos
-        </button>
-        <h3 className="admin-card-title" style={{ fontSize: '1.2rem', margin: 0 }}>
-          Pool de Correos: {product.title}
-        </h3>
-      </div>
-
-      {isCheckingRole ? (
-        <div className="admin-loading" style={{ padding: '2rem 0' }}>
-          <div className="loading-spinner"></div>
-          <p>Verificando permisos...</p>
-        </div>
-      ) : !isSuperAdmin ? (
-        <div className="admin-error-banner" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', padding: '2rem', textAlign: 'center', background: 'rgba(231, 76, 60, 0.08)', border: '1px solid rgba(231, 76, 60, 0.3)', borderRadius: '12px', color: '#e74c3c', marginBottom: '1.5rem' }}>
-          <AlertTriangle size={32} />
-          <h4 style={{ margin: 0, fontWeight: 700, fontSize: '1.05rem' }}>Acceso Restringido</h4>
-          <p style={{ margin: 0, fontSize: '0.88rem', opacity: 0.85 }}>
-            Solo los Super Administradores tienen autorización para agregar, modificar o subir correos al pool.
-          </p>
-        </div>
-      ) : (
-        <div className="admin-editor-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h4 className="admin-card-title" style={{ fontSize: '1.05rem', margin: 0 }}>
-              Cargar Correos al Pool
-            </h4>
-            <div className="orders-filters" style={{ margin: 0 }}>
-              <button 
-                type="button"
-                className={`filter-pill ${!isBulk ? 'active' : ''}`}
-                onClick={() => setIsBulk(false)}
-              >
-                Carga Individual
-              </button>
-              <button 
-                type="button"
-                className={`filter-pill ${isBulk ? 'active' : ''}`}
-                onClick={() => setIsBulk(true)}
-              >
-                Carga Masiva (CSV)
-              </button>
-            </div>
-          </div>
-
-          <div className="admin-form">
-            {product.plans && product.plans.length > 0 && (
-              <div className="admin-field" style={{ marginBottom: '1.2rem' }}>
-                <label htmlFor="pool-plan-id">Asignar a Plan Específico</label>
-                <select
-                  id="pool-plan-id"
-                  className="admin-select"
-                  value={selectedPlanId}
-                  onChange={(e) => setSelectedPlanId(e.target.value)}
-                >
-                  <option value="">General (Todos los planes de este producto)</option>
-                  {product.plans.map(p => (
-                    <option key={p.id} value={p.id}>{p.name} ({p.id})</option>
-                  ))}
-                </select>
-                <span className="field-description">
-                  Los correos se asignarán únicamente a los usuarios que adquieran este plan de precios.
-                </span>
-              </div>
-            )}
-
-            {!isBulk ? (
-              <form onSubmit={handleAddSingle} className="admin-field">
-                <label htmlFor="pool-single-email">Correo Electrónico</label>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <input 
-                    id="pool-single-email"
-                    type="email" 
-                    className="admin-input" 
-                    value={singleEmail} 
-                    onChange={(e) => setSingleEmail(e.target.value)} 
-                    placeholder="ejemplo@correo.com"
-                    required
-                    style={{ flex: 1 }}
-                  />
-                  <button type="submit" className="btn-admin-action" disabled={isSubmitting || isLoading} style={{ minHeight: '40px', padding: '0 20px' }}>
-                    {isSubmitting ? <RefreshCw className="admin-spinner" size={14} /> : <Plus size={14} />}
-                    Agregar
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <div className="admin-field">
-                <label htmlFor="csv-upload">Cargar Archivo CSV</label>
-                <div className="upload-input-group">
-                  <input 
-                    id="csv-upload"
-                    type="file" 
-                    ref={fileInputRef}
-                    accept=".csv"
-                    onChange={handleCSVUpload}
-                    style={{ display: 'none' }}
-                    disabled={isSubmitting || isLoading}
-                  />
-                  <button 
-                    type="button" 
-                    className="btn-admin-action" 
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isSubmitting || isLoading}
-                    style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '8px', minHeight: '45px' }}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <RefreshCw className="admin-spinner" size={16} />
-                        Procesando CSV...
-                      </>
-                    ) : (
-                      <>
-                        <Upload size={16} />
-                        Seleccionar Archivo CSV de Correos
-                      </>
-                    )}
-                  </button>
-                </div>
-                <span className="field-description" style={{ marginTop: '6px', display: 'block' }}>
-                  El archivo debe ser un CSV (delimitado por coma o punto y coma) con una sola columna de correos electrónicos. Ejemplo:<br />
-                  <code>correo1@dominio.com</code><br />
-                  <code>correo2@dominio.com</code>
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      <div className="admin-editor-card">
-        <h4 className="admin-card-title" style={{ fontSize: '1.05rem', marginBottom: '0.25rem' }}>
-          Correos en la Piscina
-        </h4>
-        <p className="field-description" style={{ marginBottom: '1rem', fontWeight: 600 }}>
-          {availableCount} Disponibles / {pool.length} Total
-        </p>
-
-        {isLoading ? (
-          <div className="admin-loading" style={{ padding: '2rem 0' }}>
-            <div className="loading-spinner"></div>
-            <p>Cargando piscina...</p>
-          </div>
-        ) : pool.length > 0 ? (
-          <ul className="pool-items-list">
-            {pool.map((c) => (
-              <li key={c.id} className="pool-item">
-                <div className="pool-item-creds">
-                  <strong>Email:</strong> {c.email}
-                  <span style={{ display: 'block', fontSize: '0.75rem', opacity: 0.6 }}>
-                    Creado el: {new Date(c.created_at).toLocaleString('es-CO')}
-                  </span>
-                  {c.assigned_user_id && (
-                    <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--green-deep)' }}>
-                      Asignado a usuario ID: {c.assigned_user_id}
-                    </span>
-                  )}
-                </div>
-                <div className="pool-item-actions">
-                  {c.plan_id ? (
-                    <span className="badge-admin plan-specific" style={{ background: '#fef3c7', color: '#b45309', marginRight: '8px', fontSize: '0.75rem', fontWeight: 700 }}>
-                      Plan: {c.plan_id}
-                    </span>
-                  ) : (
-                    <span className="badge-admin general-plan" style={{ background: '#f1f5f9', color: '#475569', marginRight: '8px', fontSize: '0.75rem', fontWeight: 700 }}>
-                      General
-                    </span>
-                  )}
-                  
-                  <span className={`badge-admin ${c.status === 'assigned' ? 'used' : c.status === 'blocked' ? 'rejected' : 'active'}`} style={{ textTransform: 'capitalize' }}>
-                    {c.status === 'unassigned' ? 'sin asignar' : c.status === 'assigned' ? 'asignado' : 'bloqueado'}
-                  </span>
-                  
-                  {c.status === 'unassigned' && isSuperAdmin && (
-                    <button type="button" className="btn-pool-delete" onClick={() => handleDelete(c.id)} title="Eliminar Correo">
-                      <Trash2 size={14} />
-                    </button>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="empty-panel-state" style={{ padding: '2rem 1rem' }}>
-            <Key className="empty-icon" size={32} />
-            <p>No hay correos en el pool para este producto.</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}

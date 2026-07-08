@@ -101,95 +101,82 @@ export function BinancePaymentForm({
     }
   };
   return (
-    <div>
-      {" "}
-      <div>
-        {" "}
-        <div>
-          {" "}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              marginBottom: "12px",
-            }}
-          >
-            {" "}
-            {selectedMethod.qr_image_url ? (
-              <img
-                src={selectedMethod.qr_image_url}
-                alt={selectedMethod.name}
-                style={{ height: "80px", objectFit: "contain" }}
-              />
-            ) : (
+    <div className="nequi-flow-container">
+      <div className="nequi-info-header" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '12px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
+          {selectedMethod.qr_image_url ? (
+            <img
+              src={selectedMethod.qr_image_url}
+              alt={selectedMethod.name}
+              style={{ height: '70px', objectFit: 'contain' }}
+            />
+          ) : (
+            <div style={{ height: '70px', display: 'flex', alignItems: 'center' }}>
               <BinanceLogoSVG />
-            )}{" "}
-          </div>{" "}
-          <p>
-            Realiza tu envío a través de Binance Pay para activar tu producto al
-            instante.
-          </p>{" "}
-          <div style={{ borderLeftColor: "#F3BA2F" }}>
-            {" "}
-            <span style={{ color: "#F3BA2F" }}>Binance Pay ID:</span>{" "}
-            <strong>{payId}</strong>{" "}
+            </div>
+          )}
+        </div>
+        <p style={{ margin: 0, fontSize: '0.92rem', fontWeight: 600, color: 'var(--brown-dark)', opacity: 0.8, lineHeight: 1.4 }}>
+          Realiza tu envío a través de Binance Pay para activar tu producto al instante.
+        </p>
+
+        {/* Binance Pay ID Copy Box */}
+        <div className="nequi-copy-key-wrapper" style={{ marginTop: '0.25rem' }}>
+          <div className="nequi-copy-box" style={{ borderColor: 'rgba(243, 186, 47, 0.4)', background: 'rgba(243, 186, 47, 0.05)' }}>
+            <span className="nequi-copy-value" style={{ color: '#e5b12a', fontSize: '1.05rem', fontWeight: 800 }}>
+              ID: {payId}
+            </span>
             <button
               type="button"
+              className="nequi-copy-btn"
               onClick={handleCopyPayId}
-              style={{
-                backgroundColor: "rgba(243, 186, 47, 0.15)",
-                color: "#F3BA2F",
-              }}
+              style={{ background: '#f3ba2f', color: '#000000' }}
             >
-              {" "}
-              {copied ? "¡Copiado!" : "Copiar"}{" "}
-            </button>{" "}
-          </div>{" "}
-        </div>{" "}
-        <form onSubmit={handleSubmit}>
-          {" "}
-          <div>
-            {" "}
-            <label htmlFor="binance-order-id-input">
-              ID de la Orden Binance (18 dígitos) *
-            </label>{" "}
-            <input
-              id="binance-order-id-input"
-              type="text"
-              placeholder="Ej. 434719397079719936"
-              value={binanceOrderId}
-              onChange={(e) => {
-                const val = e.target.value.replace(/\D/g, "");
-                setBinanceOrderId(val);
-              }}
-              disabled={isProcessing}
-              required
-            />{" "}
-            <span
-              style={{ marginTop: "6px", fontSize: "0.8rem", opacity: 0.85 }}
-            >
-              {" "}
-              Ingresa el ID de la orden (18 dígitos) que aparece en el detalle
-              de tu pago de Binance Pay.{" "}
-            </span>{" "}
-          </div>{" "}
-          <button
-            type="submit"
-            disabled={isProcessing || binanceOrderId.trim().length < 10}
-            style={{
-              marginTop: "15px",
-              backgroundColor: "#F3BA2F",
-              color: "#000000",
-              fontWeight: 700,
+              {copied ? '¡Copiado!' : 'Copiar'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Formulario */}
+      <form onSubmit={handleSubmit} className="nequi-form" style={{ marginTop: '1.5rem' }}>
+        <div className="nequi-field">
+          <label htmlFor="binance-order-id-input" className="nequi-label">
+            ID de la Orden Binance (18 dígitos) *
+          </label>
+          <input
+            id="binance-order-id-input"
+            type="text"
+            className="nequi-input"
+            placeholder="Ej. 434719397079719936"
+            value={binanceOrderId}
+            onChange={(e) => {
+              const val = e.target.value.replace(/\D/g, "");
+              setBinanceOrderId(val);
             }}
-          >
-            {" "}
-            {isProcessing
-              ? "Verificando con Binance..."
-              : "Confirmar y Verificar Pago"}{" "}
-          </button>{" "}
-        </form>{" "}
-      </div>{" "}
+            disabled={isProcessing}
+            required
+          />
+          <span className="nequi-hint">
+            Ingresa el ID de la orden (18 dígitos) que aparece en el detalle de tu pago de Binance Pay.
+          </span>
+        </div>
+
+        <button
+          type="submit"
+          className="nequi-btn-primary"
+          disabled={isProcessing || binanceOrderId.trim().length < 10}
+          style={{
+            marginTop: '1.25rem',
+            background: '#f3ba2f',
+            color: '#000000',
+            fontWeight: 800,
+            boxShadow: '0 6px 20px rgba(243, 186, 47, 0.25)',
+          }}
+        >
+          {isProcessing ? 'Verificando con Binance...' : 'Confirmar y Verificar Pago'}
+        </button>
+      </form>
     </div>
   );
 }

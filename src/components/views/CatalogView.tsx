@@ -6,6 +6,7 @@ import { CheckoutView } from './CheckoutView';
 import { catalogService } from '../../services/catalogService';
 import type { Product, Category, PaymentMethod } from '../../services/catalogService';
 import { VisibilityStrategyFactory } from '../../domain/visibility/VisibilityStrategyFactory';
+import { useGeoLocation } from '../../hooks/useGeoLocation';
 
 interface Props {
   userId: string;
@@ -15,6 +16,7 @@ interface Props {
 
 export function CatalogView({ userId, onRedeemSuccess, onNavigateToDashboard }: Props) {
   const { isSuperAdmin } = useAuth();
+  const { userCurrency, exchangeRate } = useGeoLocation();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -123,7 +125,6 @@ export function CatalogView({ userId, onRedeemSuccess, onNavigateToDashboard }: 
     };
   }, [loadUserProfile, loadPaymentMethods]);
 
-  /* Disparador de checkout automático al registrarse/iniciar sesión */
   useEffect(() => {
     if (products.length > 0) {
       const triggerSlug = localStorage.getItem('jacko_trigger_checkout_slug');
@@ -138,7 +139,6 @@ export function CatalogView({ userId, onRedeemSuccess, onNavigateToDashboard }: 
       }
     }
   }, [products]);
-
   const handleSelectProduct = (prod: Product) => {
     setCheckoutProduct(prod);
   };
@@ -183,20 +183,22 @@ export function CatalogView({ userId, onRedeemSuccess, onNavigateToDashboard }: 
         </header>
 
         {/* Buscador y Filtros */}
+        {/* Buscador y Filtros */}
         <div className="catalog-toolbar">
           <div className="catalog-search-wrapper">
-            <Search size={18} />
+            <Search size={18} className="catalog-search-icon" />
             <input
               type="text"
+              className="catalog-search-input"
               placeholder="Buscar productos en la tienda..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <nav className="catalog-tabs" aria-label="Filtro de categorías">
+          <nav className="categories-filter" aria-label="Filtro de categorías">
             <button
               type="button"
-              className={`tab-btn${activeCategory === null ? ' active' : ''}`}
+              className={`category-pill${activeCategory === null ? ' active' : ''}`}
               onClick={() => setActiveCategory(null)}
             >
               Todas ({products.length})
@@ -208,7 +210,7 @@ export function CatalogView({ userId, onRedeemSuccess, onNavigateToDashboard }: 
                 <button
                   type="button"
                   key={c.id}
-                  className={`tab-btn${activeCategory === c.slug ? ' active' : ''}`}
+                  className={`category-pill${activeCategory === c.slug ? ' active' : ''}`}
                   onClick={() => setActiveCategory(c.slug)}
                 >
                   {c.name} ({count})
@@ -232,7 +234,7 @@ export function CatalogView({ userId, onRedeemSuccess, onNavigateToDashboard }: 
             ))}
           </div>
         ) : filteredProducts.length > 0 ? (
-          <div className="catalog-grid">
+          <div className="products-grid">
             {filteredProducts.map((prod) => {
               return (
                 <div
@@ -248,18 +250,19 @@ export function CatalogView({ userId, onRedeemSuccess, onNavigateToDashboard }: 
                   className="product-card"
                   onClick={() => handleSelectProduct(prod)}
                 >
-                  <div className="product-card-image">
+                  <div className="product-thumb-container">
                     <img
+                      className="product-thumb"
                       src={getProductImage(prod.thumbnail_url)}
                       alt={prod.title}
                       loading="lazy"
                       decoding="async"
                     />
                   </div>
-                  <div className="product-card-body">
+                  <div className="product-info">
                     <div className="product-card-meta">
-                      {prod.categories && <span className="category-tag">{prod.categories.name}</span>}
-                      <div style={{ display: 'flex', gap: '4px' }}>
+                      {prod.categories && <span className="product-card-category">{prod.categories.name}</span>}
+                      <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
                         {prod.visibility === 'invited_only' && (
                           <span
                             style={{
@@ -294,10 +297,36 @@ export function CatalogView({ userId, onRedeemSuccess, onNavigateToDashboard }: 
                         )}
                       </div>
                     </div>
-                    <h3 className="product-title">{prod.title}</h3>
+                    <h3 className="product-card-title">{prod.title}</h3>
+                    <div className="product-card-pricing" style={{ marginBottom: '1.25rem', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      {prod.payment_modes !== 'points' && prod.price_cop !== null && prod.price_cop !== undefined && (
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                          <span style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--brown-dark)' }}>
+                            {(() => {
+                              const priceLocal = prod.price_cop * exchangeRate;
+                              const hasDecimals = userCurrency !== 'COP';
+                              return `$${priceLocal.toLocaleString(userCurrency === 'COP' ? 'es-CO' : 'en-US', {
+                                minimumFractionDigits: hasDecimals ? 2 : 0,
+                                maximumFractionDigits: hasDecimals ? 2 : 0,
+                              })} ${userCurrency}`;
+                            })()}
+                          </span>
+                          {userCurrency !== 'USD' && (
+                            <span style={{ fontSize: '0.75rem', color: 'var(--brown-dark)', opacity: 0.6, fontWeight: 700 }}>
+                              ~ ${prod.price_cop.toFixed(2)} USD
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      {prod.payment_modes !== 'money' && prod.points_price !== null && prod.points_price !== undefined && (
+                        <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--orange-base)' }}>
+                          {prod.points_price} pts
+                        </span>
+                      )}
+                    </div>
                     <button
                       type="button"
-                      className="product-action-btn"
+                      className="card-redeem-button"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleSelectProduct(prod);

@@ -3379,3 +3379,267 @@ body:has(.checkout-container) .member-header {
 .nequi-copy-btn:active {
   transform: scale(0.95);
 }
+
+/* Premium Modal Options Layout & Styling matching index.css */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(42, 26, 10, 0.45);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: backdropFadeIn 0.25s ease-out;
+}
+
+.modal-card {
+  background: var(--white-warm, #FAF6F0);
+  border: 2px solid rgba(212, 98, 26, 0.25);
+  border-radius: 24px;
+  max-width: 480px;
+  width: 90%;
+  box-shadow: 0 20px 50px rgba(42, 26, 10, 0.18), 0 0 80px rgba(212, 98, 26, 0.05);
+  overflow: hidden;
+  animation: modalSlideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1.5px solid var(--beige-light, #E8DDC8);
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-family: var(--font-display, sans-serif);
+  font-size: 1.4rem;
+  color: var(--orange-deep, #B84A0A);
+  font-weight: 800;
+}
+
+.close-btn {
+  background: rgba(232, 221, 200, 0.5);
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brown-dark, #2A1A0A);
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.close-btn:hover {
+  background: var(--orange-base, #D4621A);
+  color: white;
+  transform: rotate(90deg);
+}
+
+.order-summary-mini {
+  padding: 16px 24px;
+  background: rgba(232, 221, 200, 0.25);
+  border-bottom: 1.5px solid var(--beige-light, #E8DDC8);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  color: var(--brown-dark, #2A1A0A);
+}
+
+.summary-row span {
+  opacity: 0.7;
+  font-weight: 600;
+}
+
+.summary-row strong {
+  color: var(--brown-dark, #2A1A0A);
+  font-weight: 800;
+}
+
+.modal-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--orange-deep, #B84A0A);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+#payment-select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid var(--beige-dark, #B8A888);
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: var(--brown-dark, #2A1A0A);
+  background: white;
+  transition: border-color 0.2s ease;
+  outline: none;
+  font-weight: 600;
+}
+
+#payment-select:focus {
+  border-color: var(--orange-base, #D4621A);
+}
+
+@keyframes backdropFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalSlideUp {
+  from { opacity: 0; transform: translateY(30px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Styling for Pending State Circles in Checkout Receipt */
+.receipt-success-circle-outer.pending {
+  background: rgba(240, 140, 0, 0.1) !important;
+}
+
+.receipt-success-circle-inner.pending {
+  background: #f08c00 !important;
+  box-shadow: 0 4px 15px rgba(240, 140, 0, 0.3) !important;
+}
+
+/* Micro-animation for Pending Clock Icon */
+.pulse-icon {
+  animation: pulse-clock 2.5s ease-in-out infinite;
+}
+
+@keyframes pulse-clock {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.9) rotate(15deg);
+    opacity: 0.8;
+  }
+}
+
+/* Clean double border / double background when forms are nested inside checkout modals */
+.modal-body .payment-redirect-box,
+.modal-body .nequi-form-wrapper,
+.modal-body .points-redemption-box,
+.modal-body .nequi-waiting-container,
+.modal-body .nequi-timeout-container,
+.modal-body .nequi-flow-container form.nequi-form-wrapper {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Premium street-wear styling for credentials delivery box inside Checkout Receipt */
+.receipt-accounts-box {
+  width: 100%;
+  max-width: 520px;
+  background: rgba(212, 98, 26, 0.04);
+  border: 1.5px dashed rgba(212, 98, 26, 0.35);
+  border-radius: 16px;
+  padding: 1.25rem;
+  margin: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.accounts-box-title {
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--orange-deep, #B84A0A);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.assigned-email-text {
+  font-family: monospace;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--brown-dark, #2A1A0A);
+  word-break: break-all;
+}
+
+.btn-copy-account {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--white-warm, #FAF6F0);
+  border: 1.5px solid var(--beige-dark, #B8A888);
+  color: var(--brown-dark, #2A1A0A);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.btn-copy-account:hover {
+  border-color: var(--orange-base, #D4621A);
+  color: var(--orange-deep, #B84A0A);
+  transform: translateY(-1px);
+}
+
+.btn-copy-account.copied {
+  background: #ebfbee;
+  border-color: #2b8a3e;
+  color: #2b8a3e;
+}
+
+/* Responsiveness overrides for small mobile devices */
+@media (max-width: 576px) {
+  .checkout-receipt-view {
+    padding: 2rem 1rem !important;
+  }
+  .receipt-details-card {
+    padding: 1.5rem 1.25rem !important;
+    margin-bottom: 2rem !important;
+  }
+  .receipt-title {
+    font-size: 1.8rem !important;
+  }
+  .receipt-amount {
+    font-size: 2.2rem !important;
+  }
+  .receipt-actions {
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+}

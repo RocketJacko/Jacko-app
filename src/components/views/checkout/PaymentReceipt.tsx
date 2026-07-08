@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Check, Copy, CheckCheck } from 'lucide-react';
+import { Check, Copy, CheckCheck, Clock } from 'lucide-react';
 import { supabase } from '../../../lib/supabaseClient';
 import type { ActivationDetail } from '../dashboard/types';
 import type { ReceiptData } from './types';
@@ -103,20 +103,26 @@ export function PaymentReceipt({
   }, [receiptData.referenceId, receiptData.statusType]);
 
   return (
-    <div className="receipt-container">
-      <div className="receipt-card">
+    <div className="checkout-receipt-view">
+      <div className="receipt-details-card">
         <div className="receipt-header">
           <div className="receipt-success-icon-wrapper">
-            <div className="receipt-success-icon">
-              <Check size={32} />
+            <div className={`receipt-success-circle-outer ${receiptData.statusType}`}>
+              <div className={`receipt-success-circle-inner ${receiptData.statusType}`}>
+                {receiptData.statusType === 'success' ? (
+                  <Check size={32} />
+                ) : (
+                  <Clock size={32} className="pulse-icon" />
+                )}
+              </div>
             </div>
           </div>
         </div>
 
         <h3 className="receipt-title">{receiptData.title}</h3>
         <p className="receipt-subtitle">{receiptData.subtitle}</p>
-        <div className="receipt-amount-display">{receiptData.amount}</div>
-        <div className="receipt-status-wrapper">
+        <div className="receipt-amount">{receiptData.amount}</div>
+        <div className="receipt-badge-container">
           <span className={`receipt-status-badge ${receiptData.statusType}`}>
             {receiptData.statusLabel}
           </span>
@@ -176,26 +182,26 @@ export function PaymentReceipt({
           </div>
         )}
 
-        <div className="receipt-details-list">
-          <div className="receipt-detail-item">
-            <span>Producto</span>
-            <strong>
+        <div className="receipt-details-list" style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', margin: '1.5rem 0' }}>
+          <div className="receipt-details-row">
+            <span className="receipt-detail-label">Producto</span>
+            <strong className="receipt-detail-value">
               {quantity > 1 ? `${quantity}x ` : ''}
               {receiptData.productTitle}
             </strong>
           </div>
-          <div className="receipt-detail-item">
-            <span>Fecha</span>
-            <strong>{receiptData.date}</strong>
+          <div className="receipt-details-row">
+            <span className="receipt-detail-label">Fecha</span>
+            <strong className="receipt-detail-value">{receiptData.date}</strong>
           </div>
-          <div className="receipt-detail-item">
-            <span>Método de pago</span>
-            <strong>{receiptData.method}</strong>
+          <div className="receipt-details-row">
+            <span className="receipt-detail-label">Método de pago</span>
+            <strong className="receipt-detail-value">{receiptData.method}</strong>
           </div>
           {receiptData.referenceId && (
-            <div className="receipt-detail-item">
-              <span>Referencia</span>
-              <strong style={{ fontSize: '0.8rem', fontFamily: 'monospace' }}>
+            <div className="receipt-details-row">
+              <span className="receipt-detail-label">Referencia</span>
+              <strong className="receipt-detail-value monospace">
                 {receiptData.referenceId}
               </strong>
             </div>
@@ -206,9 +212,8 @@ export function PaymentReceipt({
           {onNavigateToDashboard ? (
             <button
               type="button"
-              className="btn-add-plan"
+              className="receipt-action-btn primary"
               onClick={onNavigateToDashboard}
-              style={{ width: '100%', margin: '0 0 10px 0' }}
             >
               Ir a Mi Panel / Resumen
             </button>
@@ -233,8 +238,7 @@ export function PaymentReceipt({
               </div>
               <button
                 type="button"
-                className="btn-add-plan"
-                style={{ width: '100%', margin: '0 0 10px 0' }}
+                className="receipt-action-btn primary"
                 onClick={() => {
                   window.dispatchEvent(new CustomEvent('app-navigate', { detail: { view: 'landing' } }));
                   setTimeout(() => {
@@ -246,7 +250,7 @@ export function PaymentReceipt({
               </button>
             </div>
           )}
-          <button type="button" className="btn-admin-secondary" onClick={onBackToCatalog} style={{ width: '100%', cursor: 'pointer', border: '1.5px solid var(--beige-dark)', borderRadius: '10px', background: '#fff', padding: '10px', fontWeight: 700 }}>
+          <button type="button" className="receipt-action-btn secondary" onClick={onBackToCatalog}>
             {onNavigateToDashboard ? 'Volver a la Tienda' : 'Volver a Servicios'}
           </button>
         </div>

@@ -36,8 +36,8 @@ export function SupportTicketsManager() {
   const [adminNote, setAdminNote] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const fetchTickets = useCallback(async () => {
-    setIsLoading(true);
+  const fetchTickets = useCallback(async (isSilent = false) => {
+    if (!isSilent) setIsLoading(true);
     setErrorMsg('');
     try {
       const { data, error } = await supabase
@@ -94,7 +94,7 @@ export function SupportTicketsManager() {
           newStatus === 'resolved' ? 'Resuelto' : newStatus === 'closed' ? 'Cerrado' : 'Abierto'
         }`
       );
-      await fetchTickets();
+      await fetchTickets(true);
       setSelectedTicket((prev) =>
         prev ? { ...prev, status: newStatus, admin_note: adminNote.trim() || null } : null
       );
@@ -141,11 +141,11 @@ export function SupportTicketsManager() {
           <button
             type="button"
             className="refresh-btn"
-            onClick={() => fetchTickets()}
-            disabled={isLoading}
+            onClick={() => fetchTickets(true)}
+            disabled={isLoading || isUpdating}
             title="Refrescar"
           >
-            <RefreshCw size={16} className={isLoading ? 'spin' : ''} />
+            <RefreshCw size={16} className={isLoading || isUpdating ? 'spin' : ''} />
           </button>
         </div>
 

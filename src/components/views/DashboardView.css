@@ -1720,3 +1720,142 @@
   }
 }
 
+/* Dashboard Stats Grid & Cards */
+.dashboard-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-top: 8px;
+}
+
+@media (max-width: 900px) {
+  .dashboard-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .dashboard-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+.dashboard-stat-card {
+  background: linear-gradient(135deg, var(--white-warm) 0%, rgba(232, 221, 200, 0.4) 100%);
+  border: 1.5px solid var(--modern-border, #E6E2DA);
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  min-height: 170px;
+  box-shadow: 0 8px 30px rgba(42, 26, 10, 0.02);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-stat-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(212, 98, 26, 0.25);
+  box-shadow: 0 12px 36px rgba(212, 98, 26, 0.08);
+}
+
+.dashboard-stat-card::before {
+  content: '';
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(212, 98, 26, 0.02) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.stat-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.stat-card-title {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--brown-dark);
+  opacity: 0.45;
+}
+
+.stat-card-icon {
+  color: var(--orange-base);
+  opacity: 0.8;
+}
+
+.stat-card-value {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--brown-dark);
+  margin: 0 0 16px 0;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.stat-card-value.text-success {
+  color: #16a34a;
+  font-size: 1.8rem;
+}
+
+.stat-card-unit {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--orange-base);
+  margin-left: 4px;
+}
+
+.btn-stat-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(212, 98, 26, 0.08);
+  color: var(--orange-base);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 14px;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-stat-action:hover {
+  background: var(--orange-base);
+  color: white;
+}
+
+.btn-stat-arrow {
+  transition: transform 0.2s ease;
+}
+
+.btn-stat-action:hover .btn-stat-arrow {
+  transform: translateX(3px);
+}
+
+.stat-card-desc {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--brown-dark);
+  opacity: 0.6;
+  margin: 0;
+  line-height: 1.4;
+}
+
+

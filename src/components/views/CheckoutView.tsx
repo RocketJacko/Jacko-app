@@ -202,7 +202,7 @@ export function CheckoutView({
   };
 
   return (
-    <div className="checkout-view-wrapper">
+    <div className="checkout-container">
       {/* Mobile Sticky Header */}
       <div className="checkout-mobile-header">
         <button type="button" className="btn-back" onClick={handleBackClick}>
@@ -212,7 +212,7 @@ export function CheckoutView({
         <span className="product-title-header">{product.title}</span>
       </div>
 
-      <div className="checkout-layout-grid">
+      <div className="checkout-card">
         {receiptData ? (
           <PaymentReceipt
             receiptData={receiptData}
@@ -223,16 +223,16 @@ export function CheckoutView({
         ) : (
           <>
             {/* Columna Izquierda - Detalles del Producto y Oferta */}
-            <div className="checkout-col-details">
-              <div className="product-details-card">
-                <button type="button" className="btn-back-desktop" onClick={handleBackClick}>
+            <div className="checkout-summary-col">
+              <div className="checkout-product-details">
+                <button type="button" className="checkout-back-link" onClick={handleBackClick}>
                   <ArrowLeft size={16} /> Volver a la Tienda
                 </button>
                 <div className="product-details-header">
-                  <span className="category-label">
+                  <span className="checkout-product-tag">
                     {product.categories?.name || 'Producto'}
                   </span>
-                  <h2>{product.title}</h2>
+                  <h2 className="checkout-product-title">{product.title}</h2>
 
                   {/* Selector de Planes */}
                   <PlanSelector
@@ -246,14 +246,14 @@ export function CheckoutView({
                   />
 
                   {/* Descripción */}
-                  <p className="product-description-text">
+                  <p className="checkout-product-desc">
                     {showFullDesc
                       ? currentDescription || currentShortDescription
                       : currentShortDescription || currentDescription?.substring(0, 150) + '...'}
                     {currentDescription && currentDescription.length > 150 && (
                       <button
                         type="button"
-                        className="btn-toggle-desc"
+                        className="toggle-desc-btn"
                         onClick={() => setShowFullDesc(!showFullDesc)}
                       >
                         {showFullDesc ? 'Ver menos' : 'Ver más'}
@@ -263,8 +263,8 @@ export function CheckoutView({
 
                   {/* Miniatura */}
                   {product.thumbnail_url && (
-                    <div className="checkout-product-thumbnail">
-                      <img src={product.thumbnail_url} alt={product.title} />
+                    <div className="checkout-thumbnail-wrapper">
+                      <img className="checkout-thumbnail" src={product.thumbnail_url} alt={product.title} />
                     </div>
                   )}
 
@@ -325,13 +325,14 @@ export function CheckoutView({
             </div>
 
             {/* Columna Derecha - Resumen y Acción */}
-            <div className="checkout-col-summary">
+            <div className="checkout-payment-col">
               {/* Selector de cantidad */}
-              <div className="checkout-quantity-selector">
-                <span className="selector-label">Cantidad</span>
+              <div className="checkout-qty-selector">
+                <span className="qty-label">Cantidad</span>
                 <div className="qty-controls">
                   <button
                     type="button"
+                    className="qty-btn"
                     onClick={() => handleQtyChange(quantity - 1)}
                     disabled={quantity <= 1 || isProcessing}
                   >
@@ -339,6 +340,7 @@ export function CheckoutView({
                   </button>
                   <input
                     aria-label="Cantidad"
+                    className="qty-input"
                     type="number"
                     value={quantity}
                     onChange={(e) => handleQtyChange(parseInt(e.target.value) || 1)}
@@ -346,6 +348,7 @@ export function CheckoutView({
                   />
                   <button
                     type="button"
+                    className="qty-btn"
                     onClick={() => handleQtyChange(quantity + 1)}
                     disabled={isProcessing}
                   >
@@ -374,30 +377,32 @@ export function CheckoutView({
               )}
 
               {/* Resumen de Precios */}
-              <div className="checkout-prices-card">
-                <div className="price-row">
-                  <span>Precio Unitario</span>
-                  <span>{unitPriceFormatted}</span>
-                </div>
-                <div className="price-row">
-                  <span>Subtotal</span>
-                  <span>{regularPriceFormatted}</span>
-                </div>
-                {savings > 0 && (
-                  <div className="price-row" style={{ color: '#2b8a3e', fontWeight: 700 }}>
-                    <span>Ahorro por Volumen</span>
-                    <span>-{savingsFormatted}</span>
+              <div className="checkout-pricing-summary">
+                <div className="checkout-summary-lines">
+                  <div className="summary-line">
+                    <span>Precio Unitario</span>
+                    <span>{unitPriceFormatted}</span>
                   </div>
-                )}
-                <div className="price-row">
-                  <span>Impuestos</span>
-                  <span>{taxesFormatted}</span>
+                  <div className="summary-line">
+                    <span>Subtotal</span>
+                    <span>{regularPriceFormatted}</span>
+                  </div>
+                  {savings > 0 && (
+                    <div className="summary-line" style={{ color: '#2b8a3e', fontWeight: 700 }}>
+                      <span>Ahorro por Volumen</span>
+                      <span>-{savingsFormatted}</span>
+                    </div>
+                  )}
+                  <div className="summary-line">
+                    <span>Impuestos</span>
+                    <span>{taxesFormatted}</span>
+                  </div>
+                  <div className="summary-line total">
+                    <span>Total</span>
+                    <span>{totalPriceFormatted}</span>
+                  </div>
                 </div>
-                <div className="price-row total">
-                  <span>Total</span>
-                  <span>{totalPriceFormatted}</span>
-                </div>
-                <div className="approximate-usd-label">{approxSubtitle}</div>
+                <div className="total-usd-approx">{approxSubtitle}</div>
                 <div style={{ marginTop: '8px', textAlign: 'right' }}>
                   <button
                     type="button"
@@ -423,9 +428,9 @@ export function CheckoutView({
               </div>
 
               {/* Método de pago preview */}
-              <div className="payment-security-card">
-                <h3 className="card-title">Completar Pedido</h3>
-                <p className="card-description">
+              <div className="payment-security-card-wrapper" style={{ marginTop: '2rem' }}>
+                <h3 className="checkout-payment-title">Completar Pedido</h3>
+                <p className="checkout-payment-subtitle">
                   Revisa los detalles a la izquierda y presiona continuar para elegir el método de pago.
                 </p>
                 <div style={{ borderTop: 'none', paddingTop: 0, marginTop: '1rem' }}>
@@ -506,7 +511,7 @@ export function CheckoutView({
 
                 <button
                   type="button"
-                  className="btn-add-plan"
+                  className="checkout-action-button"
                   style={{ marginTop: '2.5rem', width: '100%' }}
                   onClick={() => {
                     if (userId === 'guest') {
@@ -543,7 +548,7 @@ export function CheckoutView({
                   className="modal-backdrop"
                   onClick={() => !isProcessing && setShowPaymentModal(false)}
                 >
-                  <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+                  <div className="modal-card" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
                     <div className="modal-header">
                       <h3>Pago Seguro</h3>
                       <button
@@ -623,7 +628,7 @@ export function CheckoutView({
                           <div style={{ marginTop: '2rem' }}>
                             <button
                               type="button"
-                              className="btn-add-plan"
+                              className="checkout-action-button"
                               style={{ width: '100%', margin: 0 }}
                               disabled={selectedMethod === null || isProcessing}
                               onClick={() => {
@@ -733,7 +738,7 @@ export function CheckoutView({
                         </div>
                       )}
                       {errorMsg && (
-                        <div className="admin-error-banner" style={{ marginTop: '15px' }}>
+                        <div className="checkout-error-feedback" style={{ marginTop: '15px' }}>
                           <X size={16} />
                           <span>{errorMsg}</span>
                         </div>

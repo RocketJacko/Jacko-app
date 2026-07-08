@@ -35,49 +35,50 @@
 
 /* ── Hero Card (Suave y Premium) ── */
 .profile-hero {
-  background: linear-gradient(135deg, var(--white-warm) 0%, rgba(232, 221, 200, 0.45) 100%);
+  background: 
+    radial-gradient(circle at top right, rgba(212, 98, 26, 0.05) 0%, transparent 60%),
+    linear-gradient(135deg, var(--white-warm) 0%, rgba(232, 221, 200, 0.45) 100%);
   border: 1px solid rgba(212, 98, 26, 0.12);
   border-radius: 24px;
-  padding: 32px;
+  padding: 24px 32px;
   display: flex;
-  align-items: flex-start;
-  gap: 24px;
+  align-items: center;
+  gap: 28px;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   box-shadow: 0 8px 30px rgba(42, 26, 10, 0.03);
-}
-.profile-hero::before {
-  content: '';
-  position: absolute;
-  top: -60px;
-  right: -60px;
-  width: 200px;
-  height: 200px;
-  border-radius: 50%;
-  background: rgba(212, 98, 26, 0.03);
 }
 
 .profile-avatar-wrap {
   flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: -8px; /* Sobresale sutilmente a la izquierda para un estilo premium */
 }
 .profile-avatar-img {
-  width: 72px;
-  height: 72px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
-  border: 3px solid rgba(212, 98, 26, 0.15);
+  border: 4px solid var(--white-warm);
+  box-shadow: 0 8px 24px rgba(42, 26, 10, 0.12);
   object-fit: cover;
+  display: block;
 }
 .profile-avatar-initials {
-  width: 72px;
-  height: 72px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   background: rgba(212, 98, 26, 0.08);
-  border: 3px solid rgba(212, 98, 26, 0.15);
+  border: 4px solid var(--white-warm);
+  box-shadow: 0 8px 24px rgba(42, 26, 10, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--font-display);
-  font-size: 1.6rem;
+  font-size: 1.8rem;
   font-weight: 800;
   color: var(--orange-base);
 }
@@ -86,15 +87,15 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 .profile-display-name {
   font-family: var(--font-display);
-  font-size: 1.5rem;
+  font-size: 1.6rem;
   font-weight: 800;
   color: var(--brown-dark);
   margin: 0;
-  line-height: 1.2;
+  line-height: 1.1;
 }
 .profile-alias {
   font-size: 0.85rem;
@@ -105,7 +106,7 @@
 .profile-email {
   font-size: 0.8rem;
   color: rgba(42, 26, 10, 0.55);
-  margin: 4px 0 8px;
+  margin: 2px 0;
 }
 
 /* ── Botón de guardar al final ── */
@@ -355,3 +356,228 @@
     width: 100%;
   }
 }
+
+/* ── Estilos de comportamiento Modal (Profile View Modal - PVM) ── */
+.pvm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(12, 8, 4, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 12000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  overflow: hidden;
+}
+
+.pvm-card {
+  background: linear-gradient(155deg, #fdfaf5 0%, #f5efe2 60%, #ede4d0 100%);
+  border: 1px solid rgba(212, 163, 88, 0.25);
+  border-radius: 28px;
+  padding: 2.5rem 2.25rem 2rem;
+  width: 100%;
+  max-width: 680px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow:
+    0 40px 100px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.12) inset,
+    0 1px 0 rgba(255, 255, 255, 0.6) inset;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(180, 140, 80, 0.3) transparent;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: pvmScaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes pvmScaleUp {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.pvm-card::-webkit-scrollbar {
+  width: 6px;
+}
+
+.pvm-card::-webkit-scrollbar-thumb {
+  background: rgba(180, 140, 80, 0.3);
+  border-radius: 4px;
+}
+
+.pvm-close-btn {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  background: rgba(42, 26, 10, 0.05);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brown-dark);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.pvm-close-btn:hover {
+  background: rgba(212, 98, 26, 0.15);
+  color: var(--orange-base);
+  transform: scale(1.05);
+}
+
+.pvm-header {
+  text-align: left;
+  margin-bottom: 4px;
+  padding-right: 40px;
+}
+
+.pvm-title {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #1a0f00;
+  margin: 0 0 4px;
+  letter-spacing: -0.02em;
+}
+
+.pvm-subtitle {
+  font-size: 0.9rem;
+  color: #5a4020;
+  margin: 0;
+  opacity: 0.8;
+}
+
+/* Adaptación del contenido al modal */
+.pvm-card .profile-hero {
+  margin-top: 0;
+}
+
+.pvm-card .profile-sections {
+  gap: 16px;
+}
+
+.pvm-card .profile-section {
+  padding: 20px 24px;
+}
+
+.pvm-card .profile-footer-actions {
+  padding: 16px 20px;
+  margin-top: 8px;
+}
+
+/* Custom country dial select */
+.profile-dial-select-wrapper {
+  position: relative;
+  width: 35%;
+  flex-shrink: 0;
+}
+.profile-dial-trigger-wrap {
+  position: relative;
+  width: 100%;
+}
+.profile-dial-trigger-input {
+  width: 100%;
+  padding-right: 32px;
+  cursor: text;
+  height: 42px;
+}
+.profile-dial-trigger-wrap .profile-dial-chevron {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  transition: transform 0.2s ease;
+  opacity: 0.6;
+}
+.profile-dial-trigger-wrap .profile-dial-chevron.rotate {
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.profile-dial-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 260px;
+  background: #ffffff;
+  border: 1px solid rgba(212, 98, 26, 0.15);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(42, 26, 10, 0.15);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: pvmScaleUp 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.profile-dial-no-results {
+  padding: 12px;
+  font-size: 0.85rem;
+  color: var(--brown-dark);
+  opacity: 0.55;
+  text-align: center;
+}
+
+.profile-dial-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  max-height: 200px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.profile-dial-list::-webkit-scrollbar {
+  width: 4px;
+}
+.profile-dial-list::-webkit-scrollbar-thumb {
+  background: rgba(180, 140, 80, 0.3);
+  border-radius: 2px;
+}
+
+.profile-dial-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  color: var(--brown-dark);
+}
+.profile-dial-item:hover {
+  background: rgba(212, 98, 26, 0.06);
+}
+.profile-dial-item.active {
+  background: rgba(212, 98, 26, 0.1);
+  font-weight: 700;
+  color: var(--orange-deep);
+}
+.profile-dial-flag {
+  font-size: 1.1rem;
+}
+.profile-dial-country-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+.profile-dial-code {
+  color: var(--orange-base);
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+

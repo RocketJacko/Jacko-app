@@ -30,6 +30,7 @@ export function PoolCorreosManager() {
   const [pool, setPool] = useState<Credential[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isBackgroundLoading, setIsBackgroundLoading] = useState(false);
 
   // Role checking
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
@@ -68,8 +69,9 @@ export function PoolCorreosManager() {
   }, []);
 
   // Load pool
-  const fetchPool = useCallback(async () => {
-    setIsLoading(true);
+  const fetchPool = useCallback(async (isSilent = false) => {
+    if (!isSilent) setIsLoading(true);
+    else setIsBackgroundLoading(true);
     try {
       const { data, error } = await supabase
         .from('email_pool')
@@ -81,6 +83,7 @@ export function PoolCorreosManager() {
       console.error('Error fetching email_pool:', err);
     } finally {
       setIsLoading(false);
+      setIsBackgroundLoading(false);
     }
   }, []);
 
@@ -166,7 +169,7 @@ export function PoolCorreosManager() {
       });
 
       setSingleEmail('');
-      await fetchPool();
+      await fetchPool(true);
       alert('Correo agregado exitosamente.');
     } catch (err) {
       console.error(err);
@@ -254,7 +257,7 @@ export function PoolCorreosManager() {
           }`
         );
         if (fileInputRef.current) fileInputRef.current.value = '';
-        await fetchPool();
+        await fetchPool(true);
       } catch (err) {
         console.error(err);
         alert('Error al realizar la carga masiva.');
@@ -267,7 +270,7 @@ export function PoolCorreosManager() {
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('¿Estás seguro de eliminar este correo del pool?')) return;
-    setIsLoading(true);
+    setIsBackgroundLoading(true);
     try {
       const { error } = await supabase.from('email_pool').delete().eq('id', id);
       if (error) throw error;
@@ -277,12 +280,12 @@ export function PoolCorreosManager() {
         _target_id: null,
         _payload: { deleted_correo_id: id },
       });
-      await fetchPool();
+      await fetchPool(true);
     } catch (err) {
       console.error(err);
       alert('Error al eliminar correo.');
     } finally {
-      setIsLoading(false);
+      setIsBackgroundLoading(false);
     }
   };
 
@@ -633,11 +636,11 @@ export function PoolCorreosManager() {
           <button
             type="button"
             className="refresh-btn"
-            onClick={fetchPool}
-            disabled={isLoading}
+            onClick={() => fetchPool(true)}
+            disabled={isLoading || isBackgroundLoading || isSubmitting}
             title="Actualizar"
           >
-            <RefreshCw size={16} className={isLoading ? 'spin' : ''} />
+            <RefreshCw size={16} className={isLoading || isBackgroundLoading || isSubmitting ? 'spin' : ''} />
           </button>
         </div>
 

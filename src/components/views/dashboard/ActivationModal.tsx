@@ -103,6 +103,7 @@ export function ActivationModal({ order, onClose, onConfirm }: ActivationModalPr
         transition={{ duration: 0.3, ease: 'easeOut' }}
         className="activation-modal-card"
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
       >
         <button
           type="button"

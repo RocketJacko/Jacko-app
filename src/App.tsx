@@ -69,6 +69,7 @@ export default function App() {
   const [isIntroFinished, setIsIntroFinished] = useState(false);
   const [currentView, setCurrentView] = useState<AppView>('landing');
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showUserProfileModal, setShowUserProfileModal] = useState(false);
   const [isVerifyingRedirect, setIsVerifyingRedirect] = useState(false);
   const [dashboardTab, setDashboardTab] = useState<'panel' | 'history'>('panel');
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
@@ -130,7 +131,11 @@ export default function App() {
     const handleNavigate = (e: Event) => {
       const customEvent = e as CustomEvent<{ view: AppView }>;
       if (customEvent.detail && customEvent.detail.view) {
-        setCurrentView(customEvent.detail.view);
+        if (customEvent.detail.view === 'profile') {
+          setShowUserProfileModal(true);
+        } else {
+          setCurrentView(customEvent.detail.view);
+        }
       }
     };
     window.addEventListener('app-navigate', handleNavigate);
@@ -164,6 +169,19 @@ export default function App() {
           userEmail={session.user.email || ''}
           onComplete={() => setShowProfileModal(false)}
         />
+      )}
+
+      {/* Modal de perfil del usuario — accesible voluntariamente desde el menú */}
+      {session && showUserProfileModal && (
+        <ErrorBoundary>
+          <Suspense fallback={null}>
+            <ProfileView
+              userId={session.user.id}
+              userEmail={session.user.email || ''}
+              onClose={() => setShowUserProfileModal(false)}
+            />
+          </Suspense>
+        </ErrorBoundary>
       )}
 
       {/* Overlay de verificación de redirección de PayPal */}
@@ -209,9 +227,13 @@ export default function App() {
         <MemberHeader
           currentView={currentView}
           onViewChange={(view, tab) => {
-            setCurrentView(view);
-            if (view === 'dashboard' && tab) {
-              setDashboardTab(tab);
+            if (view === 'profile') {
+              setShowUserProfileModal(true);
+            } else {
+              setCurrentView(view);
+              if (view === 'dashboard' && tab) {
+                setDashboardTab(tab);
+              }
             }
           }}
           isStaff={isStaff}
@@ -271,16 +293,6 @@ export default function App() {
           </ViewSlot>
         )}
 
-        {/* Perfil — requiere sesión activa */}
-        {session && (
-          <ViewSlot isActive={currentView === 'profile'}>
-            <ErrorBoundary>
-              <Suspense fallback={<ViewFallback />}>
-                <ProfileView userId={session.user.id} userEmail={session.user.email || ''} />
-              </Suspense>
-            </ErrorBoundary>
-          </ViewSlot>
-        )}
 
         {/* Admin — requiere sesión activa + permisos de staff */}
         {session && isStaff && (
