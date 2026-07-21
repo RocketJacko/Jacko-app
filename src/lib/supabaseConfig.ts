@@ -11,11 +11,24 @@ interface SupabaseConfig {
   supabaseAnonKey: string;
 }
 
+function isValidUrl(value: string | undefined): boolean {
+  if (!value) return false;
+  // Reject unreplaced Vite placeholders like "%VITE_SUPABASE_URL%"
+  if (value.startsWith('%') && value.endsWith('%')) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 export function getSupabaseConfig(): SupabaseConfig {
   const win = typeof window !== 'undefined' ? (window as typeof globalThis & { __SUPABASE_CONFIG__?: { supabaseUrl: string; supabaseAnonKey: string } }) : null;
   const config = win?.__SUPABASE_CONFIG__;
-  return {
-    supabaseUrl: config?.supabaseUrl || '',
-    supabaseAnonKey: config?.supabaseAnonKey || '',
-  };
+
+  const supabaseUrl = isValidUrl(config?.supabaseUrl) ? config!.supabaseUrl : '';
+  const supabaseAnonKey = config?.supabaseAnonKey && !config.supabaseAnonKey.startsWith('%') ? config.supabaseAnonKey : '';
+
+  return { supabaseUrl, supabaseAnonKey };
 }

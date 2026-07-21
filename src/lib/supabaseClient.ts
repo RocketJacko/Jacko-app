@@ -18,8 +18,10 @@ import { getSupabaseConfig } from './supabaseConfig';
 
 const { supabaseUrl, supabaseAnonKey } = getSupabaseConfig();
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('[Supabase] URL o Anon Key faltante. Revisa el archivo .env.');
+const isConfigured = Boolean(supabaseUrl && supabaseAnonKey);
+
+if (!isConfigured) {
+  console.warn('[Supabase] URL o Anon Key faltante o inválida. El cliente no estará disponible hasta que se configuren VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY.');
 }
 
 // ─── Constantes ──────────────────────────────────────────────────────────────
@@ -149,21 +151,26 @@ const fetchWithResiliency = async (
 
 // ─── Cliente Supabase ────────────────────────────────────────────────────────
 
-export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '', {
-  global: {
-    fetch: fetchWithResiliency,
+// Use placeholder values when not configured so createClient doesn't throw at startup
+export const supabase = createClient(
+  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseAnonKey || 'placeholder-key',
+  {
+    global: {
+      fetch: fetchWithResiliency,
+    },
+    auth: {
+      persistSession:     true,
+      autoRefreshToken:   true,
+      detectSessionInUrl: true,
+    },
   },
-  auth: {
-    persistSession:     true,
-    autoRefreshToken:   true,
-    detectSessionInUrl: true,
-  },
-});
+);
 
 // ─── Warmup ──────────────────────────────────────────────────────────────────
 
 export const warmupConnection = (): void => {
-  if (!supabaseUrl) return;
+  if (!isConfigured) return;
   const pingUrl = `${supabaseUrl}/rest/v1/?apikey=${supabaseAnonKey}`;
   fetch(pingUrl, { method: 'HEAD', cache: 'no-store' }).catch(() => {
     // Silencioso — es solo un calentamiento
