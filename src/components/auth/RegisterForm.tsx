@@ -138,7 +138,9 @@ export function RegisterForm() {
     setStatusType('success');
 
     // Validar si el dominio existe y tiene servidores de correo configurados (MX / A)
+    console.log('[v0] Verificando dominio:', dominio, 'email:', email);
     const esDominioValido = await verificarDominioCorreoValido(dominio, email);
+    console.log('[v0] esDominioValido:', esDominioValido);
     if (!esDominioValido) {
       setStatusMsg('Correo inválido o inexistente.');
       setStatusType('error');
@@ -150,6 +152,7 @@ export function RegisterForm() {
     setStatusType('success');
 
     try {
+      console.log('[v0] Llamando supabase.auth.signInWithOtp para:', email.trim(), 'shouldCreateUser:', isRegister);
       // Iniciar sesión con OTP de forma nativa en Supabase
       const { error } = await supabase.auth.signInWithOtp({
         email: email.trim(),
@@ -165,10 +168,12 @@ export function RegisterForm() {
         },
       });
 
+      console.log('[v0] supabase.auth.signInWithOtp error:', error);
       if (error) {
         throw error;
       }
 
+      console.log('[v0] OTP enviado correctamente a:', email.trim());
       // Guardar estado en localStorage
       try {
         localStorage.setItem(

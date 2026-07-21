@@ -31,9 +31,11 @@ export const verificarDominioCorreoValido = async (domain: string, fullEmail?: s
     });
 
     if (error) {
-      console.warn('[emailValidator] Error al consultar check_email_allowed en DB:', error);
+      console.warn('[emailValidator] Error al consultar check_email_allowed en DB, permitiendo pasar:', error);
+      // Si la RPC falla por cualquier razon, no bloqueamos al usuario
     } else if (isAllowed === false) {
-      return false; // Dominio/Correo bloqueado en base de datos
+      console.warn('[emailValidator] check_email_allowed retorno false para:', emailToCheck);
+      return false; // Dominio/Correo explicitamente bloqueado en base de datos
     }
 
     // 2. Consultar registros MX (Mail Exchange)
