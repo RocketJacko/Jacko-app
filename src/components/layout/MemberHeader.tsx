@@ -337,6 +337,15 @@ export function MemberHeader({
             <span>Admin</span>
           </button>
         )}
+        <button
+          type="button"
+          className="bottom-nav-item bottom-nav-logout"
+          onClick={handleLogout}
+          aria-label="Cerrar sesión"
+        >
+          <LogOut size={22} />
+          <span>Salir</span>
+        </button>
       </nav>
 
       {/* Cajón Móvil */}

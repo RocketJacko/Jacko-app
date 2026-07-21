@@ -21,14 +21,20 @@ export default defineConfig({
       ],
       manifest: false, // Usar el public/manifest.json existente
       workbox: {
+        // Incluir explicitamente html para que offline.html quede en el precache.
+        // Sin esto, Workbox genera el manifest sin offline.html y el SW no puede
+        // servirlo cuando no hay red, mostrando "sin conexion" en el primer cargue.
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
-        // Precache the offline fallback page
+        // offline.html ya queda cubierto por globPatterns, pero se agrega aqui
+        // con revision estatica como respaldo para entornos donde glob falla.
         additionalManifestEntries: [
-          { url: '/offline.html', revision: '1' },
+          { url: '/offline.html', revision: '2' },
         ],
-        // Show offline.html when a navigation request fails (no network)
+        // Solo mostrar offline.html en navegacion que falle (no en assets).
+        // navigateFallbackAllowlist limita el fallback a rutas de la SPA.
         navigateFallback: '/offline.html',
-        // Do NOT use the offline fallback for admin routes (already excluded from mobile layout)
+        navigateFallbackAllowlist: [/^\/(?!_next|api|.*\.[^/]+$).*/],
+        // No interceptar rutas de admin con el fallback offline.
         navigateFallbackDenylist: [/^\/admin/],
         runtimeCaching: [
           {

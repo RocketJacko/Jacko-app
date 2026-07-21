@@ -639,6 +639,17 @@
   white-space: nowrap;
 }
 
+/* Boton cerrar sesion en bottom nav — color rojo suave para diferenciarlo */
+.bottom-nav-item.bottom-nav-logout {
+  color: #e05252;
+  opacity: 0.85;
+}
+
+.bottom-nav-item.bottom-nav-logout:active {
+  color: #c23b3b;
+  opacity: 1;
+}
+
 @media (max-width: 768px) {
   .member-bottom-nav {
     display: flex;

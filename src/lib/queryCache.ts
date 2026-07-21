@@ -125,14 +125,12 @@ function lsRead<T>(key: string): CacheEntry<T> | null {
       // Legacy entry: no tiene ownerId.
       if (currentUserId !== null) {
         // Hay usuario logueado → no podemos verificar propiedad → rechazar
-        console.info(`[Cache] L2 entry legacy "${key}" sin ownerId — descartada (usuario activo).`);
         try { localStorage.removeItem(LS_PREFIX + key); } catch { /* noop */ }
         return null;
       }
       // Sin usuario logueado → tratar como pública
     } else if (owner !== null && owner !== currentUserId) {
       // Entry de otro usuario → rechazar
-      console.info(`[Cache] L2 entry "${key}" pertenece a otro usuario — descartada.`);
       try { localStorage.removeItem(LS_PREFIX + key); } catch { /* noop */ }
       return null;
     }
@@ -191,7 +189,7 @@ function evictOldestEntries(count: number): void {
   }
 }
 
-// ─── Circuit Breaker (con ventana temporal) ──────────────────────────────────
+// ─── Circuit Breaker (con ventana temporal) ───────────────────────────────���──
 
 /**
  * Determina si el circuito está abierto para una key.
@@ -356,7 +354,6 @@ export async function getCachedData<T>(
         const data = await fetchFn();
 
         if (sessionGeneration !== startGeneration) {
-          console.info(`[Cache] Descartado "${key}" — sesión cambió.`);
           return data;
         }
 
