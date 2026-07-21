@@ -151,11 +151,6 @@ export function RegisterForm() {
 
     try {
       const redirectTo = `${window.location.origin}/dashboard`;
-      console.log('[v0:diag] signInWithOtp ─────────────────────────');
-      console.log('[v0:diag] email:', email.trim());
-      console.log('[v0:diag] shouldCreateUser:', isRegister);
-      console.log('[v0:diag] redirectTo:', redirectTo);
-      console.log('[v0:diag] origin:', window.location.origin);
 
       // Iniciar sesión con OTP de forma nativa en Supabase
       const { error } = await supabase.auth.signInWithOtp({
@@ -174,14 +169,8 @@ export function RegisterForm() {
       });
 
       if (error) {
-        console.error('[v0:diag] signInWithOtp ERROR ──────────────────');
-        console.error('[v0:diag] status:', (error as { status?: number }).status);
-        console.error('[v0:diag] message:', error.message);
-        console.error('[v0:diag] full error:', error);
         throw error;
       }
-
-      console.log('[v0:diag] signInWithOtp OK — OTP enviado a:', email.trim());
       // Guardar estado en localStorage
       try {
         localStorage.setItem(
@@ -230,9 +219,6 @@ export function RegisterForm() {
     setStatusMsg('');
     setStatusType('');
     try {
-      console.log('[v0:diag] verifyOtp ─────────────────────────────');
-      console.log('[v0:diag] email:', email.trim(), '| token length:', otpCode.trim().length);
-
       // Verificar OTP de forma nativa en Supabase
       const { data, error } = await supabase.auth.verifyOtp({
         email: email.trim(),
@@ -241,13 +227,8 @@ export function RegisterForm() {
       });
 
       if (error) {
-        console.error('[v0:diag] verifyOtp ERROR ───────────────────────');
-        console.error('[v0:diag] status:', (error as { status?: number }).status);
-        console.error('[v0:diag] message:', error.message);
-        console.error('[v0:diag] full error:', error);
         throw error;
       }
-      console.log('[v0:diag] verifyOtp OK — user:', data.session?.user?.email);
 
       // Actualizamos los datos del perfil si es registro
       if (isRegister && fullName.trim() && data.session?.user) {
