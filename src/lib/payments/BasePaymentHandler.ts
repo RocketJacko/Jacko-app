@@ -21,9 +21,18 @@ export abstract class BasePaymentHandler implements PaymentHandler {
       const body = this.buildRequestBody(request);
       const options = this.getInvokeOptions();
 
+      // Ensure user's access token is explicitly sent to Edge Functions
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      const headers = {
+        ...(options.headers || {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
+
       const { data, error } = await supabase.functions.invoke(functionName, {
         body,
         ...options,
+        headers,
       });
 
       if (error || !data) {

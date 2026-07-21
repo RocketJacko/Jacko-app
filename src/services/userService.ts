@@ -40,8 +40,11 @@ export const userService = {
   },
 
   async verifyPaypalOrder(paypalOrderId: string): Promise<{ success: boolean; status: string; message?: string }> {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const tokenHeader = sessionData?.session?.access_token;
     const { data, error } = await supabase.functions.invoke('paypal-capture-order', {
-      body: { paypalOrderId }
+      body: { paypalOrderId },
+      headers: tokenHeader ? { Authorization: `Bearer ${tokenHeader}` } : undefined,
     });
     if (error) {
       throw new Error(error.message || 'El pago aún no ha sido completado o no se pudo verificar.');
@@ -58,8 +61,11 @@ export const userService = {
     lastName: string,
     email: string
   ): Promise<{ success: boolean; activatedCount: number; totalQuantity: number; message: string }> {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const tokenHeader = sessionData?.session?.access_token;
     const { data, error } = await supabase.functions.invoke('activate-order', {
-      body: { orderId, firstName, lastName, email }
+      body: { orderId, firstName, lastName, email },
+      headers: tokenHeader ? { Authorization: `Bearer ${tokenHeader}` } : undefined,
     });
     if (error) {
       // AbortError = el cliente esperó 50s sin respuesta del servidor

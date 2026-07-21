@@ -31,8 +31,11 @@ export function usePaymentRedirects(
         if (paypalStatus === 'success' && token) {
           setIsVerifyingRedirect(true);
           try {
+            const { data: sessionData } = await supabase.auth.getSession();
+            const tokenHeader = sessionData?.session?.access_token;
             const { data, error } = await supabase.functions.invoke('paypal-capture-order', {
               body: { paypalOrderId: token },
+              headers: tokenHeader ? { Authorization: `Bearer ${tokenHeader}` } : undefined,
             });
             if (error || !data) {
               throw new Error(error?.message || 'Error al capturar el pago en el servidor.');
