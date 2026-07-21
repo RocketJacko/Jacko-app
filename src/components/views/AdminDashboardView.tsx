@@ -226,38 +226,11 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
         300000,
         forceRefresh
       );
-      const mockOrders: AdminOrder[] = [
-        {
-          id: "ord-1",
-          created_at: new Date().toISOString(),
-          amount_cop: 45000,
-          payment_type: "nequi",
-          status: "pending",
-          points_used: 0,
-          user_id: "usr-1",
-          product_id: "prod-1",
-          products: { title: "Plan Premium Anual" },
-          profiles: { alias: "alexis_carmona", full_name: "Alexis Carmona" }
-        }
-      ];
-      setOrders(data.length > 0 ? data : mockOrders);
+      setOrders(data || []);
       hasLoadedOrdersRef.current = true;
     } catch (err: unknown) {
-      console.log('Error fetching admin orders, using mock fallback', err);
-      setOrders([
-        {
-          id: "ord-1",
-          created_at: new Date().toISOString(),
-          amount_cop: 45000,
-          payment_type: "nequi",
-          status: "pending",
-          points_used: 0,
-          user_id: "usr-1",
-          product_id: "prod-1",
-          products: { title: "Plan Premium Anual" },
-          profiles: { alias: "alexis_carmona", full_name: "Alexis Carmona" }
-        }
-      ]);
+      console.log('Error fetching admin orders', err);
+      setOrders([]);
       hasLoadedOrdersRef.current = true;
     }
   }, []);
