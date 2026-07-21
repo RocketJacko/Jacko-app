@@ -65,6 +65,10 @@ input, select, textarea {
 html {
   scroll-behavior: smooth;
   overscroll-behavior: none;
+  /* Cortar desbordamiento horizontal en el html, no en el body.
+     Así el body queda con overflow visible para que iOS Safari
+     pueda scrollear elementos dentro de él con el dedo. */
+  overflow-x: clip;
 }
 
 body {
@@ -76,7 +80,8 @@ body {
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
-  overflow-x: hidden;
+  /* NO overflow-x:hidden aquí — eso fuerza a iOS a crear un scroll context
+     en el body que compite con los overlays y divs internos */
   /* Safe area support for notched devices */
   padding-left: env(safe-area-inset-left, 0px);
   padding-right: env(safe-area-inset-right, 0px);

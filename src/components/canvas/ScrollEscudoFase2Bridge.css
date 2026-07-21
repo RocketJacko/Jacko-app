@@ -18,7 +18,7 @@
   z-index: 10;
 }
 
-/* Register section overlay: desktop = absolute (inside sticky), mobile = fixed (breaks out of overflow:hidden) */
+/* Register section overlay: desktop = absolute dentro del sticky */
 .register-overlay-wrap {
   position: absolute;
   inset: 0;
@@ -28,16 +28,15 @@
   overscroll-behavior: contain;
 }
 
-@media (max-width: 768px) {
-  .register-overlay-wrap {
-    position: fixed;
-    inset: 0;
-    z-index: 200;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-    background: #ffffff;
-  }
+/* Mobile register: la sección colapsa su altura para que el body scrollee normalmente.
+   El .scroll-ef2-sticky y sus overflow:hidden no existen en este modo —
+   el RegisterPage queda en flujo normal del documento. */
+.scroll-ef2-section--mobile-register {
+  height: auto !important;
+  min-height: 0 !important;
+  position: relative;
+  overflow: visible;
+  background: var(--beige-light, #e8ddc8);
 }
 
 .skater-hero-overlay {

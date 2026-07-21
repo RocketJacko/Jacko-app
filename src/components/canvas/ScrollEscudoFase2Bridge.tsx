@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState, useEffect } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState, useEffect, useCallback } from 'react';
 import { m, useScroll, useSpring, useTransform, useMotionValueEvent } from 'motion/react';
 import { useImageSequence } from '../../hooks/useImageSequence';
 import { getCanvasBackingDpr } from '../../lib/canvasDpr';
@@ -84,21 +84,30 @@ export function ScrollEscudoFase2Bridge({
   const isTransitioningToInicio = useRef(false);
   const isTransitioningToSkater = useRef(false);
 
+  /* Detectar si estamos en mobile para usar scroll nativo del body */
+  const checkMobile = useCallback(() => window.innerWidth <= 768, []);
+  const [isMobileRegister, setIsMobileRegister] = useState(false);
 
-
-  /* Bloquear scroll de la página solo en la fase skater.
-     En la fase register dejamos scroll libre para que mobile pueda navegar. */
+  /* Cuando activeOverlay cambia a 'register' en mobile:
+     - Colapsar la sección 500vh a auto para que el body sea el scroller
+     - Nunca bloquear overflow en register: iOS necesita que body scrollee */
   useEffect(() => {
-    if (activeOverlay === 'skater') {
-      document.body.style.overflow = '';
+    const onMobile = checkMobile();
+    if (activeOverlay === 'register' && onMobile) {
+      setIsMobileRegister(true);
+      // En mobile-register: el body DEBE tener overflow visible para que iOS scrollee
+      document.body.style.overflowX = 'hidden';
+      document.body.style.overflowY = 'auto';
     } else {
-      // En register: liberar el scroll del body para que el contenido sea accesible en móvil
-      document.body.style.overflow = '';
+      setIsMobileRegister(false);
+      document.body.style.overflowX = 'hidden';
+      document.body.style.overflowY = '';
     }
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflowX = '';
+      document.body.style.overflowY = '';
     };
-  }, [activeOverlay]);
+  }, [activeOverlay, checkMobile]);
 
   /* Notificar al App.tsx para activar la sección de registro al terminar */
   useMotionValueEvent(smoothProgress, 'change', (latest) => {
@@ -181,6 +190,21 @@ export function ScrollEscudoFase2Bridge({
     handleResize();
     return () => window.removeEventListener('resize', handleResize);
   }, [ready, images, n, escudoDraw, smoothProgress]);
+
+  /* En mobile cuando se activa el registro, la sección colapsa a auto
+     y el registro se renderiza fuera del sticky para que el body scrollee */
+  if (isMobileRegister) {
+    return (
+      <section
+        id={id}
+        ref={sectionRef}
+        className="scroll-ef2-section scroll-ef2-section--mobile-register"
+        aria-label={ariaLabel}
+      >
+        <RegisterPage />
+      </section>
+    );
+  }
 
   return (
     <section id={id} ref={sectionRef} className="scroll-ef2-section" aria-label={ariaLabel}>
@@ -266,7 +290,7 @@ export function ScrollEscudoFase2Bridge({
           <canvas ref={canvasRef} aria-hidden />
         </m.div>
 
-        {/* SECCIÓN DE REGISTRO */}
+        {/* SECCIÓN DE REGISTRO — desktop/tablet: overlay dentro del sticky */}
         <m.div
           className="register-overlay-wrap"
           initial={{ opacity: 0 }}
