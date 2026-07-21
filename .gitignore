@@ -37,6 +37,8 @@ Thumbs.db
 .cursor/
 .specify/
 .qodo/
+.mcp/
+paypal-mcp-config.json
 scratch/
 
 # Transient / one-time files
