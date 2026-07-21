@@ -100,9 +100,22 @@ Deno.serve(async (req) => {
     }
 
     // 4. Configurar credenciales de PayPal
-    const paypalClientId = Deno.env.get("PAYPAL_CLIENT_ID");
-    const paypalClientSecret = Deno.env.get("PAYPAL_CLIENT_SECRET");
-    const paypalEnv = Deno.env.get("PAYPAL_ENVIRONMENT") || "sandbox";
+    let paypalClientId = Deno.env.get("PAYPAL_CLIENT_ID");
+    let paypalClientSecret = Deno.env.get("PAYPAL_CLIENT_SECRET");
+    const paypalEnv = Deno.env.get("PAYPAL_ENVIRONMENT") || Deno.env.get("PAYPAL_MODE") || "live";
+
+    if (!paypalClientId || !paypalClientSecret) {
+      try {
+        const { data: secrets } = await supabaseAdmin
+          .rpc("get_system_secret", { p_name: "paypal_client_id" });
+        if (secrets) paypalClientId = secrets;
+        const { data: secretKey } = await supabaseAdmin
+          .rpc("get_system_secret", { p_name: "paypal_client_secret" });
+        if (secretKey) paypalClientSecret = secretKey;
+      } catch (_e) {
+        // Ignorar error de RPC si no existe
+      }
+    }
 
     if (!paypalClientId || !paypalClientSecret) {
       console.error("Faltan variables de entorno PAYPAL_CLIENT_ID o PAYPAL_CLIENT_SECRET");
