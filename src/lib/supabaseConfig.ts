@@ -31,22 +31,12 @@ function isValidKey(value: string | undefined): boolean {
 }
 
 export function getSupabaseConfig(): SupabaseConfig {
-  // 1. Intentar leer desde import.meta.env (dev server de Vite y builds con VITE_ vars)
-  const envUrl  = import.meta.env.VITE_SUPABASE_URL  as string | undefined;
-  const envKey  = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+  // Lee las credenciales desde las variables de entorno de Vite (VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY)
+  const envUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+  const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
-  if (isValidUrl(envUrl) && isValidKey(envKey)) {
-    return { supabaseUrl: envUrl!, supabaseAnonKey: envKey! };
-  }
-
-  // 2. Fallback: window.__SUPABASE_CONFIG__ (producción — Vercel reemplaza los placeholders en build)
-  const win = typeof window !== 'undefined'
-    ? (window as typeof globalThis & { __SUPABASE_CONFIG__?: { supabaseUrl: string; supabaseAnonKey: string } })
-    : null;
-  const config = win?.__SUPABASE_CONFIG__;
-
-  const supabaseUrl     = isValidUrl(config?.supabaseUrl)  ? config!.supabaseUrl     : '';
-  const supabaseAnonKey = isValidKey(config?.supabaseAnonKey) ? config!.supabaseAnonKey : '';
-
-  return { supabaseUrl, supabaseAnonKey };
+  return {
+    supabaseUrl: isValidUrl(envUrl) ? envUrl! : '',
+    supabaseAnonKey: isValidKey(envKey) ? envKey! : '',
+  };
 }
