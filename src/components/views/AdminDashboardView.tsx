@@ -144,9 +144,12 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
     setIsSettingsLoading(true);
     setErrorMsg('');
     try {
+      // Leer directamente de system_settings filtrando is_secret=false.
+      // view_system_webhooks puede no existir o tener RLS restrictivo.
       const { data, error } = await supabase
-        .from('view_system_webhooks')
-        .select('*')
+        .from('system_settings')
+        .select('key, value, description, updated_at')
+        .eq('is_secret', false)
         .order('key', { ascending: true });
       if (error) throw error;
       setWebhooksList(data || []);
@@ -526,14 +529,27 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
         });
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('system_settings').upsert({
-          key: settingKey.trim(),
-          value: settingValue.trim(),
-          description: settingDesc.trim() || null,
-          is_secret: false,
-          updated_at: new Date().toISOString()
-        });
-        if (error) throw error;
+        // Upsert del webhook: usar onConflict explícito sobre la clave primaria
+        // para que funcione tanto en INSERT (nuevo) como UPDATE (editar).
+        const { error } = await supabase
+          .from('system_settings')
+          .upsert(
+            {
+              key: settingKey.trim(),
+              value: settingValue.trim(),
+              description: settingDesc.trim() || null,
+              is_secret: false,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: 'key' }
+          );
+        if (error) {
+          const isRls = error.code === '42501' || error.message?.toLowerCase().includes('permission');
+          if (isRls) {
+            throw new Error('Sin permisos para modificar webhooks. Verifica que tu rol tenga la política RLS de admin sobre system_settings.');
+          }
+          throw error;
+        }
       }
       setIsSettingModalOpen(false);
       if (isSecret) {
@@ -550,13 +566,23 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
   };
 
   const handleDeleteSetting = async (key: string) => {
-    if (!window.confirm(`¿Estás seguro de eliminar el parámetro "${key}"?`)) return;
+    if (!window.confirm(`¿Estás seguro de eliminar "${key}"? Esta acción no se puede deshacer.`)) return;
     try {
       const { error } = await supabase
         .from('system_settings')
         .delete()
         .eq('key', key);
-      if (error) throw error;
+      if (error) {
+        const isRls = error.code === '42501' || error.message?.toLowerCase().includes('permission');
+        if (isRls) {
+          throw new Error('Sin permisos para eliminar este parámetro. Verifica las políticas RLS de admin sobre system_settings.');
+        }
+        const isNotFound = error.code === 'PGRST116';
+        if (isNotFound) {
+          throw new Error(`El parámetro "${key}" no existe o ya fue eliminado.`);
+        }
+        throw error;
+      }
       if (activeTab === 'secrets') {
         await loadSecrets();
       } else {
