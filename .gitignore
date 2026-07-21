@@ -9,6 +9,7 @@ lerna-debug.log*
 
 node_modules
 dist
+dev-dist
 dist-ssr
 *.local
 
@@ -25,8 +26,26 @@ dist-ssr
 !.vscode/extensions.json
 .idea
 .DS_Store
+Thumbs.db
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# Dev tooling artifacts
+.cursor/
+.specify/
+.qodo/
+scratch/
+
+# Transient / one-time files
+build_error.txt
+doctor.config.json
+fix.cjs
+
+# External docs (not part of source)
+binance-spot-api-docs/
+
+# Supabase backend infra (separate repo)
+supabase/

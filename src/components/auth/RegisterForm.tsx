@@ -1,71 +1,14 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { m, AnimatePresence } from 'motion/react';
 import { supabase } from '../../lib/supabaseClient';
-import { Turnstile } from './Turnstile';
 import { useAuth } from '../../context/AuthContext';
 import './RegisterForm.css';
 
-interface GoogleDNSRecord {
-  name: string;
-  type: number;
-  TTL: number;
-  data: string;
-}
-
-// Helper para realizar peticiones fetch con límite de tiempo (timeout)
-const fetchConTimeout = (url: string, timeoutMs = 2000): Promise<Response> => {
-  return Promise.race([
-    fetch(url),
-    new Promise<Response>((_, reject) =>
-      setTimeout(() => reject(new Error('Tiempo de espera agotado (Timeout)')), timeoutMs)
-    ),
-  ]);
-};
-
-// Función para comprobar si un dominio tiene registros de correo (MX) o registros de servidor (A)
-const verificarDominioCorreoValido = async (domain: string): Promise<boolean> => {
-  try {
-    // 1. Consultar registros MX (Mail Exchange) usando el resolvedor DNS de Google con timeout de 2s
-    const responseMX = await fetchConTimeout(
-      `https://dns.google/resolve?name=${encodeURIComponent(domain)}&type=MX`,
-      2000
-    );
-    if (!responseMX.ok) return true; // Si la API falla, permitimos por defecto
-    const dataMX = await responseMX.json();
-
-    // Status 3 significa NXDOMAIN (el dominio no existe en Internet)
-    if (dataMX.Status === 3) {
-      return false;
-    }
-
-    // Si tiene registros MX en el Answer, es un dominio de correo válido
-    if (dataMX.Answer && Array.isArray(dataMX.Answer)) {
-      const tieneMX = dataMX.Answer.some((record: GoogleDNSRecord) => record.type === 15);
-      if (tieneMX) return true;
-    }
-
-    // 2. Si no tiene registros MX, verificar si al menos tiene un registro A (IP del servidor)
-    const responseA = await fetchConTimeout(
-      `https://dns.google/resolve?name=${encodeURIComponent(domain)}&type=A`,
-      2000
-    );
-    if (!responseA.ok) return true;
-    const dataA = await responseA.json();
-    if (dataA.Status === 3) {
-      return false;
-    }
-    if (dataA.Answer && Array.isArray(dataA.Answer)) {
-      const tieneA = dataA.Answer.some((record: GoogleDNSRecord) => record.type === 1); // Tipo 1 es Registro A
-      if (tieneA) return true;
-    }
-    return false;
-  } catch (error) {
-    console.warn('Error o Timeout al verificar registros DNS:', error);
-    return true; // En caso de error de red o timeout, permitimos pasar
-  }
-};
+import { verificarDominioCorreoValido } from '../../lib/emailValidator';
 
 export function RegisterForm() {
+  const navigate = useNavigate();
   // Cargar estado inicial persistido si existe
   const savedState = (() => {
     try {
@@ -99,10 +42,8 @@ export function RegisterForm() {
   const [statusType, setStatusType] = useState<'error' | 'success' | ''>(
     savedState ? 'success' : ''
   );
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-  const [turnstileKey, setTurnstileKey] = useState(0);
 
-  const { session } = useAuth();
+  const { session, isSessionLoading } = useAuth();
 
   useEffect(() => {
     let active = true;
@@ -124,6 +65,9 @@ export function RegisterForm() {
         }
       }
     } else {
+      // No limpiar campos si el AuthProvider sigue cargando la sesión inicial (evita borrar savedState)
+      if (isSessionLoading) return;
+
       // Sesión nula: esperar 600ms antes de resetear
       resetTimer = setTimeout(() => {
         if (!active) return;
@@ -140,7 +84,22 @@ export function RegisterForm() {
       active = false;
       if (resetTimer) clearTimeout(resetTimer);
     };
-  }, [session]);
+  }, [session, isSessionLoading]);
+
+  // Redirección automática tras registro exitoso (Paso 3)
+  useEffect(() => {
+    if (step === 3) {
+      const timer = setTimeout(() => {
+        const pendingPlan = localStorage.getItem('jacko_trigger_checkout_slug');
+        if (pendingPlan) {
+          navigate('/checkout');
+        } else {
+          navigate('/dashboard');
+        }
+      }, 1500); // 1.5s de delay para una UX fluida
+      return () => clearTimeout(timer);
+    }
+  }, [step, navigate]);
 
   const cardVariants = {
     hidden: { scale: 0.8, rotateY: -15, opacity: 0 },
@@ -165,11 +124,6 @@ export function RegisterForm() {
       setStatusType('error');
       return;
     }
-    if (!captchaToken) {
-      setStatusMsg('Por favor verifica el CAPTCHA para continuar.');
-      setStatusType('error');
-      return;
-    }
 
     const partesEmail = email.trim().split('@');
     if (partesEmail.length < 2) {
@@ -184,7 +138,7 @@ export function RegisterForm() {
     setStatusType('success');
 
     // Validar si el dominio existe y tiene servidores de correo configurados (MX / A)
-    const esDominioValido = await verificarDominioCorreoValido(dominio);
+    const esDominioValido = await verificarDominioCorreoValido(dominio, email);
     if (!esDominioValido) {
       setStatusMsg('Correo inválido o inexistente.');
       setStatusType('error');
@@ -200,8 +154,7 @@ export function RegisterForm() {
       const { error } = await supabase.auth.signInWithOtp({
         email: email.trim(),
         options: {
-          shouldCreateUser: true,
-          captchaToken: captchaToken,
+          shouldCreateUser: isRegister,
           data: isRegister
             ? {
                 full_name: fullName.trim(),
@@ -241,12 +194,12 @@ export function RegisterForm() {
       if (errMsg.includes('Database error saving new user')) {
         errMsg =
           'No se permiten registros con correos temporales o se produjo un error de servidor. Por favor, verifica tu correo o intenta más tarde.';
+      } else if (errMsg.toLowerCase().includes('signups not allowed for otp')) {
+        errMsg =
+          'No encontramos ninguna cuenta asociada a este correo. Verifica que esté bien escrito o regístrate en la pestaña de \'Registro\'.';
       }
       setStatusMsg(errMsg);
       setStatusType('error');
-      // Forzar el reinicio de Turnstile para generar un nuevo token
-      setCaptchaToken(null);
-      setTurnstileKey((prev) => prev + 1);
     } finally {
       setIsLoading(false);
     }
@@ -312,6 +265,7 @@ export function RegisterForm() {
       const errMsg = err instanceof Error ? err.message : 'Código inválido o expirado';
       setStatusMsg(errMsg);
       setStatusType('error');
+      setOtpCode(''); // Limpiar el código inválido por seguridad y para forzar nueva escritura
     } finally {
       setIsLoading(false);
     }
@@ -410,18 +364,6 @@ export function RegisterForm() {
                       />
                     </div>
                   )}
-                  {/* Cloudflare Turnstile CAPTCHA */}
-                  <div style={{ margin: '15px 0', display: 'flex', justifyContent: 'center' }}>
-                    <Turnstile
-                      key={turnstileKey}
-                      sitekey={
-                        import.meta.env.VITE_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'
-                      }
-                      onSuccess={(token) => setCaptchaToken(token)}
-                      onExpire={() => setCaptchaToken(null)}
-                      onError={() => setCaptchaToken(null)}
-                    />
-                  </div>
                   {statusMsg && (
                     <div className={`form-status ${statusType}`}>
                       {statusMsg}

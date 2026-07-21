@@ -1,11 +1,10 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 export const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-region",
 };
 
-// Web Crypto HMAC SHA-256 helper for signing requests
 async function hmacSha256(keyStr: string, messageStr: string): Promise<string> {
   const encoder = new TextEncoder();
   const keyBuffer = encoder.encode(keyStr);
@@ -36,81 +35,64 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // 1. Read request body parameters
-    const body = await req.json();
-    const {
-      productId,
-      paymentMethodId,
-      paymentMethodType,
-      quantity,
-      planId,
-      binanceOrderId,
-      binanceAmount,
-      guestEmail,
-      guestName,
-    } = body;
-
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    // 2. Authenticate user session or create guest account
-    let userId = null;
-
-    const authHeader = req.headers.get("Authorization");
-    if (authHeader && authHeader.length > 20) {
-      const supabaseClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
-        global: { headers: { Authorization: authHeader } },
-      });
-      const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-      if (!userError && user) {
-        userId = user.id;
-      }
-    }
-
-    if (!userId) {
-      if (!guestEmail) {
-        return new Response(
-          JSON.stringify({ success: false, error: "No autorizado: Falta token de sesión o correo de invitado." }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      const { data: existingUserId } = await supabaseAdmin.rpc('get_user_id_by_email', { p_email: guestEmail });
-      
-      if (existingUserId) {
-        userId = existingUserId;
-      } else {
-        const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-          email: guestEmail,
-          email_confirm: true,
-          user_metadata: { name: guestName || "Invitado" }
-        });
-        if (authError || !authData.user) {
-          return new Response(
-            JSON.stringify({ success: false, error: "Error al registrar la cuenta de invitado." }),
-            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-        userId = authData.user.id;
-      }
-    }
+    // 1. Leer cuerpo de la petición
+    const body = await req.json();
+    const {
+      productId,
+      paymentMethodId,
+      quantity,
+      planId,
+      binanceOrderId,
+    } = body;
 
     if (!productId) {
       return new Response(
-        JSON.stringify({ success: false, error: "ID de producto requerido." }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "ID de producto requerido." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
     if (!binanceOrderId || binanceOrderId.trim().length < 10) {
       return new Response(
-        JSON.stringify({ success: false, error: "ID de orden de Binance inválido." }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "ID de orden de Binance inválido." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const qty = quantity && Number(quantity) > 0 ? Math.floor(Number(quantity)) : 1;
 
-    // 3. Prevent reuse of the same Binance Order ID
+    let userId: string | null = null;
+    let userEmail: string | null = null;
+
+    // 2. Autenticar sesión del usuario si se provee token de Authorization
+    const authHeader = req.headers.get("Authorization");
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      const token = authHeader.split(" ")[1];
+      const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
+      if (token && token !== anonKey) {
+        const supabaseClient = createClient(supabaseUrl, anonKey, {
+          global: { headers: { Authorization: authHeader } },
+        });
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        if (user) {
+          userId = user.id;
+          userEmail = user.email || null;
+        }
+      }
+    }
+
+    // 3. Si no hay sesión válida, rechazar la transacción
+    if (!userId) {
+      return new Response(
+        JSON.stringify({ error: "No autorizado: Debes iniciar sesión para verificar compras con Binance." }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // 4. Prevenir reutilización del mismo Binance Order ID
     const { data: existingOrder } = await supabaseAdmin
       .from("orders")
       .select("id")
@@ -119,28 +101,27 @@ Deno.serve(async (req) => {
 
     if (existingOrder) {
       return new Response(
-        JSON.stringify({ success: false, error: "Este ID de orden de Binance ya fue utilizado para activar otro producto." }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "Este ID de orden de Binance ya fue utilizado para activar otro producto." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // 4. Retrieve product and calculate total price in COP
+    // 5. Consultar producto y precio total en COP
     const { data: product, error: productError } = await supabaseAdmin
       .from("products_with_plans")
-      .select("id, title, price_cop, price_usd, slug, plans")
+      .select("id, title, price_cop, slug, plans")
       .eq("id", productId)
       .eq("is_active", true)
       .maybeSingle();
 
     if (productError || !product) {
       return new Response(
-        JSON.stringify({ success: false, error: "Producto no encontrado o inactivo." }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "Producto no encontrado o inactivo." }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const exchangeRate = Number(Deno.env.get("VITE_EXCHANGE_RATE_COP")) || Number(Deno.env.get("EXCHANGE_RATE_COP")) || 3700;
-    let totalUsd = 0;
+    let totalCop = 0;
     let selectedPlan = null;
 
     if (product.plans && Array.isArray(product.plans) && planId) {
@@ -148,49 +129,44 @@ Deno.serve(async (req) => {
     }
 
     if (selectedPlan) {
-      const basePriceUsd = selectedPlan.price_cop || 0;
+      const basePrice = selectedPlan.price_cop || 0;
       if (selectedPlan.bulk_pricing) {
         const qtyStr = String(qty);
         if (selectedPlan.bulk_pricing[qtyStr] !== undefined) {
-          totalUsd = selectedPlan.bulk_pricing[qtyStr];
+          totalCop = selectedPlan.bulk_pricing[qtyStr];
         } else if (selectedPlan.id === "pago-unico") {
-          totalUsd = (qty * 60000) / exchangeRate;
+          totalCop = qty * 60000;
         } else {
-          totalUsd = basePriceUsd * qty;
+          totalCop = basePrice * qty;
         }
       } else {
-        totalUsd = basePriceUsd * qty;
+        totalCop = basePrice * qty;
       }
     } else {
-      const basePriceUsd = product.price_cop || 0;
-      if (basePriceUsd <= 0) {
+      if (!product.price_cop || product.price_cop <= 0) {
         return new Response(
-          JSON.stringify({ success: false, error: "Este producto no tiene precio configurado." }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ error: "Este producto no tiene precio en COP." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      totalUsd = basePriceUsd * qty;
+      totalCop = product.price_cop * qty;
       if (product.slug === "mini-curso-git-github") {
-        let copVal = 0;
-        if (qty === 1) copVal = 140000;
-        else if (qty === 2) copVal = 220000;
-        else if (qty === 3) copVal = 240000;
-        else if (qty === 4) copVal = 240000;
-        else copVal = qty * 60000;
-        totalUsd = copVal / exchangeRate;
+        if (qty === 1) totalCop = 140000;
+        else if (qty === 2) totalCop = 220000;
+        else if (qty === 3) totalCop = 240000;
+        else if (qty === 4) totalCop = 240000;
+        else totalCop = qty * 60000;
       }
     }
 
-    const totalCop = Math.round(totalUsd * exchangeRate);
-
-    // 6. Connect to Binance Pay API
+    // 6. Conectarse a Binance Pay API
     const binanceApi = Deno.env.get("BINANCE_API");
     const binanceSecret = Deno.env.get("BINANCE_SECRET");
 
     if (!binanceApi || !binanceSecret) {
       return new Response(
-        JSON.stringify({ success: false, error: "Las credenciales de Binance no están configuradas." }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "Las credenciales BINANCE_API o BINANCE_SECRET no están configuradas." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -211,9 +187,22 @@ Deno.serve(async (req) => {
     if (!binanceRes.ok) {
       const errText = await binanceRes.text();
       console.error("Error calling Binance API:", errText);
+      
+      let detailedError = "No se pudo comunicar con Binance.";
+      try {
+        const errObj = JSON.parse(errText);
+        if (errObj.msg) {
+          detailedError = `Error de Binance: ${errObj.msg} (Código: ${errObj.code})`;
+        } else {
+          detailedError = `Error de Binance: ${errText}`;
+        }
+      } catch {
+        detailedError = `Error de Binance (HTTP ${binanceRes.status}): ${errText}`;
+      }
+
       return new Response(
-        JSON.stringify({ success: false, error: "No se pudo comunicar con Binance para verificar el pago." }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: detailedError }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -227,104 +216,54 @@ Deno.serve(async (req) => {
     const payResult = await binanceRes.json();
     const transactions = (payResult.data as BinanceTransaction[]) || [];
 
-    // Find a matching transaction in the history
     const matchedTx = transactions.find((tx: BinanceTransaction) => 
       String(tx.orderId) === String(binanceOrderId.trim())
     );
 
     if (!matchedTx) {
       return new Response(
-        JSON.stringify({ success: false, error: "La transacción no fue encontrada en Binance o aún está pendiente." }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "Transacción no encontrada en Binance o aún está pendiente. Verifica el ID." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     if (matchedTx.currency !== "USDT") {
       return new Response(
-        JSON.stringify({ success: false, error: "La transacción de Binance debe ser en USDT." }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "La transacción de Binance debe ser en USDT." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Verify transaction amount
-    const txAmount = Number(matchedTx.amount) || 0;
-    const diff = Math.abs(txAmount - totalUsd);
-    if (diff > 0.05) {
-      return new Response(
-        JSON.stringify({ 
-          success: false,
-          error: "El monto verificado no coincide con el costo esperado de tu compra." 
-        }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Validación adicional sólo para el Plan Mensual
-    if (product.slug === 'plan-mensual') {
-      if (!binanceAmount) {
-        return new Response(
-          JSON.stringify({ success: false, error: "El monto de la transacción es requerido para validar el pago mensual." }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      const userAmount = Number(binanceAmount);
-      const diffUser = Math.abs(txAmount - userAmount);
-      if (diffUser > 0.05) {
-        return new Response(
-          JSON.stringify({ 
-            success: false,
-            error: "El monto declarado no coincide con la transacción de Binance." 
-          }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-    }
-
-    // 7. Insert approved order in orders table
-    let resolvedPaymentMethodId = paymentMethodId || null;
-    if (!resolvedPaymentMethodId) {
-      const pmType = paymentMethodType || "binance";
-      const { data: pm } = await supabaseAdmin
-        .from("payment_methods")
-        .select("id")
-        .eq("type", pmType)
-        .eq("is_active", true)
-        .limit(1)
-        .maybeSingle();
-      if (pm) {
-        resolvedPaymentMethodId = pm.id;
-      }
-    }
-
+    // 7. Insertar orden aprobada en la base de datos (se auto-transfiere en el trigger BEFORE INSERT si es invitado)
     const { data: order, error: orderError } = await supabaseAdmin
       .from("orders")
       .insert({
         user_id: userId,
         product_id: productId,
         amount_cop: totalCop,
-        amount_usd: totalUsd,
         points_used: 0,
         status: "approved",
         approved_at: new Date().toISOString(),
         payment_type: "money",
-        payment_method_id: resolvedPaymentMethodId,
+        payment_method_id: paymentMethodId || null,
         quantity: qty,
         binance_order_id: binanceOrderId.trim(),
         reference_note: selectedPlan ? `Plan: ${selectedPlan.name}` : null,
         plan_id: planId || null,
+        admin_note: null,
       })
-      .select("id, redemption_code")
+      .select("id")
       .single();
 
     if (orderError || !order) {
-      console.error("Error creating approved Binance order:", orderError);
+      console.error("Error creando orden Binance aprobada:", orderError);
       return new Response(
-        JSON.stringify({ success: false, error: "Error al registrar la orden aprobada." }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "Error al registrar la orden aprobada." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // 8. Deliver credentials/file pathways
+    // 8. Entregar credenciales del pool
     let deliveredCredentials: string | null = null;
     const { data: claimedCreds, error: rpcError } = await supabaseAdmin
       .rpc("claim_product_credential_v2", {
@@ -357,7 +296,6 @@ Deno.serve(async (req) => {
       .single();
     const deliveredFilePath = prodData?.file_path || null;
 
-    // Update order with delivered info
     await supabaseAdmin
       .from("orders")
       .update({
@@ -366,13 +304,10 @@ Deno.serve(async (req) => {
       })
       .eq("id", order.id);
 
-    console.log(`Pago verificado exitosamente. Orden ${order.id} aprobada. Transacción Binance: ${binanceOrderId}`);
-
     return new Response(
       JSON.stringify({
         success: true,
         orderId: order.id,
-        redemptionCode: order.redemption_code,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
@@ -381,8 +316,8 @@ Deno.serve(async (req) => {
     const message = e instanceof Error ? e.message : "Error interno del servidor";
     console.error("Error inesperado en binance-verify-payment:", e);
     return new Response(
-      JSON.stringify({ success: false, error: message }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ error: message }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });

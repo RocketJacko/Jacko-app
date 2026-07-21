@@ -4,7 +4,7 @@ import { useImageSequence } from '../../hooks/useImageSequence';
 import { getCanvasBackingDpr } from '../../lib/canvasDpr';
 import { drawCover, type DrawCoverOptions } from '../../lib/drawCover';
 import { RegisterPage } from '../../pages/RegisterPage';
-import { Footer } from '../layout/Footer';
+import VaporizeTextCycle, { Tag } from '../ui/vapour-text-effect';
 import './ScrollEscudoFase2Bridge.css';
 
 type Props = {
@@ -29,6 +29,19 @@ export function ScrollEscudoFase2Bridge({
 }: Props) {
   const sectionRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Detectar si la pantalla es móvil para adaptar el tamaño de la tipografía de Vaporize
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const vaporizeFontSize = isMobile ? "40px" : "80px";
 
   const allUrls = useMemo(
     () => [...escudoFrameUrls, ...fase2FrameUrls, ...fase3FrameUrls],
@@ -69,6 +82,9 @@ export function ScrollEscudoFase2Bridge({
   const [introFinished, setIntroFinished] = useState(false);
   const [activeOverlay, setActiveOverlay] = useState<'skater' | 'pricing' | 'register'>('skater');
   const isTransitioningToInicio = useRef(false);
+  const isTransitioningToSkater = useRef(false);
+
+
 
   /* Bloquear scroll de la página una vez terminada la animación 3D */
   useEffect(() => {
@@ -82,7 +98,7 @@ export function ScrollEscudoFase2Bridge({
     };
   }, [activeOverlay]);
 
-  /* Notificar al App.tsx para mostrar el DockNav y activar la sección de registro al terminar */
+  /* Notificar al App.tsx para activar la sección de registro al terminar */
   useMotionValueEvent(smoothProgress, 'change', (latest) => {
     const completed = latest > 0.7;
     if (introFinished !== completed) {
@@ -95,9 +111,14 @@ export function ScrollEscudoFase2Bridge({
       isTransitioningToInicio.current = false;
     }
 
+    /* Desactivar el flag de transición hacia arriba si el progress baja de 0.69 */
+    if (latest < 0.69) {
+      isTransitioningToSkater.current = false;
+    }
+
     /* Si pasamos del skater y seguimos en vista skater, saltar automáticamente a registro */
-    /* Pero NO si estamos transicionando programáticamente a inicio */
-    if (latest >= 0.7 && activeOverlay === 'skater' && !isTransitioningToInicio.current) {
+    /* Pero NO si estamos transicionando programáticamente a inicio o de vuelta al skater */
+    if (latest >= 0.7 && activeOverlay === 'skater' && !isTransitioningToInicio.current && !isTransitioningToSkater.current) {
       setActiveOverlay('register');
     }
   });
@@ -192,12 +213,50 @@ export function ScrollEscudoFase2Bridge({
 
         <m.div className="skater-steps-overlay grid-base" style={{ opacity: stepsContainerOpacity }}>
           <m.div className="step-item-large is-bottom col-span-12" style={{ opacity: step1Opacity }}>
-            <span className="step-num-thin">01.</span>
-            <h1>Registrate</h1>
+            <div style={{ height: isMobile ? "45px" : "90px", width: "100%" }}>
+              <VaporizeTextCycle
+                texts={["Registrate"]}
+                font={{
+                  fontFamily: "'Fredoka One', cursive",
+                  fontSize: vaporizeFontSize,
+                  fontWeight: 400
+                }}
+                color="rgb(184, 74, 10)"
+                spread={9}
+                density={9}
+                animation={{
+                  vaporizeDuration: 1.6,
+                  fadeInDuration: 1.0,
+                  waitDuration: 0.8
+                }}
+                direction="left-to-right"
+                alignment="left"
+                tag={Tag.H1}
+              />
+            </div>
           </m.div>
           <m.div className="step-item-large is-bottom col-span-12" style={{ opacity: step2Opacity }}>
-            <span className="step-num-thin">02.</span>
-            <h1>Disfruta</h1>
+            <div style={{ height: isMobile ? "45px" : "90px", width: "100%" }}>
+              <VaporizeTextCycle
+                texts={["Disfruta"]}
+                font={{
+                  fontFamily: "'Fredoka One', cursive",
+                  fontSize: vaporizeFontSize,
+                  fontWeight: 400
+                }}
+                color="rgb(184, 74, 10)"
+                spread={9}
+                density={9}
+                animation={{
+                  vaporizeDuration: 1.6,
+                  fadeInDuration: 1.0,
+                  waitDuration: 0.8
+                }}
+                direction="left-to-right"
+                alignment="left"
+                tag={Tag.H1}
+              />
+            </div>
           </m.div>
         </m.div>
 
@@ -212,23 +271,10 @@ export function ScrollEscudoFase2Bridge({
             opacity: activeOverlay === 'register' ? 1 : 0,
             pointerEvents: activeOverlay === 'register' ? 'auto' : 'none',
           }}
-          transition={{ duration: 0.4 }}
-          style={{ position: 'absolute', inset: 0, zIndex: 51, overflow: 'hidden' }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          style={{ position: 'absolute', inset: 0, zIndex: 51, overflowY: 'auto' }}
         >
           <RegisterPage />
-        </m.div>
-
-        {/* FOOTER GLOBAL PERMANENTE */}
-        <m.div
-          initial={{ opacity: 0 }}
-          animate={{
-            opacity: activeOverlay !== 'skater' ? 1 : 0,
-            pointerEvents: activeOverlay !== 'skater' ? 'auto' : 'none',
-          }}
-          transition={{ duration: 0.4 }}
-          style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 100 }}
-        >
-          <Footer />
         </m.div>
       </div>
     </section>

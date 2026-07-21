@@ -29,7 +29,7 @@ export function ProductEditor({ product, categories, onSave, onCancel }: Product
   const [pointsPrice, setPointsPrice] = useState<string>(product?.points_price?.toString() ?? '');
   const [stock, setStock] = useState<string>(product?.stock?.toString() ?? '');
   const [isActive, setIsActive] = useState(product?.is_active ?? true);
-  const [visibility, setVisibility] = useState(product?.visibility ?? 'public');
+  const visibility = product?.visibility ?? 'public';
   const [paymentModes, setPaymentModes] = useState(product?.payment_modes ?? 'both');
   const [thumbnailUrl, setThumbnailUrl] = useState(product?.thumbnail_url ?? '');
   const [filePath, setFilePath] = useState(product?.file_path ?? '');
@@ -304,19 +304,6 @@ export function ProductEditor({ product, categories, onSave, onCancel }: Product
 
         <div className="form-grid-2">
           <div className="admin-field">
-            <label htmlFor="visibility">Visibilidad del Producto</label>
-            <select 
-              id="visibility"
-              className="admin-select"
-              value={visibility}
-              onChange={(e) => setVisibility(e.target.value)}
-            >
-              <option value="public">General (Público)</option>
-              <option value="invited_only">Solo Invitados</option>
-            </select>
-          </div>
-
-          <div className="admin-field">
             <label htmlFor="payment_modes">Modos de Pago Permitidos</label>
             <select 
               id="payment_modes"
@@ -460,12 +447,7 @@ export function ProductEditor({ product, categories, onSave, onCancel }: Product
               <button
                 type="button"
                 onClick={() => setThumbnailUrl('')}
-                style={{
-                  position: 'absolute', top: '-6px', right: '-6px',
-                  background: '#e74c3c', border: 'none', borderRadius: '50%',
-                  width: '20px', height: '20px', display: 'flex', alignItems: 'center',
-                  justifyContent: 'center', cursor: 'pointer', color: '#fff',
-                }}
+                className="admin-remove-image-btn"
                 title="Quitar imagen"
               >
                 <X size={11} />

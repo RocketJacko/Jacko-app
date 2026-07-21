@@ -10,6 +10,8 @@ export interface GeoLocationState {
   isLoading: boolean;
   localCurrency: string;
   detectedIsColombia: boolean;
+  detectedCountryCode: string;
+  detectedCity: string;
   setIsColombia: React.Dispatch<React.SetStateAction<boolean>>;
   setUserCurrency: React.Dispatch<React.SetStateAction<string>>;
 }
@@ -20,6 +22,8 @@ export function useGeoLocation(): GeoLocationState {
   const [isColombia, setIsColombia] = useState<boolean>(true);
   const [localCurrency, setLocalCurrency] = useState<string>('COP');
   const [detectedIsColombia, setDetectedIsColombia] = useState<boolean>(true);
+  const [detectedCountryCode, setDetectedCountryCode] = useState<string>('CO');
+  const [detectedCity, setDetectedCity] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -36,6 +40,7 @@ export function useGeoLocation(): GeoLocationState {
             const currency = isCo ? 'COP' : 'USD';
             setIsColombia(isCo);
             setDetectedIsColombia(isCo);
+            setDetectedCountryCode(countryCodeUpper);
             setUserCurrency(currency);
             setLocalCurrency(currency);
             setIsLoading(false);
@@ -51,7 +56,7 @@ export function useGeoLocation(): GeoLocationState {
         const ipRes = await fetch('https://api.ipify.org?format=json');
         if (ipRes.ok) {
           const { ip } = await ipRes.json();
-          const geoRes = await fetch(`http://ip-api.com/json/${ip}?fields=status,message,country,countryCode,currency`);
+          const geoRes = await fetch(`http://ip-api.com/json/${ip}?fields=status,message,country,countryCode,currency,city`);
           if (geoRes.ok) {
             const geoData = await geoRes.json();
             if (geoData && geoData.status === 'success' && active) {
@@ -61,6 +66,8 @@ export function useGeoLocation(): GeoLocationState {
               setLocalCurrency(detected);
               setIsColombia(isCo);
               setDetectedIsColombia(isCo);
+              setDetectedCountryCode(geoData.countryCode || 'CO');
+              setDetectedCity(geoData.city || '');
               setIsLoading(false);
               return;
             }
@@ -82,6 +89,8 @@ export function useGeoLocation(): GeoLocationState {
             setLocalCurrency(detected);
             setIsColombia(isCo);
             setDetectedIsColombia(isCo);
+            setDetectedCountryCode(data.country_code || 'CO');
+            setDetectedCity(data.city || '');
             setIsLoading(false);
             return;
           }
@@ -125,6 +134,8 @@ export function useGeoLocation(): GeoLocationState {
     isLoading,
     localCurrency,
     detectedIsColombia,
+    detectedCountryCode,
+    detectedCity,
     setIsColombia,
     setUserCurrency,
   };

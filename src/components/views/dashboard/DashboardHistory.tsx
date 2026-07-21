@@ -12,8 +12,9 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../../lib/supabaseClient';
 import { invalidateCache } from '../../../lib/queryCache';
-import type { Order, ActivationDetail } from './types';
+import type { Order } from './types';
 import { ActivationModal } from './ActivationModal';
+import { OrderExpandedDetails } from './OrderExpandedDetails';
 import { userService } from '../../../services/userService';
 import '../../../styles/data-table.css';
 
@@ -26,7 +27,7 @@ interface DashboardHistoryProps {
   formatCOP: (val: number | null) => string;
 }
 
-interface HistoryItem {
+export interface HistoryItem {
   id: string;
   created_at: string;
   type: 'Compra Directa' | 'Canje Puntos';
@@ -102,6 +103,7 @@ export function DashboardHistory({
   const [typeFilter, setTypeFilter] = useState('Todos');
   const [statusFilter, setStatusFilter] = useState('Todos');
   const [activatingOrder, setActivatingOrder] = useState<Order | null>(null);
+  const [assigningOrderId, setAssigningOrderId] = useState<string | null>(null);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
@@ -327,461 +329,72 @@ export function DashboardHistory({
       const result = await userService.activateOrder(activatingOrder.id, firstName, lastName, email);
       invalidateCache('dashboard_data_' + userId);
       await onRefresh(true);
-      alert(result.message || 'Activación completada con éxito.');
+
+      window.dispatchEvent(
+        new CustomEvent('show-toast', {
+          detail: { message: '¡Activación completada!', type: 'success' },
+        })
+      );
+      
+      window.dispatchEvent(
+        new CustomEvent('show-modal', {
+          detail: {
+            title: '¡Activación Exitosa!',
+            message: result.message || 'Tu cuenta ha sido activada correctamente.',
+          },
+        })
+      );
     } catch (err: unknown) {
       console.error('Error activating order:', err);
       throw err;
     }
   };
 
-  /* Row Credentials / Activations Details Drawer */
-  const renderDetails = (item: HistoryItem) => {
-    if (!item.isOrder || !item.order) return null;
-    const o = item.order;
-    const isMiniCurso = o.delivered_credentials === 'Acceso al mini-curso entregado tras canje';
-    const activations = Array.isArray(o.activation_details) ? o.activation_details : [];
-    const statusLower = o.status.toLowerCase();
-    const isPending =
-      statusLower === 'pending' || statusLower === 'pending_nequi' || statusLower === 'procesando';
-
-    return (
-      <div style={{ padding: '0' }}>
-        <div
-          style={{
-            background: '#ffffff',
-            border: '1px solid var(--modern-border, #E6E2DA)',
-            borderRadius: '12px',
-            padding: '16px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '16px',
-            width: '100%',
-          }}
-        >
-          {/* Main Info Row (Reference, Date, Amount) */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '12px',
-              borderBottom: '1px solid var(--modern-border, #E6E2DA)',
-              paddingBottom: '12px',
-            }}
-          >
-            {o.reference_note && (
-              <div>
-                <span
-                  style={{
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    color: 'var(--modern-text-secondary, #6B7280)',
-                    textTransform: 'uppercase',
-                    display: 'block',
-                    marginBottom: '2px',
-                  }}
-                >
-                  Referencia
-                </span>
-                <span
-                  style={{
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    color: 'var(--modern-text-primary, #1E1E1E)',
-                  }}
-                >
-                  {o.reference_note}
-                </span>
-              </div>
-            )}
-            {o.amount_cop !== null && o.amount_cop > 0 && (
-              <div>
-                <span
-                  style={{
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    color: 'var(--modern-text-secondary, #6B7280)',
-                    textTransform: 'uppercase',
-                    display: 'block',
-                    marginBottom: '2px',
-                  }}
-                >
-                  Monto
-                </span>
-                <span
-                  style={{
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    color: 'var(--modern-text-primary, #1E1E1E)',
-                  }}
-                >
-                  {formatCOP(o.amount_cop)}
-                </span>
-              </div>
-            )}
-            {o.points_used !== null && o.points_used > 0 && (
-              <div>
-                <span
-                  style={{
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    color: 'var(--modern-text-secondary, #6B7280)',
-                    textTransform: 'uppercase',
-                    display: 'block',
-                    marginBottom: '2px',
-                  }}
-                >
-                  Puntos Canjeados
-                </span>
-                <span
-                  style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--orange-base)' }}
-                >
-                  {o.points_used.toLocaleString('es-CO')} pts
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Redemption Code (Código de Canje) */}
-          {o.redemption_code && (
-            <div
-              style={{
-                background: 'var(--modern-bg, #F8F7F4)',
-                border: '1px dashed var(--orange-base, #d4621a)',
-                borderRadius: '12px',
-                padding: '14px 16px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: '12px',
-                boxShadow: '0 2px 8px rgba(212, 98, 26, 0.05)',
-              }}
-            >
-              <div>
-                <span
-                  style={{
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    color: 'var(--modern-text-secondary, #6B7280)',
-                    textTransform: 'uppercase',
-                    display: 'block',
-                    marginBottom: '4px',
-                    letterSpacing: '0.5px',
-                  }}
-                >
-                  Código de Canje
-                </span>
-                <span
-                  style={{
-                    fontFamily: 'monospace',
-                    fontSize: '1.15rem',
-                    fontWeight: 800,
-                    color: 'var(--orange-base, #d4621a)',
-                    letterSpacing: '1px',
-                  }}
-                >
-                  {o.redemption_code}
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigator.clipboard.writeText(o.redemption_code || '');
-                  alert('¡Código de canje copiado al portapapeles!');
-                }}
-                style={{
-                  backgroundColor: 'var(--orange-base, #d4621a)',
-                  color: '#ffffff',
-                  fontSize: '0.75rem',
-                  padding: '8px 16px',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                  transition: 'transform 0.1s, opacity 0.1s',
-                }}
-              >
-                Copiar Código
-              </button>
-            </div>
-          )}
-
-          {/* Credentials / Delivery Status */}
-          {o.delivered_credentials && (
-            <div
-              style={{ borderBottom: '1px solid var(--modern-border, #E6E2DA)', paddingBottom: '12px' }}
-            >
-              <span
-                style={{
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
-                  color: 'var(--modern-text-secondary, #6B7280)',
-                  textTransform: 'uppercase',
-                  display: 'block',
-                  marginBottom: '4px',
-                }}
-              >
-                {isMiniCurso ? 'Acceso Curso' : 'Credenciales Entregadas'}
-              </span>
-              <pre
-                style={{
-                  margin: 0,
-                  fontFamily: 'monospace',
-                  fontSize: '0.75rem',
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-all',
-                  background: 'var(--modern-bg, #F8F7F4)',
-                  padding: '10px 12px',
-                  borderRadius: '8px',
-                  border: '1px solid var(--modern-border, #E6E2DA)',
-                  color: 'var(--modern-text-primary, #1E1E1E)',
-                  fontWeight: 600,
-                }}
-              >
-                {o.delivered_credentials}
-              </pre>
-            </div>
-          )}
-
-          {/* Slots Activations block */}
-          {o.payment_type !== 'points' &&
-            o.points_used === 0 &&
-            (activations.length > 0 ||
-              (!o.delivered_credentials &&
-                (o.status === 'approved' || o.status === 'procesando'))) && (
-              <div
-                style={{
-                  borderBottom: '1px solid var(--modern-border, #E6E2DA)',
-                  paddingBottom: '12px',
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    color: 'var(--modern-text-secondary, #6B7280)',
-                    textTransform: 'uppercase',
-                    display: 'block',
-                    marginBottom: '8px',
-                  }}
-                >
-                  Registro y Asignación de Cuentas (Slots)
-                </span>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {activations.map((act: ActivationDetail, idx: number) => (
-                    <div
-                      key={idx}
-                      style={{
-                        border: '1px solid var(--modern-border, #E6E2DA)',
-                        padding: '10px 14px',
-                        borderRadius: '8px',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        background: 'var(--modern-bg, #F8F7F4)',
-                      }}
-                    >
-                      <div>
-                        <span
-                          style={{
-                            display: 'block',
-                            fontWeight: 700,
-                            fontSize: '0.75rem',
-                            color: 'var(--modern-text-primary, #1E1E1E)',
-                          }}
-                        >
-                          Slot #{idx + 1}: {act.first_name} {act.last_name}
-                        </span>
-                        <span
-                          style={{ color: 'var(--modern-text-secondary, #6B7280)', fontSize: '0.75rem' }}
-                        >
-                          {act.correo || act.email}
-                        </span>
-                      </div>
-                      <span className="dt-badge dt-badge-success">Activa</span>
-                    </div>
-                  ))}
-                  {(o.status === 'approved' || o.status === 'procesando') &&
-                    Array.from({
-                      length: Math.max(0, (o.quantity || 1) - activations.length),
-                    }).map((_, rIdx) => {
-                      const slotIndex = activations.length + rIdx + 1;
-                      return (
-                        <div
-                          key={`empty-${rIdx}`}
-                          style={{
-                            border: '1px dashed var(--modern-border, #E6E2DA)',
-                            padding: '10px 14px',
-                            borderRadius: '8px',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            background: '#ffffff',
-                          }}
-                        >
-                          <div>
-                            <span
-                              style={{
-                                display: 'block',
-                                fontWeight: 700,
-                                fontStyle: 'italic',
-                                fontSize: '0.75rem',
-                                color: 'var(--modern-text-secondary, #6B7280)',
-                              }}
-                            >
-                              Slot #{slotIndex}: Sin asignar
-                            </span>
-                            <span
-                              style={{
-                                color: 'var(--modern-text-secondary, #6B7280)',
-                                opacity: 0.7,
-                                fontSize: '0.75rem',
-                              }}
-                            >
-                              Pendiente por registrar
-                            </span>
-                          </div>
-                          {rIdx === 0 ? (
-                            <button
-                              type="button"
-                              style={{
-                                backgroundColor: 'var(--orange-base, #d4621a)',
-                                color: '#ffffff',
-                                fontSize: '0.75rem',
-                                padding: '6px 12px',
-                                border: 'none',
-                                borderRadius: '6px',
-                                fontWeight: 700,
-                                cursor: 'pointer',
-                              }}
-                              onClick={() => setActivatingOrder(o)}
-                            >
-                              🔑 Registrar Correo
-                            </button>
-                          ) : (
-                            <span
-                              style={{
-                                fontSize: '0.75rem',
-                                fontWeight: 700,
-                                color: 'var(--modern-text-secondary, #6B7280)',
-                                opacity: 0.5,
-                                padding: '4px 10px',
-                              }}
-                            >
-                              En espera
-                            </span>
-                          )}
-                        </div>
-                      );
-                    })}
-                </div>
-              </div>
-            )}
-
-          {/* Pending points redemption status */}
-          {(o.payment_type === 'points' || (o.points_used && o.points_used > 0)) &&
-            (o.status === 'approved' || o.status === 'procesando') &&
-            !o.delivered_credentials && (
-              <div style={{ borderLeft: '3px solid var(--orange-base)', paddingLeft: '12px' }}>
-                <span>Estado del Canje</span>
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: '0.75rem',
-                    color: 'var(--modern-text-primary, #1E1E1E)',
-                    fontWeight: 500,
-                  }}
-                >
-                  Asignando cuenta de los servidores... Por favor espera unos segundos o recarga la
-                  página.
-                </p>
-              </div>
-            )}
-
-          {/* Proof upload link */}
-          {o.receipt_url && (
-            <div
-              style={{ borderBottom: '1px solid var(--modern-border, #E6E2DA)', paddingBottom: '12px' }}
-            >
-              <span
-                style={{
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
-                  color: 'var(--modern-text-secondary, #6B7280)',
-                  textTransform: 'uppercase',
-                  display: 'block',
-                  marginBottom: '4px',
-                }}
-              >
-                Soporte de Pago
-              </span>
-              <a
-                href={o.receipt_url.replace(
-                  '/object/nequi-comprobantes/',
-                  '/object/public/nequi-comprobantes/'
-                )}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Ver imagen de comprobante ↗
-              </a>
-            </div>
-          )}
-
-          {/* Admin Note block */}
-          {(() => {
-            const cleanNote = o.admin_note
-              ? o.admin_note.replace(/\[ADVERTENCIA:[^\]]*\]/gi, '').trim()
-              : '';
-            if (!cleanNote) return null;
-            return (
-              <div style={{ borderLeft: '3px solid var(--orange-base)', paddingLeft: '12px' }}>
-                <span>Nota Administrativa</span>
-                <pre
-                  style={{
-                    margin: 0,
-                    fontFamily: 'inherit',
-                    fontSize: '0.75rem',
-                    whiteSpace: 'pre-wrap',
-                    wordBreak: 'break-all',
-                    color: 'var(--modern-text-primary, #1E1E1E)',
-                    fontWeight: 500,
-                  }}
-                >
-                  {cleanNote}
-                </pre>
-              </div>
-            );
-          })()}
-
-          {/* Actions inline inside details panel */}
-          {isPending && (
-            <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-              <button
-                type="button"
-                className="dt-inline-action orange"
-                onClick={() => setUploadModalItem(item)}
-              >
-                📷 Subir Soporte de Pago
-              </button>
-              {o.payment_methods?.type === 'paypal' && (
-                <button
-                  type="button"
-                  className="dt-inline-action"
-                  onClick={() => handleVerifyPaypal(o.reference_note, item.id)}
-                  disabled={verifyingOrderId === item.id}
-                >
-                  {verifyingOrderId === item.id ? 'Verificando...' : 'Verificar Pago en PayPal'}
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-    );
+  /* Handle pool email assignment */
+  const handleAssignPoolEmail = async (order: Order) => {
+    if (assigningOrderId) return;
+    setAssigningOrderId(order.id);
+    try {
+      const result = await userService.assignPoolEmail(order.id, order.plan_id || undefined);
+      invalidateCache('dashboard_data_' + userId);
+      await onRefresh(true);
+      
+      window.dispatchEvent(
+        new CustomEvent('show-toast', {
+          detail: { message: '¡Asignación exitosa!', type: 'success' },
+        })
+      );
+      
+      window.dispatchEvent(
+        new CustomEvent('show-modal', {
+          detail: {
+            title: '¡Cuenta Asignada!',
+            message: result.message || 'Se ha asignado un correo del pool con éxito. Puedes ver las credenciales en los detalles de tu compra.',
+          },
+        })
+      );
+    } catch (err: unknown) {
+      console.error('Error assigning pool email:', err);
+      const msg = err instanceof Error ? err.message : 'No se pudo asignar el correo del pool.';
+      window.dispatchEvent(
+        new CustomEvent('show-toast', {
+          detail: { message: 'Error de asignación', type: 'error' },
+        })
+      );
+      window.dispatchEvent(
+        new CustomEvent('show-modal', {
+          detail: {
+            title: 'Error de Asignación',
+            message: msg,
+          },
+        })
+      );
+    } finally {
+      setAssigningOrderId(null);
+    }
   };
+
+
 
   if (sortedItems.length === 0) {
     return (
@@ -964,6 +577,9 @@ export function DashboardHistory({
                           item.order.status.toLowerCase() === 'approved' &&
                           (() => {
                             const order = item.order;
+                            if (order.products?.slug === 'plan-mensual') {
+                              return null;
+                            }
                             const activations = Array.isArray(order.activation_details)
                               ? order.activation_details
                               : [];
@@ -1038,7 +654,18 @@ export function DashboardHistory({
                     </tr>
                     {isExpanded && (
                       <tr className="dt-expanded-row">
-                        <td colSpan={6}>{renderDetails(item)}</td>
+                        <td colSpan={6}>
+                          <OrderExpandedDetails
+                            item={item}
+                            formatCOP={formatCOP}
+                            assigningOrderId={assigningOrderId}
+                            verifyingOrderId={verifyingOrderId}
+                            onUploadModal={setUploadModalItem}
+                            onVerifyPaypal={handleVerifyPaypal}
+                            onAssignPoolEmail={handleAssignPoolEmail}
+                            onActivatingOrder={setActivatingOrder}
+                          />
+                        </td>
                       </tr>
                     )}
                   </Fragment>
@@ -1129,6 +756,9 @@ export function DashboardHistory({
                       item.order.status.toLowerCase() === 'approved' &&
                       (() => {
                         const order = item.order;
+                        if (order.products?.slug === 'plan-mensual') {
+                          return null;
+                        }
                         const activations = Array.isArray(order.activation_details)
                           ? order.activation_details
                           : [];
@@ -1203,7 +833,16 @@ export function DashboardHistory({
                 {/* Mobile details block */}
                 {isExpanded && (
                   <div style={{ marginTop: '8px' }} onClick={(e) => e.stopPropagation()}>
-                    {renderDetails(item)}
+                    <OrderExpandedDetails
+                      item={item}
+                      formatCOP={formatCOP}
+                      assigningOrderId={assigningOrderId}
+                      verifyingOrderId={verifyingOrderId}
+                      onUploadModal={setUploadModalItem}
+                      onVerifyPaypal={handleVerifyPaypal}
+                      onAssignPoolEmail={handleAssignPoolEmail}
+                      onActivatingOrder={setActivatingOrder}
+                    />
                   </div>
                 )}
               </div>
@@ -1238,16 +877,7 @@ export function DashboardHistory({
         >
           <div
             className="support-modal-panel"
-            style={{
-              maxWidth: '450px',
-              width: '90%',
-              background: 'var(--white-warm)',
-              padding: '24px',
-              borderRadius: '24px',
-              border: '2px solid rgba(212, 98, 26, 0.2)',
-              boxShadow: '0 20px 48px rgba(42, 26, 10, 0.15)',
-              position: 'relative',
-            }}
+            style={PROOF_MODAL_CONTENT_STYLE}
           >
             {/* Header */}
             <div className="support-modal-header">
@@ -1417,17 +1047,16 @@ export function DashboardHistory({
                     onClick={handleUploadProof}
                     disabled={isUploading || !imageFile}
                     style={{
-                      padding: '8px 16px',
-                      fontSize: '0.75rem',
-                      borderRadius: '12px',
-                      border: 'none',
+                      ...SUBMIT_PROOF_BASE_STYLE,
                       background:
                         isUploading || !imageFile
                           ? 'var(--beige-dark)'
                           : 'var(--orange-base, #d4621a)',
-                      color: '#ffffff',
                       cursor: isUploading || !imageFile ? 'not-allowed' : 'pointer',
-                      fontWeight: 700,
+                      boxShadow:
+                        isUploading || !imageFile
+                          ? 'none'
+                          : '0 2px 6px rgba(212, 98, 26, 0.15)',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '6px',
@@ -1459,3 +1088,27 @@ export function DashboardHistory({
     </div>
   );
 }
+
+
+
+
+
+const PROOF_MODAL_CONTENT_STYLE: React.CSSProperties = {
+  maxWidth: '450px',
+  width: '90%',
+  background: 'var(--white-warm)',
+  padding: '24px',
+  borderRadius: '24px',
+  border: '2px solid rgba(212, 98, 26, 0.2)',
+  boxShadow: '0 20px 48px rgba(42, 26, 10, 0.15)',
+  position: 'relative',
+};
+
+const SUBMIT_PROOF_BASE_STYLE: React.CSSProperties = {
+  padding: '8px 16px',
+  fontSize: '0.75rem',
+  borderRadius: '12px',
+  border: 'none',
+  color: '#ffffff',
+  fontWeight: 700,
+};

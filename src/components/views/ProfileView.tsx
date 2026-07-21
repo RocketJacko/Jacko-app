@@ -319,12 +319,12 @@ export function ProfileView({ userId, userEmail, onClose }: ProfileViewProps) {
                     </div>
 
                     <div className="profile-field">
-                      <label>Email</label>
+                      <span className="profile-field-label">Email</span>
                       <p className="profile-value profile-value--muted">{userEmail}</p>
                     </div>
 
                     <div className="profile-field">
-                      <label>Teléfono / Celular (WhatsApp)</label>
+                      <label htmlFor="profile-phone">Teléfono / Celular (WhatsApp)</label>
                       <div className="profile-phone-row">
                         <div className="profile-dial-select-wrapper" ref={dialDropdownRef}>
                           <div className="profile-dial-trigger-wrap">
@@ -376,6 +376,7 @@ export function ProfileView({ userId, userEmail, onClose }: ProfileViewProps) {
                           )}
                         </div>
                         <input
+                          id="profile-phone"
                           type="tel"
                           className="profile-input"
                           aria-label="Número de teléfono sin prefijo"
@@ -403,7 +404,7 @@ export function ProfileView({ userId, userEmail, onClose }: ProfileViewProps) {
                     </div>
 
                     <div className="profile-field">
-                      <label>País</label>
+                      <span className="profile-field-label">País</span>
                       <p className="profile-value">
                         {COUNTRIES.find((c) => c.code === fields.country_code)?.name ||
                           fields.country_code || <em>No definido</em>}

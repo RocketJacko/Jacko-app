@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { m, AnimatePresence } from 'motion/react';
 import { MessageCircle, X, HelpCircle, ExternalLink } from 'lucide-react';
+import DOMPurify from 'dompurify';
 import './ChatBot.css';
 
 interface QuickReply {
@@ -23,8 +24,23 @@ interface ChatBotProps {
   onViewChange: (view: AppView) => void;
 }
 
-export function ChatBot({ onViewChange }: ChatBotProps) {
+export function ChatBot({ currentView, onViewChange }: ChatBotProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isLandingIntroFinished, setIsLandingIntroFinished] = useState(false);
+
+  // Escuchar el estado de la animación de la landing page
+  useEffect(() => {
+    const handleIntroStatus = (e: Event) => {
+      const customEvent = e as CustomEvent<{ finished: boolean }>;
+      if (customEvent.detail && typeof customEvent.detail.finished === 'boolean') {
+        setIsLandingIntroFinished(customEvent.detail.finished);
+      }
+    };
+    window.addEventListener('skater-intro-status', handleIntroStatus);
+    return () => {
+      window.removeEventListener('skater-intro-status', handleIntroStatus);
+    };
+  }, []);
 
   // Ref tracking total messages sent for ID purity
   const messageIdCounter = useRef(1);
@@ -230,18 +246,30 @@ export function ChatBot({ onViewChange }: ChatBotProps) {
     }
   };
 
+  // Ocultar chat si estamos en la Landing Page y la animación del skater aún está activa
+  const isHidden = currentView === '/' || currentView === 'landing' || currentView === ''
+    ? !isLandingIntroFinished
+    : false;
+
+  if (isHidden) {
+    return null;
+  }
+
   return (
-    <div className="chatbot-root">
-      {/* Floating Action Button */}
+    <div className="jacko-chatbot-wrapper">
+      {/* Floating Action Button con animación de entrada suave */}
       <m.button
         className="chatbot-fab"
         onClick={() => setIsOpen(!isOpen)}
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4, delay: 0.2 }}
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.93 }}
         aria-label="Abrir chat de servicio"
       >
         {isOpen ? <X size={24} /> : <MessageCircle size={24} />}
-        {!isOpen && <span className="chatbot-fab-ping" />}
+        {!isOpen && <span className="chatbot-pulse-dot" />}
       </m.button>
 
       {/* Chat Window */}
@@ -271,29 +299,32 @@ export function ChatBot({ onViewChange }: ChatBotProps) {
             </div>
 
             {/* Chat Area */}
-            <div className="chatbot-messages">
+            <div className="chatbot-body">
               {messages.map((msg) => (
                 <div
                   key={msg.id}
-                  className={`chatbot-message-row ${msg.sender === 'user' ? 'user-row' : 'bot-row'}`}
+                  className={`chatbot-msg-row ${msg.sender === 'user' ? 'msg-user' : 'msg-bot'}`}
                 >
                   {msg.sender === 'bot' && (
                     <div className="chatbot-avatar">
                       <span>🤖</span>
                     </div>
                   )}
-                  <div className="chatbot-bubble-wrap">
+                  <div className="chatbot-bubble-wrapper">
                     <div
                       className={`chatbot-bubble ${msg.sender === 'user' ? 'user-bubble' : 'bot-bubble'}`}
                       dangerouslySetInnerHTML={{
-                        __html: msg.text
-                          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                          .replace(/\*(.*?)\*/g, '<em>$1</em>'),
+                        __html: DOMPurify.sanitize(
+                          msg.text
+                            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                            .replace(/\n/g, '<br />')
+                        ),
                       }}
                     />
                     {/* Render Quick Replies inside/under the bubble */}
                     {msg.buttons && msg.buttons.length > 0 && (
-                      <div className="chatbot-quick-replies">
+                      <div className="chatbot-replies-list">
                         {msg.buttons.map((btn, index) => {
                           const isExternal = btn.action === 'whatsapp_redirect';
                           return (
@@ -318,14 +349,14 @@ export function ChatBot({ onViewChange }: ChatBotProps) {
 
               {/* Typing Loader */}
               {isTyping && (
-                <div className="chatbot-message-row bot-row">
+                <div className="chatbot-msg-row msg-bot">
                   <div className="chatbot-avatar">
                     <span>🤖</span>
                   </div>
-                  <div className="chatbot-typing-indicator">
-                    <span />
-                    <span />
-                    <span />
+                  <div className="typing-bubble">
+                    <span className="dot" />
+                    <span className="dot" />
+                    <span className="dot" />
                   </div>
                 </div>
               )}
@@ -333,7 +364,7 @@ export function ChatBot({ onViewChange }: ChatBotProps) {
             </div>
 
             {/* Footer / Input (Locked for menu options only) */}
-            <div className="chatbot-footer">
+            <div className="chatbot-footer-locked">
               <HelpCircle size={14} />
               <span>Haz clic en las opciones para interactuar.</span>
             </div>

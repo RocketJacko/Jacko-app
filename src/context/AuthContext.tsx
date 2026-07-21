@@ -23,6 +23,12 @@ import {
   setCurrentUserId,
 } from "../lib/queryCache";
 
+// OCP: Configuración extensible de roles administrativos
+const STAFF_ROLES = new Set(["super_admin", "admin", "staff"]);
+
+// Constantes de configuración de seguridad
+const SESSION_LOAD_TIMEOUT_MS = 8_000;
+
 interface AuthContextType {
   session: Session | null;
   user: User | null;
@@ -34,28 +40,81 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// DIP: Servicio abstracto para consultar roles (independiza de Supabase DB Query directo en el render)
+async function fetchUserRole(userId: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data?.role ?? null;
+}
+
+/**
+ * Obtiene el identificador del proyecto Supabase a partir de su URL configurada.
+ * Utilizado para predecir y validar las llaves de almacenamiento en localStorage.
+ */
+function getSupabaseProjectRef(): string {
+  const url = import.meta.env.VITE_SUPABASE_URL || "";
+  try {
+    if (url.includes("supabase.co")) {
+      return url.split("//")[1]?.split(".")[0] ?? "";
+    }
+  } catch (e) {
+    console.warn("[AuthContext] Error parsing VITE_SUPABASE_URL project ref:", e);
+  }
+  return "";
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<Session | null>({
-    user: { id: "test-admin-id", email: "admin@jacko.com" } as unknown as Session['user'],
-    access_token: "mock-token"
-  } as unknown as Session);
-  const [isSessionLoading, setIsSessionLoading] = useState(false);
-  const [isStaff, setIsStaff] = useState(true);
-  const [isSuperAdmin, setIsSuperAdmin] = useState(true);
+  // SEGURIDAD: La sesión inicial arranca vacía (null) y en estado de carga (true)
+  // para evitar falsos privilegios o destellos de contenido privado antes de consultar al servidor.
+  const [session, setSession] = useState<Session | null>(null);
+  const [isSessionLoading, setIsSessionLoading] = useState(true);
+  const [isStaff, setIsStaff] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   // Ref para detectar cambio de usuario entre sesiones (VUL-C1)
   const previousUserIdRef = useRef<string | null>(null);
 
+  // SRP / DRY: Centralización del reseteo de la sesión local y la caché
+  const resetLocalSession = useCallback(() => {
+    clearAllCache();
+    setCurrentUserId(null);
+    previousUserIdRef.current = null;
+    setSession(null);
+    setIsStaff(false);
+    setIsSuperAdmin(false);
+  }, []);
+
   /**
-   * Obtiene el rol del usuario y actualiza isStaff.
+   * Obtiene el rol del usuario y actualiza isStaff y isSuperAdmin.
    * Se ejecuta en segundo plano — NUNCA bloquea isSessionLoading.
    */
   const syncUserRole = useCallback(async (activeSession: Session | null) => {
-    if (activeSession) {
-      console.log("Mock session active for user:", activeSession.user.id);
+    if (!activeSession?.user) {
+      setIsStaff(false);
+      setIsSuperAdmin(false);
+      return;
     }
-    setIsStaff(true);
-    setIsSuperAdmin(true);
+
+    try {
+      const role = await fetchUserRole(activeSession.user.id);
+      if (role) {
+        const isSuper = role === "super_admin";
+        setIsSuperAdmin(isSuper);
+        setIsStaff(isSuper || STAFF_ROLES.has(role));
+      } else {
+        setIsStaff(false);
+        setIsSuperAdmin(false);
+      }
+    } catch (err) {
+      console.error("[AuthContext] Error syncing user role:", err);
+      setIsStaff(false);
+      setIsSuperAdmin(false);
+    }
   }, []);
 
   /**
@@ -133,23 +192,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 // Sesión sigue válida — restaurar sin borrar caché
                 setSession(data.session);
               } else {
-                clearAllCache();
-                setCurrentUserId(null);
-                previousUserIdRef.current = null;
-                setSession(null);
-                setIsStaff(false);
-                setIsSuperAdmin(false);
+                resetLocalSession(); // DRY
               }
               setIsSessionLoading(false);
             })
             .catch(() => {
               if (!mounted) return;
-              clearAllCache();
-              setCurrentUserId(null);
-              previousUserIdRef.current = null;
-              setSession(null);
-              setIsStaff(false);
-              setIsSuperAdmin(false);
+              resetLocalSession(); // DRY
               setIsSessionLoading(false);
             });
           break;
@@ -172,18 +221,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     document.addEventListener("visibilitychange", handleVisibility);
 
     // ─── 4. Sync cross-tab via StorageEvent (VUL-C6) ──────────────────────
-    //
-    // Validaciones estrictas (CRÍTICO 2):
-    //  - Verificar e.storageArea === localStorage (no sessionStorage/IndexedDB)
-    //  - Key matching exacto contra el patrón de Supabase Auth
-    //  - Confirmar con supabase.auth.getSession() antes de actuar
-    //    (no confiamos ciegamente en el evento — podría ser una extensión)
-    //
-    // El patrón de la clave de Supabase Auth es:
-    //   sb-{project-ref}-auth-token
-    const supabaseRef =
-      (import.meta.env.VITE_SUPABASE_URL || "").split("//")[1]?.split(".")[0] ??
-      "";
+    const supabaseRef = getSupabaseProjectRef();
     const expectedStorageKey = supabaseRef
       ? `sb-${supabaseRef}-auth-token`
       : null;
@@ -199,8 +237,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (!e.newValue) {
         // Otra pestaña parece haber cerrado sesión.
-        // Guard 3: Verificar con el SDK antes de actuar (evita falsos positivos
-        // por extensiones del browser o limpieza accidental de storage).
+        // Guard 3: Verificar con el SDK antes de actuar (evita falsos positivos)
         supabase.auth
           .getSession()
           .then(({ data }) => {
@@ -213,22 +250,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               return;
             }
             // Sesión realmente cerrada
-            clearAllCache();
-            setCurrentUserId(null);
-            previousUserIdRef.current = null;
-            setSession(null);
-            setIsStaff(false);
-            setIsSuperAdmin(false);
+            resetLocalSession(); // DRY
           })
           .catch(() => {
             // Si no podemos verificar, asumir logout por seguridad
             if (!mounted) return;
-            clearAllCache();
-            setCurrentUserId(null);
-            previousUserIdRef.current = null;
-            setSession(null);
-            setIsStaff(false);
-            setIsSuperAdmin(false);
+            resetLocalSession(); // DRY
           });
       } else if (e.newValue && !e.oldValue) {
         // Otra pestaña inició sesión — refrescar
@@ -242,7 +269,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
     window.addEventListener("storage", handleStorageChange);
 
-    // ─── 5. Fallback: forzar fin de loading a los 8s por seguridad ─────────
+    // ─── 5. Fallback: forzar fin de loading por seguridad ─────────
     const safetyTimer = setTimeout(() => {
       if (mounted) {
         console.warn(
@@ -250,7 +277,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         );
         setIsSessionLoading(false);
       }
-    }, 8_000);
+    }, SESSION_LOAD_TIMEOUT_MS);
 
     return () => {
       mounted = false;
@@ -259,12 +286,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       document.removeEventListener("visibilitychange", handleVisibility);
       window.removeEventListener("storage", handleStorageChange);
     };
-  }, [syncUserRole, prepareCache]);
+  }, [syncUserRole, prepareCache, resetLocalSession]);
 
   const signOut = async () => {
-    clearAllCache();
-    setCurrentUserId(null);
-    previousUserIdRef.current = null;
+    resetLocalSession(); // DRY
     await supabase.auth.signOut();
   };
 

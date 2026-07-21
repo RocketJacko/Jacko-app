@@ -6,12 +6,13 @@ import { invalidateCache } from "../../lib/queryCache";
 import {
   Upload,
   Phone,
-  MapPin,
   Globe,
   RefreshCw,
   CheckCircle2,
   UserCircle2,
 } from "lucide-react";
+import { useGeoLocation } from "../../hooks/useGeoLocation";
+import { BaseModal } from "../ui/BaseModal";
 import "./ProfileCompletionModal.css";
 
 // ─── Países con bandera, código ISO y prefijo telefónico ──────────────────────
@@ -82,6 +83,23 @@ export function ProfileCompletionModal({ userId, userEmail, onComplete }: Props)
 
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
+  const { detectedCountryCode, detectedCity, isLoading: isGeoLoading } = useGeoLocation();
+
+  // Autodetectar y seleccionar el país y ciudad en base a IP si no hay datos persistidos
+  useEffect(() => {
+    if (!isGeoLoading) {
+      if (!countryCode) {
+        const finalCountry = detectedCountryCode || 'CO';
+        setCountryCode(finalCountry);
+        const country = COUNTRIES.find((c) => c.code === finalCountry);
+        setDialCode(country?.dial ?? '+57');
+      }
+      if (!city) {
+        setCity(detectedCity || 'Bogotá');
+      }
+    }
+  }, [isGeoLoading, detectedCountryCode, detectedCity, countryCode, city]);
+
   // ── 1. Verificar perfil al montar ──────────────────────────────────────────
   useEffect(() => {
     let mounted = true;
@@ -121,12 +139,6 @@ export function ProfileCompletionModal({ userId, userEmail, onComplete }: Props)
     };
   }, [userId, onComplete]);
 
-  // ── 2. Manejar selección de país ───────────────────────────────────────────
-  const handleCountryChange = (code: string) => {
-    setCountryCode(code);
-    const country = COUNTRIES.find((c) => c.code === code);
-    setDialCode(country?.dial ?? '');
-  };
 
   // ── 3. Subir avatar al bucket ──────────────────────────────────────────────
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -212,7 +224,6 @@ export function ProfileCompletionModal({ userId, userEmail, onComplete }: Props)
       }
 
       const { error } = await supabase.from('profiles').upsert({
-        id: userId,
         full_name: fullName.trim(),
         alias: alias.trim(),
         city: city.trim(),
@@ -243,27 +254,34 @@ export function ProfileCompletionModal({ userId, userEmail, onComplete }: Props)
   const selectedCountry = COUNTRIES.find((c) => c.code === countryCode);
 
   return (
-    <div className="profile-modal-overlay" role="dialog" aria-modal="true" aria-label="Completa tu perfil">
+    <BaseModal
+      isOpen={true}
+      onClose={() => {}}
+      showCloseButton={false}
+      isProcessing={isSaving}
+      maxWidth="540px"
+      ariaLabel="Completa tu perfil"
+    >
       <m.div
         initial={{ scale: 0.88, opacity: 0, y: 40 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-        className="profile-modal-card"
+        style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
       >
         {/* Header */}
-        <div className="profile-modal-header">
-          <span className="brand-logo">JACKO™</span>
-          <h2>Completa tu perfil</h2>
-          <p>Para acceder a tu cuenta necesitamos unos datos básicos. Solo se hace una vez.</p>
-          <div className="account-indicator">
-            <span>Cuenta:</span>
-            <strong>{userEmail}</strong>
+        <div className="custom-modal-header" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', width: '100%', gap: '8px' }}>
+          <span className="brand-logo" style={{ fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.18em', color: '#b87c2a', background: 'rgba(184, 124, 42, 0.1)', border: '1px solid rgba(184, 124, 42, 0.25)', padding: '4px 14px', borderRadius: '999px', textTransform: 'uppercase' }}>JACKO™</span>
+          <h4 className="custom-modal-title" style={{ fontSize: '1.5rem', fontWeight: 800 }}>Completa tu perfil</h4>
+          <p style={{ fontSize: '0.9rem', color: '#5a4020', margin: 0, lineHeight: 1.5 }}>Para acceder a tu cuenta necesitamos unos datos básicos. Solo se hace una vez.</p>
+          <div className="account-indicator" style={{ display: 'flex', gap: '6px', fontSize: '0.8rem', background: '#f5efe2', padding: '4px 10px', borderRadius: '8px', marginTop: '4px' }}>
+            <span style={{ opacity: 0.6 }}>Cuenta:</span>
+            <strong style={{ color: 'var(--brown-dark)' }}>{userEmail}</strong>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} noValidate className="profile-modal-form">
+        <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {/* Avatar */}
-          <div className="avatar-uploader-container">
+          <div className="avatar-uploader-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
             <button
               type="button"
               className="avatar-btn"
@@ -296,31 +314,33 @@ export function ProfileCompletionModal({ userId, userEmail, onComplete }: Props)
               style={{ display: 'none' }}
               onChange={handleAvatarUpload}
             />
-            <p className="uploader-hint">Foto de perfil (opcional) · máx. 3 MB · JPG, PNG, WEBP</p>
+            <p className="uploader-hint" style={{ fontSize: '0.75rem', opacity: 0.6, margin: 0 }}>Foto de perfil (opcional) · máx. 3 MB · JPG, PNG, WEBP</p>
           </div>
 
           {/* Nombre completo + Alias */}
-          <div className="form-row-2col">
-            <div className="form-group">
+          <div className="form-row-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div className="custom-modal-field">
               <label htmlFor="pcm-fullname">
                 Nombre completo <span className="required-star">*</span>
               </label>
               <input
                 id="pcm-fullname"
                 type="text"
+                className="custom-modal-input"
                 placeholder="Tu nombre real"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 required
               />
             </div>
-            <div className="form-group">
+            <div className="custom-modal-field">
               <label htmlFor="pcm-alias">
                 Alias <span className="required-star">*</span>
               </label>
               <input
                 id="pcm-alias"
                 type="text"
+                className="custom-modal-input"
                 placeholder="Tu apodo en JACKO"
                 value={alias}
                 onChange={(e) => setAlias(e.target.value)}
@@ -330,60 +350,36 @@ export function ProfileCompletionModal({ userId, userEmail, onComplete }: Props)
             </div>
           </div>
 
-          {/* País + Ciudad */}
-          <div className="form-row-2col">
-            <div className="form-group">
-              <label htmlFor="pcm-country">
-                <Globe size={13} style={{ marginRight: '4px' }} /> País <span className="required-star">*</span>
-              </label>
-              <select
-                id="pcm-country"
-                value={countryCode}
-                onChange={(e) => handleCountryChange(e.target.value)}
-                required
-              >
-                <option value="">Selecciona tu país</option>
-                {COUNTRIES.map((c) => (
-                  <option key={c.code} value={c.code}>
-                    {c.flag} {c.name} ({c.dial})
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="form-group">
-              <label htmlFor="pcm-ciudad">
-                <MapPin size={13} style={{ marginRight: '4px' }} /> Ciudad <span className="required-star">*</span>
-              </label>
-              <input
-                id="pcm-ciudad"
-                type="text"
-                placeholder="Tu ciudad"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                required
-              />
-            </div>
-          </div>
+
 
           {/* WhatsApp */}
-          <div className="form-group">
+          <div className="custom-modal-field">
             <label htmlFor="pcm-phone">
-              <Phone size={13} style={{ marginRight: '4px' }} /> WhatsApp <span className="required-star">*</span>
+              <Phone size={13} style={{ marginRight: '4px', display: 'inline' }} /> WhatsApp <span className="required-star">*</span>
             </label>
-            <div className="tel-input-wrapper">
-              <div className="tel-prefix-badge">
-                {selectedCountry ? `${selectedCountry.flag} ${selectedCountry.dial}` : '🌎 +?'}
+            <div className="tel-input-wrapper" style={{ display: 'flex', gap: '8px' }}>
+              <div className="tel-prefix-badge" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--beige-light)', border: '2px solid var(--beige-dark)', padding: '10px 14px', borderRadius: '16px', height: '44px', width: '56px' }}>
+                {selectedCountry ? (
+                  <img
+                    src={`https://flagcdn.com/w40/${selectedCountry.code.toLowerCase()}.png`}
+                    alt={selectedCountry.name}
+                    style={{ width: '26px', height: 'auto', borderRadius: '3px', display: 'block', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }}
+                  />
+                ) : (
+                  <Globe size={18} style={{ color: 'var(--brown-dark)' }} />
+                )}
               </div>
               <input
                 id="pcm-phone"
                 type="tel"
+                className="custom-modal-input"
                 placeholder="Número sin prefijo"
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value.replace(/[^\d\s\-()]/g, ''))}
                 required
               />
             </div>
-            <span className="field-hint">El prefijo se rellena automáticamente al elegir el país.</span>
+            <span className="field-hint" style={{ fontSize: '0.75rem', opacity: 0.6, display: 'block', marginTop: '2px' }}>El indicativo internacional se asocia automáticamente según tu país.</span>
           </div>
 
           {/* Error */}
@@ -392,13 +388,14 @@ export function ProfileCompletionModal({ userId, userEmail, onComplete }: Props)
               initial={{ opacity: 0, y: -6 }}
               animate={{ opacity: 1, y: 0 }}
               className="error-msg-banner"
+              style={{ padding: '10px 14px', background: 'rgba(239, 68, 68, 0.08)', border: '1.5px solid rgba(239, 68, 68, 0.3)', borderRadius: '12px', color: '#ef4444', fontSize: '0.85rem', fontWeight: 700 }}
             >
               {errorMsg}
             </m.div>
           )}
 
           {/* Submit */}
-          <button type="submit" className="submit-btn" disabled={isSaving || isUploadingAvatar}>
+          <button type="submit" className="btn-modal-action primary" style={{ width: '100%', marginTop: '8px' }} disabled={isSaving || isUploadingAvatar}>
             {isSaving ? (
               <>
                 <RefreshCw className="spin" size={16} style={{ marginRight: '6px' }} /> Guardando…
@@ -409,11 +406,11 @@ export function ProfileCompletionModal({ userId, userEmail, onComplete }: Props)
               </>
             )}
           </button>
-          <p className="privacy-disclosure">
+          <p className="privacy-disclosure" style={{ textAlign: 'center', fontSize: '0.72rem', opacity: 0.5, margin: 0 }}>
             Esta información es privada y solo se usa para gestionar tu cuenta JACKO™.
           </p>
         </form>
       </m.div>
-    </div>
+    </BaseModal>
   );
 }

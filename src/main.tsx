@@ -7,6 +7,12 @@ import { LazyMotion, domMax } from "motion/react";
 import { createClient } from "@supabase/supabase-js";
 import { getSupabaseConfig } from "./lib/supabaseConfig";
 
+import { BrowserRouter } from "react-router-dom";
+import { registerSW } from "virtual:pwa-register";
+
+// Registrar Service Worker PWA para soporte offline e instalabilidad
+registerSW({ immediate: true });
+
 // Prevents Rolldown from merging supabase-lib and supabase-config chunks by establishing multiple importers
 if (
   typeof window !== "undefined" &&
@@ -20,9 +26,11 @@ if (
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <AuthProvider>
-      <LazyMotion features={domMax}>
-        <App />
-      </LazyMotion>
+      <BrowserRouter>
+        <LazyMotion features={domMax}>
+          <App />
+        </LazyMotion>
+      </BrowserRouter>
     </AuthProvider>
   </StrictMode>,
 );

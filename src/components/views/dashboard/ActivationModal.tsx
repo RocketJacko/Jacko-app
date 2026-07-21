@@ -93,7 +93,7 @@ export function ActivationModal({ order, onClose, onConfirm }: ActivationModalPr
           e.currentTarget.click();
         }
       }}
-      className="activation-modal-overlay"
+      className="custom-modal-backdrop"
       onClick={onClose}
     >
       <m.div
@@ -101,31 +101,33 @@ export function ActivationModal({ order, onClose, onConfirm }: ActivationModalPr
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
         transition={{ duration: 0.3, ease: 'easeOut' }}
-        className="activation-modal-card"
+        className="custom-modal-card"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
       >
-        <button
-          type="button"
-          className="modal-close-btn"
-          onClick={onClose}
-          aria-label="Cerrar modal"
-        >
-          <X size={20} />
-        </button>
+        <div className="custom-modal-header" style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', width: '100%', gap: '8px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+            <h4 className="custom-modal-title">Activar cuenta</h4>
+            <button
+              type="button"
+              className="custom-modal-close"
+              onClick={onClose}
+              aria-label="Cerrar modal"
+              style={{ position: 'static' }}
+            >
+              <X size={20} />
+            </button>
+          </div>
+          <p className="modal-product-title" style={{ margin: 0, fontSize: '0.9rem', color: 'var(--brown-dark)', fontWeight: 700, opacity: 0.8 }}>{order.products?.title || 'Producto'}</p>
 
-        <div className="modal-header">
-          <h3 className="modal-title">Activar cuenta</h3>
-          <p className="modal-product-title">{order.products?.title || 'Producto'}</p>
-
-          <div className="activation-slots-indicator">
-            <div className="slots-label-row">
+          <div className="activation-slots-indicator" style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '8px' }}>
+            <div className="slots-label-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', fontWeight: 700, color: 'var(--brown-dark)', opacity: 0.8 }}>
               <span>Progreso de activación</span>
               <span>
                 {currentActivations.length} de {quantity} activadas
               </span>
             </div>
-            <div className="slots-progress-bar">
+            <div className="slots-progress-bar" style={{ display: 'flex', gap: '6px', height: '8px', background: 'var(--beige-light)', borderRadius: '99px', padding: '2px', overflow: 'hidden' }}>
               {Array.from({ length: quantity }).map((_, idx) => {
                 let slotClass = 'pending';
                 let slotTitle = `Cuenta ${idx + 1}: Pendiente`;
@@ -141,6 +143,12 @@ export function ActivationModal({ order, onClose, onConfirm }: ActivationModalPr
                     key={idx}
                     className={`progress-slot-dot ${slotClass}`}
                     title={slotTitle}
+                    style={{
+                      flex: 1,
+                      borderRadius: '99px',
+                      background: slotClass === 'activated' ? 'var(--orange-base)' : slotClass === 'current' ? 'var(--orange-light)' : 'var(--beige-dark)',
+                      opacity: slotClass === 'pending' ? 0.3 : 1
+                    }}
                   />
                 );
               })}
@@ -149,17 +157,18 @@ export function ActivationModal({ order, onClose, onConfirm }: ActivationModalPr
         </div>
 
         {remaining > 1 && (
-          <div className="modal-activation-banner">
+          <div className="modal-activation-banner" style={{ background: 'var(--beige-light)', border: '1.5px solid var(--beige-dark)', padding: '10px 14px', borderRadius: '12px', color: 'var(--orange-deep)', fontSize: '0.8rem', fontWeight: 700, textAlign: 'center' }}>
             <span>{remaining} activaciones pendientes</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="activation-form">
-          <div className="form-group">
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div className="custom-modal-field">
             <label htmlFor="first-name">Primer nombre</label>
             <input
               id="first-name"
               type="text"
+              className="custom-modal-input"
               placeholder="Ej. Juan"
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
@@ -168,11 +177,12 @@ export function ActivationModal({ order, onClose, onConfirm }: ActivationModalPr
               autoFocus
             />
           </div>
-          <div className="form-group">
+          <div className="custom-modal-field">
             <label htmlFor="last-name">Apellido</label>
             <input
               id="last-name"
               type="text"
+              className="custom-modal-input"
               placeholder="Ej. Pérez"
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
@@ -180,37 +190,38 @@ export function ActivationModal({ order, onClose, onConfirm }: ActivationModalPr
               disabled={isSubmitting}
             />
           </div>
-          <div className="form-group">
+          <div className="custom-modal-field">
             <label htmlFor="activation-email">Correo electrónico a activar</label>
             <input
               id="activation-email"
               type="email"
+              className="custom-modal-input"
               placeholder="correo@ejemplo.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={isSubmitting}
             />
-            <span className="field-hint">
+            <span className="field-hint" style={{ fontSize: '0.75rem', opacity: 0.6, display: 'block', marginTop: '2px' }}>
               Las credenciales serán enviadas a este correo.
             </span>
           </div>
 
-          {errorMsg && <div className="activation-error-msg">{errorMsg}</div>}
+          {errorMsg && <div className="activation-error-msg" style={{ padding: '12px 14px', borderRadius: '12px', background: 'rgba(239, 68, 68, 0.08)', border: '1.5px solid rgba(239, 68, 68, 0.3)', color: '#ef4444', fontSize: '0.85rem', fontWeight: 700 }}>{errorMsg}</div>}
 
-          <div className="modal-footer">
+          <div className="custom-modal-footer">
             <button
               type="button"
-              className="btn-cancel"
+              className="btn-modal-action secondary"
               onClick={onClose}
               disabled={isSubmitting}
             >
               Cancelar
             </button>
-            <button type="submit" className="btn-submit" disabled={isSubmitting}>
+            <button type="submit" className="btn-modal-action primary" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
-                  <span className="btn-spinner"></span>
+                  <span className="spinner-mini" style={{ width: '14px', height: '14px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin-anim 0.6s linear infinite', display: 'inline-block', marginRight: '6px' }}></span>
                   <span>{PHASES[phaseIndex]?.label || 'Activando...'}</span>
                 </>
               ) : (

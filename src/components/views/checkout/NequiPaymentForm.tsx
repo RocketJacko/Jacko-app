@@ -20,8 +20,6 @@ interface NequiPaymentFormProps {
   onPaymentSuccess: (orderId: string, receipt: ReceiptData) => void;
   onPaymentError: (error: string) => void;
   onBackToCatalog: () => void;
-  guestEmail?: string;
-  guestName?: string;
   exchangeRate: number;
 }
 
@@ -55,8 +53,6 @@ export function NequiPaymentForm({
   onPaymentSuccess,
   onPaymentError,
   onBackToCatalog,
-  guestEmail,
-  guestName,
   exchangeRate,
 }: NequiPaymentFormProps) {
   // Form states
@@ -136,7 +132,7 @@ export function NequiPaymentForm({
     e.preventDefault();
     onPaymentError('');
 
-    const finalPayerName = payerName.trim() || guestName || '';
+    const finalPayerName = payerName.trim();
 
     if (!finalPayerName || finalPayerName.length < 3) {
       onPaymentError('Ingresa el nombre completo del pagador (mínimo 3 caracteres).');
@@ -165,12 +161,10 @@ export function NequiPaymentForm({
         paymentMethodType: selectedMethod.type,
         quantity,
         userId,
-        payerName: payerName.trim() || guestName || '',
+        payerName: payerName.trim(),
         bankName,
         paymentDate,
         planId: selectedPlan?.id,
-        guestEmail,
-        guestName,
         exchangeRate,
       });
 
@@ -332,8 +326,7 @@ export function NequiPaymentForm({
                 placeholder="Ej. DANIEL EDUARDO SOLARTE"
                 value={payerName}
                 onChange={(e) => setPayerName(e.target.value)}
-                disabled={isProcessing}
-                required={!guestName}
+                required
               />
             </div>
 

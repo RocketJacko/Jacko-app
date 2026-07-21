@@ -69,15 +69,19 @@ export const catalogService = {
     return data?.points || 0;
   },
 
-  async getUserProfile(userId: string): Promise<{ points: number; subscription_tier: 'free' | 'mensual' | 'anual' }> {
+  async getUserProfile(userId: string): Promise<{ points: number; subscription_tier: 'free' | 'mensual' | 'anual'; isInvited: boolean }> {
     const { data } = await supabase
       .from('profiles')
-      .select('points')
+      .select('points, subscription_tier')
       .eq('id', userId)
       .maybeSingle();
+
+    const { data: isInvited } = await supabase.rpc('is_current_user_invited');
+
     return {
       points: data?.points || 0,
-      subscription_tier: 'free'
+      subscription_tier: (data?.subscription_tier as 'free' | 'mensual' | 'anual') || 'free',
+      isInvited: !!isInvited
     };
   },
 

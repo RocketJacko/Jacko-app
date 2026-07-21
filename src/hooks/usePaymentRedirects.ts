@@ -14,7 +14,9 @@ function cleanSearchParams(): void {
 export function usePaymentRedirects(
   session: Session | null,
   setCurrentView: (view: AppView) => void,
-  setIsVerifyingRedirect: (verifying: boolean) => void
+  setIsVerifyingRedirect: (verifying: boolean) => void,
+  showModal: (title: string, message: string) => void,
+  showToast: (message: string, type: 'success' | 'error') => void
 ) {
   // ── Retorno de redirección PayPal ─────────────────────────────────────────
   useEffect(() => {
@@ -25,7 +27,6 @@ export function usePaymentRedirects(
     if ((paypalStatus === 'success' && token) || paypalStatus === 'cancel') {
       const handlePaypalReturn = async () => {
         await Promise.resolve();
-        if (!session) return;
 
         if (paypalStatus === 'success' && token) {
           setIsVerifyingRedirect(true);
@@ -37,22 +38,36 @@ export function usePaymentRedirects(
               throw new Error(error?.message || 'Error al capturar el pago en el servidor.');
             }
             if (data.success && data.status === 'approved') {
-              invalidateCache('dashboard_data_' + session.user.id);
+              if (session) {
+                invalidateCache('dashboard_data_' + session.user.id);
+              }
               invalidateCacheByPrefix('catalog_products');
-              alert('¡Pago capturado con éxito! Tu orden ha sido aprobada y tu producto está activo en tu Dashboard.');
-              setCurrentView('dashboard');
+              showToast('¡Pago procesado con éxito!', 'success');
+              
+              if (session) {
+                showModal('¡Pago exitoso!', '¡Pago aprobado con éxito! Tu orden ha sido aprobada y tu producto está activo en tu Dashboard.');
+                setCurrentView('dashboard');
+              } else {
+                showModal(
+                  '¡Pago exitoso!',
+                  '¡Pago aprobado con éxito! Tu cuenta temporal ha sido creada. Por favor ingresa con tu correo electrónico en la sección de ingreso para acceder a tus productos.'
+                );
+                setCurrentView('landing');
+              }
             }
           } catch (err: unknown) {
             console.error('Error capturing redirected PayPal payment:', err);
             const msg =
               err instanceof Error ? err.message : 'No se pudo completar la verificación del pago.';
-            alert(`Error en verificación de pago: ${msg}`);
+            showToast('Error en el pago', 'error');
+            showModal('Error de Verificación', `No se pudo completar la verificación del pago: ${msg}`);
           } finally {
             setIsVerifyingRedirect(false);
             cleanSearchParams();
           }
         } else if (paypalStatus === 'cancel') {
-          alert('Pago de PayPal cancelado por el usuario.');
+          showToast('Pago cancelado', 'error');
+          showModal('Pago Cancelado', 'El pago de PayPal fue cancelado por el usuario.');
           cleanSearchParams();
           setCurrentView('catalogo');
         }
@@ -60,7 +75,7 @@ export function usePaymentRedirects(
 
       handlePaypalReturn();
     }
-  }, [session, setCurrentView, setIsVerifyingRedirect]);
+  }, [session, setCurrentView, setIsVerifyingRedirect, showModal, showToast]);
 
   // ── Retorno de redirección Mercado Pago ───────────────────────────────────
   useEffect(() => {
@@ -70,21 +85,34 @@ export function usePaymentRedirects(
     if (mpStatus === 'success' || mpStatus === 'failure' || mpStatus === 'pending') {
       const handleMercadopagoReturn = async () => {
         await Promise.resolve();
-        if (!session) return;
 
         if (mpStatus === 'success') {
-          invalidateCache('dashboard_data_' + session.user.id);
+          if (session) {
+            invalidateCache('dashboard_data_' + session.user.id);
+            showModal('¡Pago exitoso!', '¡Pago procesado con éxito! Tu orden está activa en tu Dashboard.');
+            setCurrentView('dashboard');
+          } else {
+            showModal(
+              '¡Pago exitoso!',
+              '¡Pago procesado con éxito! Tu cuenta temporal ha sido creada. Por favor ingresa con tu correo electrónico en la sección de ingreso para acceder a tus productos.'
+            );
+            setCurrentView('landing');
+          }
           invalidateCacheByPrefix('catalog_products');
-          alert('¡Pago procesado con éxito! Tu orden está activa en tu Dashboard.');
-          setCurrentView('dashboard');
+          showToast('¡Pago procesado con éxito!', 'success');
         } else if (mpStatus === 'failure') {
-          alert('El pago de Mercado Pago fue rechazado o cancelado.');
+          showToast('Pago fallido', 'error');
+          showModal('Pago Rechazado', 'El pago de Mercado Pago fue rechazado o cancelado.');
           setCurrentView('catalogo');
         } else if (mpStatus === 'pending') {
-          alert(
-            'El pago está pendiente de aprobación (ej. pago en efectivo o PSE en proceso). Podrás ver el estado en tu Dashboard.',
-          );
-          setCurrentView('dashboard');
+          showToast('Pago pendiente', 'error');
+          if (session) {
+            showModal('Pago Pendiente', 'El pago está pendiente de aprobación (ej. pago en efectivo o PSE en proceso). Podrás ver el estado en tu Dashboard.');
+            setCurrentView('dashboard');
+          } else {
+            showModal('Pago Pendiente', 'El pago está pendiente de aprobación. Una vez verificado, recibirás un correo para ingresar a tu cuenta.');
+            setCurrentView('landing');
+          }
         }
 
         cleanSearchParams();
@@ -92,5 +120,5 @@ export function usePaymentRedirects(
 
       handleMercadopagoReturn();
     }
-  }, [session, setCurrentView]);
+  }, [session, setCurrentView, showModal, showToast]);
 }

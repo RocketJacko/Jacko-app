@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 export const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,88 +12,66 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
     // 1. Leer entrada del request
     const body = await req.json();
-    const { productId, paymentMethodId, paymentMethodType, quantity, planId, guestEmail, guestName } = body;
-    
+    const { productId, paymentMethodId, quantity, planId } = body;
     if (!productId) {
       return new Response(
-        JSON.stringify({ success: false, error: "ID de producto faltante." }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "ID de producto faltante." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const qty = quantity && Number(quantity) > 0 ? Math.floor(Number(quantity)) : 1;
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    let userId: string | null = null;
+    let userEmail: string | null = null;
 
-    // 2. Verificar sesión o crear cuenta de invitado
-    let userId = null;
-
+    // 2. Verificar sesión del usuario si se proporciona token de Authorization
     const authHeader = req.headers.get("Authorization");
-    if (authHeader && authHeader.length > 20) {
-      const supabaseClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
-        global: { headers: { Authorization: authHeader } },
-      });
-      const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-      if (!userError && user) {
-        userId = user.id;
-      }
-    }
-
-    if (!userId) {
-      if (!guestEmail) {
-        return new Response(
-          JSON.stringify({ success: false, error: "No autorizado: Falta token de sesión o correo de invitado." }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      // Tratar de obtener el usuario por el RPC get_user_id_by_email
-      const { data: existingUserId } = await supabaseAdmin.rpc('get_user_id_by_email', { p_email: guestEmail });
-      
-      if (existingUserId) {
-        userId = existingUserId;
-      } else {
-        // Crear el usuario
-        const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-          email: guestEmail,
-          email_confirm: true,
-          user_metadata: { name: guestName || "Invitado" }
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      const token = authHeader.split(" ")[1];
+      const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
+      if (token && token !== anonKey) {
+        const supabaseClient = createClient(supabaseUrl, anonKey, {
+          global: { headers: { Authorization: authHeader } },
         });
-        if (authError || !authData.user) {
-          return new Response(
-            JSON.stringify({ success: false, error: "Error al registrar la cuenta de invitado." }),
-            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        if (user) {
+          userId = user.id;
+          userEmail = user.email || null;
         }
-        userId = authData.user.id;
       }
     }
 
-    const exchangeRate = parseFloat(
-      Deno.env.get("EXCHANGE_RATE_COP") || 
-      Deno.env.get("VITE_EXCHANGE_RATE_COP") || 
-      "3700"
-    );
+    // 3. Si no hay sesión válida, rechazar la transacción
+    if (!userId) {
+      return new Response(
+        JSON.stringify({ error: "No autorizado: Debes iniciar sesión para realizar compras con PayPal." }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
-    // 3. Consultar detalles oficiales del producto
+    // 4. Consultar detalles oficiales del producto
     const { data: product, error: productError } = await supabaseAdmin
       .from("products_with_plans")
-      .select("id, slug, title, price_cop, price_usd, plans")
+      .select("id, slug, title, price_cop, plans")
       .eq("id", productId)
       .eq("is_active", true)
       .maybeSingle();
 
     if (productError || !product) {
       return new Response(
-        JSON.stringify({ success: false, error: "El producto no existe o no está activo." }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "El producto no existe o no está activo." }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    let totalUsd = 0;
+    let totalCop = 0;
     let selectedPlan = null;
 
     if (product.plans && Array.isArray(product.plans) && planId) {
@@ -101,43 +79,55 @@ Deno.serve(async (req) => {
     }
 
     if (selectedPlan) {
-      const basePriceUsd = selectedPlan.price_cop || 0;
+      const basePrice = selectedPlan.price_cop || 0;
       if (selectedPlan.bulk_pricing) {
         const qtyStr = String(qty);
         if (selectedPlan.bulk_pricing[qtyStr] !== undefined) {
-          totalUsd = selectedPlan.bulk_pricing[qtyStr];
+          totalCop = selectedPlan.bulk_pricing[qtyStr];
         } else if (selectedPlan.id === "pago-unico") {
-          totalUsd = (qty * 60000) / exchangeRate;
+          totalCop = qty * 60000;
         } else {
-          totalUsd = basePriceUsd * qty;
+          totalCop = basePrice * qty;
         }
       } else {
-        totalUsd = basePriceUsd * qty;
+        totalCop = basePrice * qty;
       }
     } else {
-      const basePriceUsd = product.price_cop || 0;
-      if (basePriceUsd <= 0) {
+      if (!product.price_cop || product.price_cop <= 0) {
         return new Response(
-          JSON.stringify({ success: false, error: "Este producto no tiene un precio válido en dinero." }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ error: "Este producto no tiene un precio válido en dinero." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      totalUsd = basePriceUsd * qty;
+      totalCop = product.price_cop * qty;
       if (product.slug === "mini-curso-git-github") {
-        let copVal = 0;
-        if (qty === 1) copVal = 140000;
-        else if (qty === 2) copVal = 220000;
-        else if (qty === 3) copVal = 240000;
-        else if (qty === 4) copVal = 240000;
-        else copVal = qty * 60000;
-        totalUsd = copVal / exchangeRate;
+        if (qty === 1) totalCop = 140000;
+        else if (qty === 2) totalCop = 220000;
+        else if (qty === 3) totalCop = 240000;
+        else if (qty === 4) totalCop = 240000;
+        else totalCop = qty * 60000;
       }
     }
 
-    const usdAmount = totalUsd.toFixed(2);
-    const totalCop = Math.round(totalUsd * exchangeRate);
+    // 5. Calcular valor en USD para PayPal
+    let usdAmountVal = 0;
+    if (product.slug === "mini-curso-git-github") {
+      const exchangeRate = parseFloat(
+        Deno.env.get("EXCHANGE_RATE_COP") || 
+        Deno.env.get("VITE_EXCHANGE_RATE_COP") || 
+        "3700"
+      );
+      usdAmountVal = totalCop / exchangeRate;
+    } else {
+      usdAmountVal = totalCop;
+    }
 
-    // 5. Configurar credenciales de PayPal
+    if (usdAmountVal < 0.01) {
+      usdAmountVal = 0.01;
+    }
+    const usdAmount = usdAmountVal.toFixed(2);
+
+    // 6. Configurar credenciales de PayPal
     const paypalClientId = Deno.env.get("PAYPAL_CLIENT_ID");
     const paypalClientSecret = Deno.env.get("PAYPAL_CLIENT_SECRET");
     const paypalEnv = Deno.env.get("PAYPAL_ENVIRONMENT") || "sandbox";
@@ -145,8 +135,8 @@ Deno.serve(async (req) => {
     if (!paypalClientId || !paypalClientSecret) {
       console.error("Faltan variables de entorno PAYPAL_CLIENT_ID o PAYPAL_CLIENT_SECRET");
       return new Response(
-        JSON.stringify({ success: false, error: "Configuración del servidor de pagos incompleta." }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "Configuración del servidor de pagos incompleta." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -154,7 +144,7 @@ Deno.serve(async (req) => {
       ? "https://api-m.paypal.com" 
       : "https://api-m.sandbox.paypal.com";
 
-    // 6. Obtener Token de Acceso de PayPal
+    // 7. Obtener Token de Acceso de PayPal
     const authString = btoa(`${paypalClientId.trim()}:${paypalClientSecret.trim()}`);
     const tokenResponse = await fetch(`${paypalBaseUrl}/v1/oauth2/token`, {
       method: "POST",
@@ -169,14 +159,14 @@ Deno.serve(async (req) => {
       const tokenError = await tokenResponse.text();
       console.error("Error obteniendo token de PayPal:", tokenError);
       return new Response(
-        JSON.stringify({ success: false, error: "No se pudo autenticar con el portal de pagos de PayPal." }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "No se pudo autenticar con el portal de pagos de PayPal." }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const { access_token } = await tokenResponse.json();
 
-    // 7. Crear Orden en PayPal
+    // 8. Crear Orden en PayPal
     const origin = req.headers.get("origin") || "http://localhost:5173";
     const paypalOrderResponse = await fetch(`${paypalBaseUrl}/v2/checkout/orders`, {
       method: "POST",
@@ -210,8 +200,8 @@ Deno.serve(async (req) => {
       const orderError = await paypalOrderResponse.text();
       console.error("Error creando orden en PayPal:", orderError);
       return new Response(
-        JSON.stringify({ success: false, error: "Error al generar la orden de cobro en PayPal." }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "Error al generar la orden de cobro en PayPal." }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -220,27 +210,12 @@ Deno.serve(async (req) => {
 
     if (!approveLink) {
       return new Response(
-        JSON.stringify({ success: false, error: "No se encontró enlace de aprobación de PayPal." }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "No se encontró enlace de aprobación de PayPal." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // 8. Crear Orden pendiente en base de datos local
-    let resolvedPaymentMethodId = paymentMethodId || null;
-    if (!resolvedPaymentMethodId) {
-      const pmType = paymentMethodType || "paypal";
-      const { data: pm } = await supabaseAdmin
-        .from("payment_methods")
-        .select("id")
-        .eq("type", pmType)
-        .eq("is_active", true)
-        .limit(1)
-        .maybeSingle();
-      if (pm) {
-        resolvedPaymentMethodId = pm.id;
-      }
-    }
-
+    // 9. Crear Orden pendiente en base de datos local
     const { data: localOrder, error: localOrderError } = await supabaseAdmin
       .from("orders")
       .insert({
@@ -248,13 +223,13 @@ Deno.serve(async (req) => {
         product_id: productId,
         payment_type: "money",
         amount_cop: totalCop,
-        amount_usd: totalUsd,
         points_used: 0,
-        payment_method_id: resolvedPaymentMethodId,
+        payment_method_id: paymentMethodId || null,
         status: "pending",
         quantity: qty,
-        reference_note: paypalOrder.id, // Guardamos el ID de orden de PayPal para validación posterior
+        reference_note: paypalOrder.id,
         plan_id: planId || null,
+        admin_note: null,
       })
       .select("id")
       .single();
@@ -262,14 +237,13 @@ Deno.serve(async (req) => {
     if (localOrderError || !localOrder) {
       console.error("Error insertando orden local:", localOrderError);
       return new Response(
-        JSON.stringify({ success: false, error: "Error al registrar la orden pendiente de pago en el sistema." }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "Error al registrar la orden pendiente de pago en el sistema." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     return new Response(
       JSON.stringify({
-        success: true,
         paypalOrderId: paypalOrder.id,
         approveUrl: approveLink,
         localOrderId: localOrder.id,
@@ -280,8 +254,8 @@ Deno.serve(async (req) => {
   } catch (e) {
     console.error("Error inesperado en paypal-create-order:", e);
     return new Response(
-      JSON.stringify({ success: false, error: "Error interno del servidor" }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ error: "Error interno del servidor" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });

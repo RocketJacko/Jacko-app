@@ -15,8 +15,6 @@ interface RedirectPanelProps {
   onProcessingChange: (processing: boolean) => void;
   onPaymentSuccess: (orderId: string, receipt: ReceiptData) => void;
   onPaymentError: (error: string) => void;
-  guestEmail?: string;
-  guestName?: string;
 }
 
 export function RedirectPanel({
@@ -32,8 +30,6 @@ export function RedirectPanel({
   onProcessingChange,
   onPaymentSuccess,
   onPaymentError,
-  guestEmail,
-  guestName,
 }: RedirectPanelProps) {
   const isPaypal = selectedMethod.type === 'paypal';
   const isMercadopago = selectedMethod.type === 'mercadopago';
@@ -52,8 +48,6 @@ export function RedirectPanel({
         quantity,
         userId,
         planId: selectedPlan?.id,
-        guestEmail,
-        guestName,
       });
 
       if (!response.success || !response.approveUrl) {
@@ -104,15 +98,15 @@ export function RedirectPanel({
       <h4>Pago Seguro</h4>
       <p className="redirect-description">
         {isPaypal
-          ? 'Paga de manera segura con tu cuenta PayPal o tarjetas internacionales.'
+          ? 'Paga de manera segura con tu cuenta PayPal.'
           : 'Paga de manera segura a través de PSE, tarjetas de crédito/débito o efectivo con Mercado Pago.'}
       </p>
       <button
         type="button"
-        className="checkout-pay-btn"
+        className="btn-modal-action primary"
         disabled={isProcessing}
         onClick={handleRedirectPayment}
-        style={{ width: '100%', padding: '12px', borderRadius: '10px', fontWeight: 800 }}
+        style={{ width: '100%', padding: '14px 20px', display: 'flex', boxSizing: 'border-box' }}
       >
         {isProcessing ? 'Procesando...' : `Pagar con ${selectedMethod.name}`}
       </button>

@@ -3,6 +3,8 @@ export interface Profile {
   full_name: string | null;
   city?: string | null;
   points: number;
+  subscription_tier?: string | null;
+  isInvited?: boolean;
 }
 
 export interface Task {
@@ -63,4 +65,5 @@ export interface Order {
     type: string;
     name: string;
   } | null;
+  plan_id?: string | null;
 }

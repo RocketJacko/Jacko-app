@@ -16,8 +16,6 @@ interface BinancePaymentFormProps {
   onProcessingChange: (processing: boolean) => void;
   onPaymentSuccess: (orderId: string, receipt: ReceiptData) => void;
   onPaymentError: (error: string) => void;
-  guestEmail?: string;
-  guestName?: string;
 }
 export function BinancePaymentForm({
   selectedMethod,
@@ -32,8 +30,6 @@ export function BinancePaymentForm({
   onProcessingChange,
   onPaymentSuccess,
   onPaymentError,
-  guestEmail,
-  guestName,
 }: BinancePaymentFormProps) {
   const [binanceOrderId, setBinanceOrderId] = useState("");
   const [copied, setCopied] = useState(false);
@@ -63,8 +59,6 @@ export function BinancePaymentForm({
         userId,
         planId: selectedPlan?.id,
         binanceOrderId: binanceOrderId.trim(),
-        guestEmail,
-        guestName,
       });
       if (!response.success) {
         throw new Error(

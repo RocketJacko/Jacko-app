@@ -364,19 +364,7 @@ export function PoolCorreosManager() {
         className="stats-row"
         style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem' }}
       >
-        <div
-          className="stat-card"
-          style={{
-            background: '#ffffff',
-            border: '1px solid var(--beige-dark)',
-            padding: '20px',
-            borderRadius: '20px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            minHeight: 'auto',
-          }}
-        >
+        <div className="stat-card">
           <div>
             <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', opacity: 0.6 }}>
               Total Correos
@@ -388,19 +376,7 @@ export function PoolCorreosManager() {
           </div>
         </div>
 
-        <div
-          className="stat-card"
-          style={{
-            background: '#ffffff',
-            border: '1px solid var(--beige-dark)',
-            padding: '20px',
-            borderRadius: '20px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            minHeight: 'auto',
-          }}
-        >
+        <div className="stat-card">
           <div>
             <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', opacity: 0.6 }}>
               Disponibles
@@ -412,19 +388,7 @@ export function PoolCorreosManager() {
           </div>
         </div>
 
-        <div
-          className="stat-card"
-          style={{
-            background: '#ffffff',
-            border: '1px solid var(--beige-dark)',
-            padding: '20px',
-            borderRadius: '20px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            minHeight: 'auto',
-          }}
-        >
+        <div className="stat-card">
           <div>
             <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', opacity: 0.6 }}>
               Asignados
@@ -438,20 +402,7 @@ export function PoolCorreosManager() {
       </div>
 
       {!isSuperAdmin ? (
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '10px',
-            padding: '3rem',
-            textAlign: 'center',
-            background: 'rgba(231, 76, 60, 0.08)',
-            border: '1px solid rgba(231, 76, 60, 0.3)',
-            borderRadius: '24px',
-            color: '#e74c3c',
-          }}
-        >
+        <div className="restricted-access-card">
           <ShieldAlert size={48} />
           <h3 style={{ margin: 0, fontWeight: 800, fontSize: '1.3rem' }}>Acceso Restringido</h3>
           <p style={{ margin: 0, opacity: 0.8 }}>
@@ -461,32 +412,12 @@ export function PoolCorreosManager() {
       ) : (
         <>
           {/* Panel de Carga */}
-          <div
-            className="admin-editor-card"
-            style={{
-              background: '#ffffff',
-              border: '1.5px solid var(--beige-dark)',
-              padding: '24px',
-              borderRadius: '20px',
-            }}
-          >
-            <div
-              className="admin-editor-header"
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '20px',
-                borderBottom: '1px solid var(--beige-light)',
-                paddingBottom: '12px',
-                flexWrap: 'wrap',
-                gap: '12px',
-              }}
-            >
-              <h3 style={{ fontSize: '1.2rem', margin: 0, fontWeight: 800 }}>
+          <div className="admin-editor-card">
+            <div className="admin-editor-header">
+              <h3>
                 Cargar Nuevos Correos al Inventario
               </h3>
-              <div className="auth-toggle-container" style={{ margin: 0 }}>
+              <div className="auth-toggle-container">
                 <button
                   type="button"
                   className={`auth-toggle-btn${!isBulk ? ' active' : ''}`}

@@ -1,19 +1,28 @@
 .register-section {
-  height: 100%;
+  min-height: 100%;
   width: 100%;
   background-color: var(--beige-light);
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 30px 20px;
+  padding: 30px 20px 0;
   position: relative;
   overflow-y: auto;
-  overscroll-behavior: contain; /* Evita que el scroll del form mueva el canvas exterior */
+  overscroll-behavior: contain;
+  box-sizing: border-box;
 }
 
 .register-container {
+  flex: 1 0 auto;
   width: 100%;
-  margin: auto; /* Centra vertical y horizontalmente de forma segura en caso de desbordamiento */
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding-bottom: 2.5rem;
+  box-sizing: border-box;
 }
 
 .register-form-wrapper {
@@ -37,19 +46,15 @@
 
 @media (min-width: 768px) {
   .register-section {
-    padding-top: 80px; /* Reducido para eliminar espacio superior excesivo */
-    padding-bottom: 140px; /* Reducido para ajustarse mejor a la altura del footer */
-  }
-}
-
-@media (min-width: 1024px) {
-  .register-section {
-    overflow-y: auto; /* Permitir scroll para ver los planes completos */
+    padding-top: 40px;
   }
 }
 
 @media (max-width: 600px) {
   .register-section {
-    padding: 24px 10px;
+    padding: 20px 12px 0;
+  }
+  .register-container {
+    padding-bottom: 1.5rem;
   }
 }

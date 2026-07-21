@@ -85,8 +85,8 @@
 
 .step-item-large {
   position: absolute;
-  left: 0;
-  right: 0;
+  left: var(--grid-padding, var(--space-lg));
+  right: var(--grid-padding, var(--space-lg));
   display: flex;
   flex-direction: column;
 }

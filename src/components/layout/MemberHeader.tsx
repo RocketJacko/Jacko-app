@@ -17,7 +17,7 @@ interface Props {
   currentView: 'landing' | 'dashboard' | 'catalogo' | 'admin' | 'profile';
   onViewChange: (
     view: 'landing' | 'dashboard' | 'catalogo' | 'admin' | 'profile',
-    tab?: 'panel' | 'history'
+    tab?: 'panel' | 'history' | 'activities'
   ) => void;
   isStaff?: boolean;
   userEmail: string;

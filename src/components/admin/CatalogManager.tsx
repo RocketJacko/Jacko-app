@@ -66,7 +66,7 @@ export interface Product {
 }
 
 
-export function CatalogManager() {
+function useCatalogManager() {
   const [activeSubTab, setActiveSubTab] = useState<'products' | 'categories' | 'payments'>('products');
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -272,7 +272,6 @@ export function CatalogManager() {
   const handleToggleActiveProduct = async (prod: Product) => {
     const newStatus = !prod.is_active;
     
-    // Optimistic local state update to prevent UI layout shift or scroll resetting
     setProducts(prev => prev.map(p => p.id === prod.id ? { ...p, is_active: newStatus } : p));
 
     try {
@@ -282,7 +281,6 @@ export function CatalogManager() {
         .eq('id', prod.id);
 
       if (error) {
-        // Rollback state if database update fails
         setProducts(prev => prev.map(p => p.id === prod.id ? { ...p, is_active: !newStatus } : p));
         throw error;
       }
@@ -308,7 +306,8 @@ export function CatalogManager() {
     }
     setIsLoading(true);
     try {
-      const productsToDelete = products.filter(p => selectedProducts.includes(p.id));
+      const selectedSet = new Set(selectedProducts);
+      const productsToDelete = products.filter(p => selectedSet.has(p.id));
       const deletedTitles = productsToDelete.map(p => p.title).join(', ');
 
       const { error } = await supabase
@@ -334,7 +333,6 @@ export function CatalogManager() {
     }
   };
 
-  // Product filtering and selection handlers
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
       setSelectedProducts(filteredProducts.map(p => p.id));
@@ -361,6 +359,42 @@ export function CatalogManager() {
     if (selectedCategorySlug === 'all') return true;
     return prod.categories?.slug === selectedCategorySlug;
   });
+
+  return {
+    activeSubTab, setActiveSubTab,
+    categories,
+    isLoading,
+    isBackgroundLoading,
+    errorMsg,
+    editingProduct, setEditingProduct,
+    searchQuery, setSearchQuery,
+    selectedCategorySlug, setSelectedCategorySlug,
+    selectedProducts, setSelectedProducts,
+    loadData,
+    handleSaveCategory, handleDeleteCategory,
+    handleSaveProduct, handleDeleteProduct, handleToggleActiveProduct,
+    handleDeleteMultipleProducts, handleSelectAll, handleSelectOne,
+    filteredProducts
+  };
+}
+
+export function CatalogManager() {
+  const {
+    activeSubTab, setActiveSubTab,
+    categories,
+    isLoading,
+    isBackgroundLoading,
+    errorMsg,
+    editingProduct, setEditingProduct,
+    searchQuery, setSearchQuery,
+    selectedCategorySlug, setSelectedCategorySlug,
+    selectedProducts, setSelectedProducts,
+    loadData,
+    handleSaveCategory, handleDeleteCategory,
+    handleSaveProduct, handleDeleteProduct, handleToggleActiveProduct,
+    handleDeleteMultipleProducts, handleSelectAll, handleSelectOne,
+    filteredProducts
+  } = useCatalogManager();
 
   return (
     <div className="catalog-manager-root">
@@ -538,16 +572,18 @@ function ProductsSection({
                   <th className="col-prod-price-header">Precio</th>
                   <th className="col-prod-points-header">Puntos</th>
                   <th className="col-prod-stock-header">Stock</th>
-                  <th className="col-prod-status-header">Visibilidad</th>
+                  <th className="col-prod-status-header">Modo Pago</th>
                   <th className="col-prod-active-header">Estado</th>
                   <th className="col-prod-actions-header">Acciones</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredProducts.map((prod) => {
-                  const isSelected = selectedProducts.includes(prod.id);
-                  return (
-                    <tr key={prod.id} className={`tasks-tr ${isSelected ? 'row-selected' : ''}`}>
+                {(() => {
+                  const selectedSet = new Set(selectedProducts);
+                  return filteredProducts.map((prod) => {
+                    const isSelected = selectedSet.has(prod.id);
+                    return (
+                      <tr key={prod.id} className={`tasks-tr ${isSelected ? 'row-selected' : ''}`}>
                       <td className="col-prod-checkbox-cell">
                         <input
                           type="checkbox"
@@ -588,10 +624,7 @@ function ProductsSection({
                       <td className="col-prod-stock-cell">
                         <span className="task-badge badge-neutral">{prod.stock === null ? '∞' : prod.stock}</span>
                       </td>
-                      <td className="col-prod-status-cell" style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center', justifyContent: 'center', border: 'none' }}>
-                        <span className={`task-badge ${prod.visibility === 'invited_only' || prod.visibility === 'invited' ? 'badge-brand' : 'badge-success'}`} style={{ width: '80px', textAlign: 'center' }}>
-                          {prod.visibility === 'invited_only' || prod.visibility === 'invited' ? 'Invitado' : 'General'}
-                        </span>
+                      <td className="col-prod-status-cell" style={{ border: 'none', textAlign: 'center' }}>
                         <span className={`task-badge ${prod.payment_modes === 'points' ? 'badge-brand' : (prod.payment_modes === 'money' ? 'badge-success' : 'badge-neutral')}`} style={{ width: '80px', textAlign: 'center', textTransform: 'none' }}>
                           {prod.payment_modes === 'points' ? 'Puntos' : (prod.payment_modes === 'money' ? 'Dinero' : 'Ambos')}
                         </span>
@@ -599,8 +632,7 @@ function ProductsSection({
                       <td className="col-prod-active-cell">
                         <button
                           type="button"
-                          className="pm-card-switch-container"
-                          style={{ margin: 0, justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                          className="pm-card-switch-container admin-toggle-active-btn"
                           aria-label={prod.is_active ? 'Desactivar producto' : 'Activar producto'}
                           onClick={() => onToggleActive(prod)}
                         >
@@ -624,7 +656,7 @@ function ProductsSection({
                       </td>
                     </tr>
                   );
-                })}
+                })})()}
               </tbody>
             </table>
             <div className="dt-table-footer" style={{ borderTop: '1px solid var(--beige-light)' }}>

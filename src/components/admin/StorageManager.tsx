@@ -359,9 +359,8 @@ export function StorageManager({
                 <p style={{ margin: '0 0 10px', fontSize: '0.9rem', opacity: 0.7 }}>Esta carpeta no tiene archivos.</p>
                 <button
                   type="button"
-                  className="btn-admin-secondary"
+                  className="btn-admin-secondary admin-btn-back"
                   onClick={handleGoBack}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer', padding: '6px 12px', border: '1px solid var(--beige-dark)', borderRadius: '8px', background: '#fff', fontWeight: 700 }}
                 >
                   <ArrowLeft size={14} /> Subir de nivel
                 </button>

@@ -23,24 +23,7 @@ export class ErrorBoundary extends Component<Props, State> {
   public render() {
     if (this.state.hasError) {
       return (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "3rem 2rem",
-            margin: "2rem auto",
-            maxWidth: "500px",
-            backgroundColor: "var(--beige-light, #e8ddc8)",
-            border: "2px solid var(--beige-dark, #b8a888)",
-            borderRadius: "24px",
-            textAlign: "center",
-            boxShadow: "0 10px 30px rgba(42, 26, 10, 0.05)",
-            fontFamily: "var(--font-body), sans-serif",
-            color: "var(--brown-dark, #2a1a0a)",
-          }}
-        >
+        <div style={ERROR_CONTAINER_STYLE}>
           {" "}
           <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>
             {" "}
@@ -66,19 +49,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <button
             type="button"
             onClick={this.handleReload}
-            style={{
-              backgroundColor: "var(--orange-base, #d4621a)",
-              color: "#ffffff",
-              border: "none",
-              fontFamily: "var(--font-display), cursive",
-              fontSize: "0.95rem",
-              fontWeight: 800,
-              padding: "12px 28px",
-              borderRadius: "12px",
-              cursor: "pointer",
-              boxShadow: "0 4px 14px rgba(212, 98, 26, 0.2)",
-              transition: "all 0.2s ease",
-            }}
+            style={RELOAD_BUTTON_STYLE}
             onMouseOver={(e) => {
               e.currentTarget.style.backgroundColor =
                 "var(--orange-light, #e8762a)";
@@ -99,3 +70,34 @@ export class ErrorBoundary extends Component<Props, State> {
     return this.props.children;
   }
 }
+
+const ERROR_CONTAINER_STYLE: React.CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: "3rem 2rem",
+  margin: "2rem auto",
+  maxWidth: "500px",
+  backgroundColor: "var(--beige-light, #e8ddc8)",
+  border: "2px solid var(--beige-dark, #b8a888)",
+  borderRadius: "24px",
+  textAlign: "center",
+  boxShadow: "0 10px 30px rgba(42, 26, 10, 0.05)",
+  fontFamily: "var(--font-body), sans-serif",
+  color: "var(--brown-dark, #2a1a0a)",
+};
+
+const RELOAD_BUTTON_STYLE: React.CSSProperties = {
+  backgroundColor: "var(--orange-base, #d4621a)",
+  color: "#ffffff",
+  border: "none",
+  fontFamily: "var(--font-display), cursive",
+  fontSize: "0.95rem",
+  fontWeight: 800,
+  padding: "12px 28px",
+  borderRadius: "12px",
+  cursor: "pointer",
+  boxShadow: "0 4px 14px rgba(212, 98, 26, 0.2)",
+  transition: "all 0.2s ease",
+};

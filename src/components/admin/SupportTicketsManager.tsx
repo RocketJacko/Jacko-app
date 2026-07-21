@@ -361,10 +361,9 @@ export function SupportTicketsManager() {
                   </button>
                   <button
                     type="button"
-                    className="btn-admin-secondary"
+                    className="btn-admin-secondary admin-btn-medium-outline"
                     onClick={() => handleUpdateTicketStatus('closed')}
                     disabled={isUpdating}
-                    style={{ padding: '10px 16px', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer', border: '1.5px solid var(--beige-dark)', borderRadius: '10px', background: '#fff', fontWeight: 700 }}
                   >
                     <X size={16} />
                     <span>Cerrar sin Resolver</span>

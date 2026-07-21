@@ -52,11 +52,6 @@ export function DockNav({
           label: 'Inicio',
         },
         {
-          id: 'catalogo',
-          icon: 'M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z',
-          label: 'Servicios',
-        },
-        {
           id: 'register',
           icon: 'M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h3a3 3 0 013 3v1',
           label: 'Ingreso / Registro',
@@ -83,6 +78,7 @@ export function DockNav({
     if (id === 'register') {
       onViewChange('landing');
       setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('open-login-form'));
         window.dispatchEvent(new CustomEvent('scroll-to-section', { detail: 'register' }));
       }, 50);
       return;

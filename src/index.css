@@ -1,5 +1,30 @@
 @import "tailwindcss";
 
+@theme inline {
+  --color-hightlight-light: #DADBF8;
+  --color-accent-light: #D9EAE3;
+  --color-primary-light: #FFCFE1;
+  --color-secondary-light: #FFFCE5;
+  --color-primary: #FF0F67;
+  --color-primary-content: #fff;
+  --color-secondary: #FFF07C;
+  --color-secondary-content: #0A0A0A;
+  --color-accent: #439775;
+  --color-accent-content: #0A0A0A;
+  --color-neutral: #222222;
+  --color-neutral-content: #FFFFFF;
+  --color-base-100: #f0f0f0;
+  --color-base-200: #ffffff;
+  --color-base-300: #F2F2F2;
+  --color-base-content: #0A0A0A;
+  --color-info: #3ABFF8;
+  --color-success: #36D399;
+  --color-warning: #FBBD23;
+  --color-error: #F87272;
+  --color-highlight: #454ADE;
+  --color-muted: #777777;
+}
+
 :root {
   /* Paleta JACKO™ */
   --beige-base: #d4c4a8;
@@ -129,4 +154,265 @@ body {
   .col-span-lg-fourth { grid-column: span 3; } /* 4 columnas en desktop (12/3) */
   .col-span-lg-half { grid-column: span 6; }
 }
+
+/* ─── Custom Premium Modals (Skate & Streetwear Theme) ─── */
+.custom-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(12, 8, 4, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 1.5rem;
+  overflow: hidden;
+}
+
+.custom-modal-card {
+  background: linear-gradient(155deg, #fdfaf5 0%, #f5efe2 60%, #ede4d0 100%);
+  border: 1px solid rgba(212, 163, 88, 0.25);
+  border-radius: 28px;
+  padding: 2.25rem 2rem;
+  width: 100%;
+  max-width: 440px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow:
+    0 40px 100px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.12) inset,
+    0 1px 0 rgba(255, 255, 255, 0.6) inset;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: customModalScaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes customModalScaleUp {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.custom-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.custom-modal-title {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--orange-deep);
+  margin: 0;
+}
+
+.custom-modal-close {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  background: rgba(42, 26, 10, 0.05);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brown-dark, #2a1a0a);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.custom-modal-close:hover {
+  background: rgba(42, 26, 10, 0.12);
+  transform: rotate(90deg);
+  opacity: 1;
+}
+
+.custom-modal-body {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--brown-dark);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.custom-modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.custom-modal-field label {
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--brown-dark);
+  opacity: 0.8;
+}
+
+.custom-modal-input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid var(--beige-dark);
+  border-radius: 16px;
+  background-color: white;
+  font-size: 0.88rem;
+  color: var(--brown-dark);
+  transition: all 0.2s ease;
+}
+
+.custom-modal-input:focus {
+  outline: none;
+  border-color: var(--orange-base);
+  box-shadow: 0 0 0 3px rgba(212, 98, 26, 0.15);
+}
+
+.custom-modal-input.error-state {
+  border-color: #ef4444;
+  background-color: #fef2f2;
+}
+
+.custom-modal-error-text {
+  font-size: 0.75rem;
+  color: #ef4444;
+  margin: 0;
+  font-weight: 700;
+}
+
+.custom-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.btn-modal-action {
+  padding: 10px 20px;
+  font-family: var(--font-display);
+  font-size: 0.88rem;
+  border-radius: 99px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-modal-action.primary {
+  background-color: var(--orange-base);
+  color: white;
+  box-shadow: 0 4px 12px rgba(212, 98, 26, 0.25);
+}
+
+.btn-modal-action.primary:hover:not(:disabled) {
+  background-color: var(--brown-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(42, 26, 10, 0.25);
+}
+
+.btn-modal-action.secondary {
+  background-color: var(--beige-light);
+  color: var(--brown-dark);
+}
+
+.btn-modal-action.secondary:hover {
+  background-color: var(--beige-base);
+}
+
+.btn-modal-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ─── Global Premium Toast Notifications (Skate & Streetwear Theme) ─── */
+.custom-toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 25000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.custom-toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border-radius: 16px;
+  font-family: var(--font-body), system-ui, sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  box-shadow: 0 10px 30px rgba(42, 26, 10, 0.2);
+  border: 2px solid var(--brown-dark);
+  color: var(--brown-dark);
+  background: var(--white-warm);
+  min-width: 320px;
+  max-width: 450px;
+}
+
+.custom-toast.success {
+  background: #f0fdf4;
+  border-color: #16a34a;
+  color: #14532d;
+}
+
+.custom-toast.error {
+  background: #fef2f2;
+  border-color: #dc2626;
+  color: #7f1d1d;
+}
+
+.custom-toast-icon {
+  font-size: 1.25rem;
+}
+
+.custom-toast-text {
+  flex: 1;
+  line-height: 1.4;
+}
+
+.custom-toast-close {
+  background: none;
+  border: none;
+  color: var(--brown-dark);
+  opacity: 0.6;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+}
+
+.custom-toast-close:hover {
+  opacity: 1;
+}
+
+@media (max-width: 768px) {
+  .custom-modal-input {
+    font-size: 16px;
+  }
+}
+
+
 

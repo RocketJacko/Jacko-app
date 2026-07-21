@@ -1,11 +1,10 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 export const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// ─── Helpers para matching fuzzy ──────────────────────────────────────────────
 function similarityScore(a: string, b: string): number {
   if (!a || !b) return 0;
   const la = a.toUpperCase().trim();
@@ -35,7 +34,7 @@ function normalizeBank(bank: string): string {
   return bank
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")  // quita tildes
+    .replace(/[\u0300-\u036f]/g, "")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -46,191 +45,150 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
     // 1. Leer y validar el cuerpo del request
     const body = await req.json();
     const {
       productId,
       paymentMethodId,
-      paymentMethodType,
-      payerName,     // Nombre del pagador declarado por el usuario
-      bankName,      // Banco declarado (Davivienda, Bancolombia, etc.)
-      paymentDate,   // Fecha del pago en ISO string (YYYY-MM-DD)
-      quantity,      // Cantidad (opcional)
+      payerName,
+      bankName,
+      paymentDate,
+      quantity,
+      planId,
       guestEmail,
       guestName,
-      exchangeRate,  // TRM enviada por el cliente
     } = body;
-
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-
-    // 2. Verificar sesión o crear cuenta de invitado
-    let userId = null;
-
-    const authHeader = req.headers.get("Authorization");
-    if (authHeader && authHeader.length > 20) {
-      const supabaseClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
-        global: { headers: { Authorization: authHeader } },
-      });
-      const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-      if (!userError && user) {
-        userId = user.id;
-      }
-    }
-
-    if (!userId) {
-      if (!guestEmail) {
-        return new Response(
-          JSON.stringify({ success: false, error: "No autorizado: Falta token de sesión o correo de invitado." }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      const { data: existingUserId } = await supabaseAdmin.rpc('get_user_id_by_email', { p_email: guestEmail });
-      
-      if (existingUserId) {
-        userId = existingUserId;
-      } else {
-        const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-          email: guestEmail,
-          email_confirm: true,
-          user_metadata: { name: guestName || payerName || "Invitado" }
-        });
-        if (authError || !authData.user) {
-          return new Response(
-            JSON.stringify({ success: false, error: "Error al registrar la cuenta de invitado." }),
-            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-        userId = authData.user.id;
-      }
-    }
 
     if (!productId) {
       return new Response(
-        JSON.stringify({ success: false, error: "ID de producto requerido." }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "ID de producto requerido." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
     if (!payerName || payerName.trim().length < 3) {
       return new Response(
-        JSON.stringify({ success: false, error: "Nombre del pagador requerido (mínimo 3 caracteres)." }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "Nombre del pagador requerido (mínimo 3 caracteres)." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
     if (!bankName) {
       return new Response(
-        JSON.stringify({ success: false, error: "Banco/entidad de pago requerida." }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "Banco/entidad de pago requerida." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
     if (!paymentDate) {
       return new Response(
-        JSON.stringify({ success: false, error: "Fecha del pago requerida." }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "Fecha del pago requerida." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const qty = quantity && Number(quantity) > 0 ? Math.floor(Number(quantity)) : 1;
 
-    // 3. Verificar que el producto existe y está activo
+    let userId: string | null = null;
+    let userEmail: string | null = null;
+
+    // 2. Verificar sesión del usuario
+    const authHeader = req.headers.get("Authorization");
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      const token = authHeader.split(" ")[1];
+      const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
+      if (token && token !== anonKey) {
+        const supabaseClient = createClient(supabaseUrl, anonKey, {
+          global: { headers: { Authorization: authHeader } },
+        });
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        if (user) {
+          userId = user.id;
+          userEmail = user.email || null;
+        }
+      }
+    }
+
+    // 3. Si no hay sesión válida, rechazar la transacción
+    if (!userId) {
+      return new Response(
+        JSON.stringify({ error: "No autorizado: Debes iniciar sesión para realizar compras." }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // 4. Verificar que el producto existe y está activo
     const { data: product, error: productError } = await supabaseAdmin
       .from("products_with_plans")
-      .select("id, title, price_cop, price_usd, slug, plans")
+      .select("id, title, price_cop, slug, plans")
       .eq("id", productId)
       .eq("is_active", true)
       .maybeSingle();
 
     if (productError || !product) {
       return new Response(
-        JSON.stringify({ success: false, error: "Producto no encontrado o inactivo." }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "Producto no encontrado o inactivo." }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const planId = body.planId;
     let totalCop = 0;
-    let totalUsd = 0;
     let selectedPlan = null;
 
     if (product.plans && Array.isArray(product.plans) && planId) {
       selectedPlan = product.plans.find((p: { id: string }) => p.id === planId);
     }
 
-    const rate = exchangeRate && Number(exchangeRate) > 0 ? Number(exchangeRate) : 3700.0;
-
     if (selectedPlan) {
-      const baseUsd = selectedPlan.price_cop || 0;
+      const basePrice = selectedPlan.price_cop || 0;
       if (selectedPlan.bulk_pricing) {
         const qtyStr = String(qty);
         if (selectedPlan.bulk_pricing[qtyStr] !== undefined) {
-          totalUsd = selectedPlan.bulk_pricing[qtyStr];
-          totalCop = Math.round(totalUsd * rate);
+          totalCop = selectedPlan.bulk_pricing[qtyStr];
         } else if (selectedPlan.id === "pago-unico") {
           totalCop = qty * 60000;
-          totalUsd = totalCop / rate;
         } else {
-          totalUsd = baseUsd * qty;
-          totalCop = Math.round(totalUsd * rate);
+          totalCop = basePrice * qty;
         }
       } else {
-        totalUsd = baseUsd * qty;
-        totalCop = Math.round(totalUsd * rate);
+        totalCop = basePrice * qty;
       }
     } else {
       if (!product.price_cop || product.price_cop <= 0) {
         return new Response(
-          JSON.stringify({ success: false, error: "Este producto no tiene precio configurado." }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ error: "Este producto no tiene precio en COP." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      const baseUsd = product.price_cop || 0;
-      totalUsd = baseUsd * qty;
-      totalCop = Math.round(totalUsd * rate);
+      totalCop = product.price_cop * qty;
       if (product.slug === "mini-curso-git-github") {
         if (qty === 1) totalCop = 140000;
         else if (qty === 2) totalCop = 220000;
         else if (qty === 3) totalCop = 240000;
         else if (qty === 4) totalCop = 240000;
         else totalCop = qty * 60000;
-        totalUsd = totalCop / rate;
       }
     }
 
-    // 4. Crear la orden pendiente con status 'pending_nequi'
-    let resolvedPaymentMethodId = paymentMethodId || null;
-    if (!resolvedPaymentMethodId && (paymentMethodType || bankName)) {
-      const pmType = paymentMethodType || (bankName === 'Nequi App' || bankName?.toLowerCase().includes('nequi') ? 'nequi' : 'bre_b');
-      const { data: pm } = await supabaseAdmin
-        .from("payment_methods")
-        .select("id")
-        .eq("type", pmType)
-        .eq("is_active", true)
-        .limit(1)
-        .maybeSingle();
-      if (pm) {
-        resolvedPaymentMethodId = pm.id;
-      }
-    }
-
+    // 5. Crear la orden pendiente con status 'pending_nequi'
     const { data: order, error: orderError } = await supabaseAdmin
       .from("orders")
       .insert({
         user_id: userId,
         product_id: productId,
         amount_cop: totalCop,
-        amount_usd: Number(totalUsd.toFixed(2)),
         points_used: 0,
         status: "pending_nequi",
         payment_type: "money",
-        payment_method_id: resolvedPaymentMethodId,
+        payment_method_id: paymentMethodId || null,
         quantity: qty,
-        // Datos declarados por el usuario para el matching posterior
         nequi_payer_declared: payerName.trim().toUpperCase(),
         nequi_bank_declared: bankName.trim(),
         nequi_date_declared: paymentDate,
         reference_note: selectedPlan ? `Plan: ${selectedPlan.name}` : null,
         plan_id: planId || null,
+        admin_note: null,
       })
       .select("id")
       .single();
@@ -238,12 +196,11 @@ Deno.serve(async (req) => {
     if (orderError || !order) {
       console.error("Error creando orden Nequi:", orderError);
       return new Response(
-        JSON.stringify({ success: false, error: "Error al registrar la orden de pago." }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "Error al registrar la orden de pago." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // 4b. Buscar coincidencia retroactiva con algún email de Nequi sin asociar de las últimas 48 horas
     let alreadyApproved = false;
     try {
       const limitDate = new Date();
@@ -274,7 +231,6 @@ Deno.serve(async (req) => {
         for (const log of emailLogs as NequiEmailLog[]) {
           let score = 0;
 
-          // Banco (40 pts)
           if (bankName && log.bank) {
             const bankA = normalizeBank(bankName);
             const bankB = normalizeBank(log.bank);
@@ -283,7 +239,6 @@ Deno.serve(async (req) => {
             }
           }
 
-          // Nombre del pagador (40 pts) — fuzzy match
           if (payerName && log.payer) {
             const nameSim = similarityScore(payerName, log.payer);
             if (nameSim >= 0.80) {
@@ -293,7 +248,6 @@ Deno.serve(async (req) => {
             }
           }
 
-          // Fecha (20 pts) — mismo día
           if (paymentDate && log.email_date) {
             const emailDateStr = new Date(log.email_date).toISOString().split("T")[0];
             if (paymentDate === emailDateStr) {
@@ -307,11 +261,9 @@ Deno.serve(async (req) => {
           }
         }
 
-        // Si la coincidencia es lo suficientemente alta (>= 0.75), auto-aprobar inmediatamente
         if (bestLog && bestScore >= 0.75) {
           console.log(`Coincidencia retroactiva encontrada: log ID ${bestLog.id} con score ${bestScore.toFixed(2)}`);
 
-          // Intentar reclamar credenciales del pool
           let deliveredCredentials: string | null = null;
           const { data: claimedCreds, error: rpcError } = await supabaseAdmin
             .rpc("claim_product_credential_v2", {
@@ -329,7 +281,6 @@ Deno.serve(async (req) => {
               cred.extra_data ? `\n\nDetalles: ${JSON.stringify(cred.extra_data)}` : ""
             }`;
           } else {
-            // Fallback a credenciales estáticas
             const { data: prodData } = await supabaseAdmin
               .from("products")
               .select("credentials")
@@ -345,7 +296,6 @@ Deno.serve(async (req) => {
             .single();
           const deliveredFilePath = prodData?.file_path || null;
 
-          // Aprobar la orden directamente
           const { error: updateOrderError } = await supabaseAdmin
             .from("orders")
             .update({
@@ -360,14 +310,14 @@ Deno.serve(async (req) => {
               nequi_payment_method: bestLog.payment_method,
               nequi_match_score: bestScore,
               nequi_match_status: "auto_approved",
-              admin_note: `Aprobado automáticamente por coincidencia retroactiva al crear la orden. Score: ${bestScore.toFixed(2)} | Referencia: ${bestLog.reference}`,
+              // NOTA: El trigger BEFORE UPDATE en orders interceptará esta actualización a 'approved' 
+              -- y transferirá la propiedad del placeholder 0000...0000 al usuario real aprovisionado
             })
             .eq("id", order.id);
 
           if (updateOrderError) {
             console.error("Error al aprobar orden por coincidencia retroactiva:", updateOrderError);
           } else {
-            // Vincular el log del email
             const { error: updateLogError } = await supabaseAdmin
               .from("nequi_email_logs")
               .update({
@@ -389,8 +339,7 @@ Deno.serve(async (req) => {
       console.error("Error inesperado en algoritmo de matching retroactivo:", matchErr);
     }
 
-    // 5. Generar URL pre-firmada para que el frontend suba el comprobante a Storage
-    //    El archivo se guarda en: nequi-comprobantes/{userId}/{order_id}.jpg
+    // 6. Generar URL pre-firmada para subir comprobante a Storage
     const filePath = `${userId}/${order.id}.jpg`;
     const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
       .from("nequi-comprobantes")
@@ -398,10 +347,8 @@ Deno.serve(async (req) => {
 
     if (uploadError || !uploadData) {
       console.error("Error generando URL de upload:", uploadError);
-      // No falla la creación de la orden, solo no tendremos URL de comprobante
     }
 
-    // 6. Guardar la URL pública del comprobante en la orden (para mostrar en admin)
     const comprobanteUrl = uploadData
       ? `${supabaseUrl}/storage/v1/object/public/nequi-comprobantes/${filePath}`
       : null;
@@ -412,8 +359,6 @@ Deno.serve(async (req) => {
         .update({ receipt_url: comprobanteUrl })
         .eq("id", order.id);
     }
-
-    console.log(`Orden Nequi creada: ${order.id} | Usuario: ${userId} | Producto: ${productId} | Pagador: ${payerName} | Banco: ${bankName} | Auto-aprobada retroactiva: ${alreadyApproved}`);
 
     return new Response(
       JSON.stringify({
@@ -430,8 +375,8 @@ Deno.serve(async (req) => {
     const message = e instanceof Error ? e.message : "Error interno del servidor";
     console.error("Error inesperado en nequi-create-order:", e);
     return new Response(
-      JSON.stringify({ success: false, error: message }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ error: message }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });

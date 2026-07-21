@@ -1934,4 +1934,22 @@
   cursor: not-allowed;
 }
 
+.btn-receipt-view {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-decoration: none;
+  text-align: center;
+  background-color: var(--beige-light, #f8f3eb);
+  color: var(--brown-dark, #2a1a0a);
+  border: 1px solid rgba(184, 168, 136, 0.35);
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
 

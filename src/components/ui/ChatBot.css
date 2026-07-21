@@ -4,7 +4,7 @@
 
 .jacko-chatbot-wrapper {
   position: fixed;
-  bottom: 85px;
+  bottom: calc(85px + env(safe-area-inset-bottom, 0px));
   right: 24px;
   z-index: 1000;
   font-family: var(--font-body), 'Nunito', sans-serif;

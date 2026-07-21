@@ -1,0 +1,89 @@
+/* ─── Skeleton Base & Shimmer Animation (GPU Accelerated) ─── */
+.skeleton-base {
+  background-color: var(--modern-bg, #F5EFE2);
+  position: relative;
+  overflow: hidden;
+  display: block;
+}
+
+.skeleton-base::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.5) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: skeletonShimmer 1.6s infinite cubic-bezier(0.4, 0, 0.6, 1);
+  will-change: transform;
+}
+
+@keyframes skeletonShimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.skeleton-text {
+  border-radius: 6px;
+  height: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.skeleton-circular {
+  border-radius: 50%;
+}
+
+.skeleton-rectangular {
+  border-radius: 12px;
+}
+
+/* Preset Product Card Skeleton */
+.product-card-skeleton {
+  pointer-events: none;
+  user-select: none;
+  min-height: 380px;
+  display: flex;
+  flex-direction: column;
+}
+
+.product-card-skeleton .skeleton-thumb {
+  width: 100%;
+  height: 180px;
+  border-radius: 16px;
+  margin-bottom: 1rem;
+}
+
+.product-card-skeleton .skeleton-title {
+  width: 75%;
+  height: 1.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.product-card-skeleton .skeleton-subtitle {
+  width: 50%;
+  height: 0.9rem;
+  margin-bottom: 1.25rem;
+}
+
+.product-card-skeleton .skeleton-button {
+  width: 100%;
+  height: 42px;
+  border-radius: 12px;
+  margin-top: auto;
+}
+
+/* Table Row Skeleton */
+.table-row-skeleton {
+  padding: 1rem;
+  border-bottom: 1px solid var(--modern-border, #E6E2DA);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}

@@ -555,4 +555,10 @@
   .member-nav-desktop {
     display: none;
   }
+  .member-menu-toggle {
+    display: flex !important;
+  }
+  .member-user-zone {
+    display: none !important;
+  }
 }

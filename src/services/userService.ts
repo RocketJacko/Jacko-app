@@ -14,13 +14,21 @@ export const userService = {
       async () => {
         const [
           { data: profileData },
-          { data: ordersData }
+          { data: ordersData },
+          { data: isInvited }
         ] = await Promise.all([
           supabase.from('profiles').select('*').eq('id', userId).maybeSingle(),
-          supabase.from('orders').select('*, products(title, slug), payment_methods(type, name)').eq('user_id', userId).order('created_at', { ascending: false }).limit(30)
+          supabase.from('orders').select('*, products(title, slug), payment_methods(type, name)').eq('user_id', userId).order('created_at', { ascending: false }).limit(30),
+          supabase.rpc('is_current_user_invited')
         ]);
+        
+        const finalProfile = profileData ? {
+          ...(profileData as Profile),
+          isInvited: !!isInvited
+        } : null;
+
         return {
-          profile: profileData as Profile | null,
+          profile: finalProfile,
           orders: (ordersData as Order[]) || []
         };
       },
@@ -81,5 +89,43 @@ export const userService = {
       throw new Error('No se recibió respuesta del servidor de activación.');
     }
     return data;
+  },
+
+  async assignPoolEmail(
+    orderId: string,
+    planId?: string
+  ): Promise<{ success: boolean; assigned: boolean; message: string }> {
+    const { data, error } = await supabase.functions.invoke('assign-pool-email', {
+      body: { order_id: orderId, plan_id: planId }
+    });
+    if (error) {
+      let customMsg = error.message;
+      const httpError = error as { context?: { json?: () => Promise<{ error?: string }> } };
+      if (httpError.context && typeof httpError.context.json === 'function') {
+        try {
+          const body = await httpError.context.json();
+          if (body && body.error) {
+            customMsg = body.error;
+          }
+        } catch {
+          // ignore
+        }
+      }
+      throw new Error(customMsg || 'Ocurrió un error al asignar correo del pool.');
+    }
+    if (!data) {
+      throw new Error('No se recibió respuesta del servidor de asignación.');
+    }
+    return data;
+  },
+
+  async redeemInvitationCode(
+    code: string
+  ): Promise<{ success: boolean; message: string }> {
+    const { data, error } = await supabase.rpc('redeem_invitation_code', { p_code: code });
+    if (error) {
+      throw new Error(error.message || 'Error al procesar el canje de invitación.');
+    }
+    return data as { success: boolean; message: string };
   }
 };

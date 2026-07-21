@@ -69,6 +69,7 @@ function loadAndCacheImage(
 ): Promise<{ url: string; img: HTMLImageElement | null }> {
   return new Promise((resolve) => {
     const img = new Image();
+    img.crossOrigin = 'anonymous';
     img.decoding = 'async';
 
     img.onload = () => {
@@ -151,8 +152,16 @@ export function useImageSequence(urls: readonly string[]): ImageSequenceResult {
     };
 
     const loadAll = async () => {
-      const promises = urls.map((url) => loadAndCacheImage(url, onProgress));
-      const results = await Promise.all(promises);
+      const batchSize = 15; // Carga en batches de 15 para evitar errores 429 en Supabase
+      const results = [];
+
+      for (let i = 0; i < urls.length; i += batchSize) {
+        if (cancelled) return;
+        const batch = urls.slice(i, i + batchSize);
+        const promises = batch.map((url) => loadAndCacheImage(url, onProgress));
+        const batchResults = await Promise.all(promises);
+        results.push(...batchResults);
+      }
 
       if (cancelled) return;
 
@@ -174,10 +183,31 @@ export function useImageSequence(urls: readonly string[]): ImageSequenceResult {
 
       if (cancelled) return;
 
-      // Reconstruir en el orden original (algunas pueden ser null si fallaron)
-      const ordered = urls.map((url) => imageSequenceCache.get(url)).filter(
-        (img): img is HTMLImageElement => img !== undefined,
-      );
+      // Reconstruir en el orden original conservando la alineación exacta del índice (1:1)
+      const ordered = urls.map((url, idx) => {
+        const img = imageSequenceCache.get(url);
+        if (img) return img;
+
+        // Si falló la carga, usamos el frame anterior como fallback para mantener alineación e índices intactos
+        if (idx > 0) {
+          const prevUrl = urls[idx - 1];
+          const prevImg = imageSequenceCache.get(prevUrl);
+          if (prevImg) {
+            console.warn(`[useImageSequence] Fallback: duplicando frame anterior para reemplazar error en ${url}`);
+            return prevImg;
+          }
+        }
+
+        // Si es el primer frame y falló, buscamos el primero que sea exitoso adelante
+        for (let j = idx + 1; j < urls.length; j++) {
+          const nextUrl = urls[j];
+          const nextImg = imageSequenceCache.get(nextUrl);
+          if (nextImg) return nextImg;
+        }
+
+        // Fallback final (un objeto Image vacío)
+        return new Image();
+      });
 
       setImages(ordered);
       setStatus(hasError ? 'error' : 'ready');

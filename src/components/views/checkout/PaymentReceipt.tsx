@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Check, Copy, CheckCheck, Clock } from 'lucide-react';
 import { supabase } from '../../../lib/supabaseClient';
 import type { ActivationDetail } from '../dashboard/types';
@@ -17,10 +18,16 @@ export function PaymentReceipt({
   onBackToCatalog,
   onNavigateToDashboard,
 }: PaymentReceiptProps) {
+  const navigate = useNavigate();
   const [assignedEmail, setAssignedEmail] = useState<string | null>(null);
-  const [isLoadingEmail, setIsLoadingEmail] = useState(receiptData.statusType === 'success');
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [activationDetails, setActivationDetails] = useState<ActivationDetail[]>([]);
+  const [localStatus, setLocalStatus] = useState<'success' | 'pending' | 'error'>(
+    receiptData.statusType === 'success' ? 'success' : 'pending'
+  );
+  const [isLoadingEmail, setIsLoadingEmail] = useState(
+    receiptData.statusType === 'success' || receiptData.statusType === 'pending'
+  );
 
   const emailsList = assignedEmail
     ? assignedEmail
@@ -30,7 +37,19 @@ export function PaymentReceipt({
     : [];
 
   useEffect(() => {
-    if (receiptData.statusType !== 'success') return;
+    // Reset states to avoid leaking data from previous receipts
+    setAssignedEmail(null);
+    setActivationDetails([]);
+    setLocalStatus(
+      receiptData.statusType === 'success' ? 'success' : 'pending'
+    );
+    setIsLoadingEmail(receiptData.statusType === 'success' || receiptData.statusType === 'pending');
+
+    if (!receiptData.referenceId) {
+      setIsLoadingEmail(false);
+      return;
+    }
+
     let active = true;
 
     async function fetchOrder() {
@@ -43,7 +62,11 @@ export function PaymentReceipt({
 
         if (error || !data || !active) return;
 
-        /* delivered_credentials: set by pool assignment (points redemption) */
+        if (data.status === 'approved') {
+          setLocalStatus('success');
+        }
+
+        /* delivered_credentials: set by pool assignment */
         const creds = data.delivered_credentials;
         if (creds?.includes('@') || creds?.includes('Tu cuenta asignada:')) {
           const email = creds.includes('Tu cuenta asignada:')
@@ -52,7 +75,7 @@ export function PaymentReceipt({
           setAssignedEmail(email);
         }
 
-        /* activation_details: set by n8n after account creation (money purchase) */
+        /* activation_details: set by n8n after account creation */
         if (Array.isArray(data.activation_details) && data.activation_details.length > 0) {
           setActivationDetails(data.activation_details);
         }
@@ -65,7 +88,7 @@ export function PaymentReceipt({
 
     fetchOrder();
 
-    /* Realtime: when n8n writes to the order, update UI instantly */
+    /* Realtime: when n8n or database trigger writes to the order, update UI instantly */
     const channel = supabase
       .channel(`receipt-order-${receiptData.referenceId}`)
       .on(
@@ -78,6 +101,11 @@ export function PaymentReceipt({
         },
         (payload) => {
           if (!active) return;
+
+          if (payload.new?.status === 'approved') {
+            setLocalStatus('success');
+          }
+
           const creds = payload.new?.delivered_credentials;
           if (creds?.includes('@') || creds?.includes('Tu cuenta asignada:')) {
             const email = creds.includes('Tu cuenta asignada:')
@@ -102,14 +130,24 @@ export function PaymentReceipt({
     };
   }, [receiptData.referenceId, receiptData.statusType]);
 
+  const displayTitle = localStatus === 'success' ? '¡Pago Aprobado!' : receiptData.title;
+  
+  const displaySubtitle = localStatus === 'success'
+    ? (onNavigateToDashboard 
+        ? '¡Pago aprobado con éxito! Tu orden ha sido procesada y tu producto está activo en tu Dashboard.'
+        : '¡Pago aprobado con éxito! Tu cuenta ha sido creada. Por favor inicia sesión con tu correo electrónico en la sección de ingreso para activar y acceder a tus productos.')
+    : receiptData.subtitle;
+
+  const displayStatusLabel = localStatus === 'success' ? 'APROBADO' : receiptData.statusLabel;
+
   return (
     <div className="checkout-receipt-view">
       <div className="receipt-details-card">
         <div className="receipt-header">
           <div className="receipt-success-icon-wrapper">
-            <div className={`receipt-success-circle-outer ${receiptData.statusType}`}>
-              <div className={`receipt-success-circle-inner ${receiptData.statusType}`}>
-                {receiptData.statusType === 'success' ? (
+            <div className={`receipt-success-circle-outer ${localStatus}`}>
+              <div className={`receipt-success-circle-inner ${localStatus}`}>
+                {localStatus === 'success' ? (
                   <Check size={32} />
                 ) : (
                   <Clock size={32} className="pulse-icon" />
@@ -119,20 +157,20 @@ export function PaymentReceipt({
           </div>
         </div>
 
-        <h3 className="receipt-title">{receiptData.title}</h3>
-        <p className="receipt-subtitle">{receiptData.subtitle}</p>
+        <h3 className="receipt-title">{displayTitle}</h3>
+        <p className="receipt-subtitle">{displaySubtitle}</p>
         <div className="receipt-amount">{receiptData.amount}</div>
         <div className="receipt-badge-container">
-          <span className={`receipt-status-badge ${receiptData.statusType}`}>
-            {receiptData.statusLabel}
+          <span className={`receipt-status-badge ${localStatus}`}>
+            {displayStatusLabel}
           </span>
         </div>
 
         {/* Assigned email from pool (points redemption) */}
-        {isLoadingEmail && (
+        {isLoadingEmail && localStatus !== 'success' && (
           <div className="receipt-loader">
             <div className="loading-spinner" />
-            <span>Procesando tu pedido...</span>
+            <span>Esperando la confirmación de tu pago...</span>
           </div>
         )}
 
@@ -230,23 +268,25 @@ export function PaymentReceipt({
                 }}
               >
                 <h4 style={{ margin: '0 0 4px 0', fontFamily: 'var(--font-display)', color: 'var(--orange-deep)', fontSize: '0.9rem' }}>
-                  🎉 ¡Únete a la comunidad de JACKO™!
+                  {localStatus === 'success' ? '🎉 ¡Tu cuenta está lista!' : '🎉 ¡Únete a la comunidad de JACKO™!'}
                 </h4>
                 <p style={{ margin: '0', fontSize: '0.8rem', color: 'var(--brown-dark)', opacity: 0.9 }}>
-                  Crea tu cuenta para realizar misiones de la comunidad, acumular puntos y canjear premios gratis.
+                  {localStatus === 'success'
+                    ? 'Hemos creado tu cuenta con tu correo electrónico de compra. Por favor inicia sesión para activarla y acceder a tus productos.'
+                    : 'Crea tu cuenta para realizar misiones de la comunidad, acumular puntos y canjear premios gratis.'}
                 </p>
               </div>
               <button
                 type="button"
                 className="receipt-action-btn primary"
                 onClick={() => {
-                  window.dispatchEvent(new CustomEvent('app-navigate', { detail: { view: 'landing' } }));
+                  navigate("/");
                   setTimeout(() => {
                     window.dispatchEvent(new CustomEvent('scroll-to-section', { detail: 'register' }));
                   }, 100);
                 }}
               >
-                Crear Cuenta / Registrarme
+                {localStatus === 'success' ? 'Iniciar Sesión / Ingresar' : 'Crear Cuenta / Registrarme'}
               </button>
             </div>
           )}

@@ -20,15 +20,11 @@ let ok = true;
 
 console.log('\n[infinity-qa] 1/3 Comprobando frames generados...');
 const generated = path.join(root, 'src', 'generated', 'miPersonajeFrameUrls.ts');
-const framesDir = path.join(root, 'public', 'frames', 'f3d2a1c09b8e');
 if (!fs.existsSync(generated)) {
   console.error('  ✗ Falta', path.relative(root, generated), '— ejecuta npm run sync:personaje');
   ok = false;
-} else if (!fs.existsSync(framesDir)) {
-  console.warn('  ⚠ Carpeta de frames no encontrada:', path.relative(root, framesDir));
 } else {
-  const jpgs = fs.readdirSync(framesDir).filter((f) => /\.jpe?g$/i.test(f));
-  console.log('  ✓', jpgs.length, 'JPG en public/frames/f3d2a1c09b8e');
+  console.log('  ✓ Encontrado', path.relative(root, generated));
 }
 
 console.log('\n[infinity-qa] 2/3 TypeScript + Vite build...');

@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 export const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,32 +12,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // 1. Verificar sesión del usuario
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "No autorizado: Falta token de autenticación." }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    
-    const supabaseClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-    if (userError || !user) {
-      return new Response(
-        JSON.stringify({ error: "Sesión inválida o expirada." }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // 2. Leer entrada del request
-    const { paypalOrderId } = await req.json();
+    // 1. Leer entrada del request
+    const body = await req.json();
+    const { paypalOrderId } = body;
     if (!paypalOrderId) {
       return new Response(
         JSON.stringify({ error: "ID de orden de PayPal faltante." }),
@@ -45,17 +22,37 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Cliente admin para actualizar de forma segura e invalidar políticas de RLS restrictivas para escritura
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    // 3. Consultar la orden local correspondiente
+    // 2. Intentar verificar sesión de usuario si existe token
+    let userId: string | null = null;
+    const authHeader = req.headers.get("Authorization");
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      const token = authHeader.split(" ")[1];
+      const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
+      if (token && token !== anonKey) {
+        const supabaseClient = createClient(supabaseUrl, anonKey, {
+          global: { headers: { Authorization: authHeader } },
+        });
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        if (user) {
+          userId = user.id;
+        }
+      }
+    }
+
+    // 3. Consultar la orden local correspondiente por el ID de PayPal (reference_note)
     const { data: localOrder, error: localOrderError } = await supabaseAdmin
       .from("orders")
       .select(`
         id, 
         status, 
+        user_id,
         product_id, 
         delivered_credentials,
+        admin_note,
         products (
           id,
           title,
@@ -64,14 +61,21 @@ Deno.serve(async (req) => {
         )
       `)
       .eq("reference_note", paypalOrderId)
-      .eq("user_id", user.id)
       .maybeSingle();
 
     if (localOrderError || !localOrder) {
       console.error("Error al consultar orden local:", localOrderError);
       return new Response(
-        JSON.stringify({ error: "No se encontró la orden en el sistema o no te pertenece." }),
+        JSON.stringify({ error: "No se encontró la orden en el sistema o no tienes acceso." }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Si la orden pertenece a otro usuario o no estás autenticado, bloquear
+    if (localOrder.user_id !== userId) {
+      return new Response(
+        JSON.stringify({ error: "No autorizado: Esta orden de pago no te pertenece." }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -151,7 +155,6 @@ Deno.serve(async (req) => {
         paymentSuccess = true;
       }
     } else {
-      // Manejar el caso si la orden ya fue capturada (por ejemplo, si se llamó dos veces consecutivas)
       const errorText = await captureResponse.text();
       let errorJson = null;
       try {
@@ -163,7 +166,6 @@ Deno.serve(async (req) => {
       const errorCode = errorJson?.details?.[0]?.issue || errorJson?.name || "";
       if (errorCode === "ORDER_ALREADY_CAPTURED") {
         console.log(`La orden de PayPal ${paypalOrderId} ya había sido capturada. Verificando estado actual...`);
-        // Consultar el estado real de la orden en PayPal
         const getOrderResponse = await fetch(`${paypalBaseUrl}/v2/checkout/orders/${paypalOrderId}`, {
           method: "GET",
           headers: {
@@ -194,8 +196,6 @@ Deno.serve(async (req) => {
 
     // 7. Entregar credenciales del Pool o estáticas
     let deliveredCredentials = null;
-
-    // A) Llamar a la RPC atómica para reclamar una credencial del pool
     const { data: claimedCreds, error: rpcError } = await supabaseAdmin
       .rpc("claim_product_credential_v2", {
         p_product_id: localOrder.product_id,
@@ -206,7 +206,6 @@ Deno.serve(async (req) => {
       console.error("Error al llamar a claim_product_credential_v2:", rpcError);
     }
 
-    // Resolver el producto (puede venir como objeto o como arreglo de 1 elemento)
     const product = Array.isArray(localOrder.products)
       ? localOrder.products[0]
       : localOrder.products;
@@ -217,7 +216,6 @@ Deno.serve(async (req) => {
         cred.extra_data ? `\n\nDetalles: ${JSON.stringify(cred.extra_data)}` : ""
       }`;
     } else {
-      // B) Fallback a credenciales estáticas del producto si existen
       const staticCredentials = product?.credentials;
       if (staticCredentials) {
         deliveredCredentials = staticCredentials;
@@ -226,8 +224,8 @@ Deno.serve(async (req) => {
 
     const deliveredFilePath = product?.file_path || null;
 
-    // 8. Aprobar Orden localmente
-    const { data: updatedOrder, error: updateError } = await supabaseAdmin
+    // 8. Aprobar Orden localmente (esto disparará el trigger BEFORE UPDATE trg_00_handle_guest_order_approval si era de un invitado)
+    const { error: updateError } = await supabaseAdmin
       .from("orders")
       .update({
         status: "approved",
@@ -235,9 +233,7 @@ Deno.serve(async (req) => {
         delivered_credentials: deliveredCredentials,
         delivered_file_path: deliveredFilePath,
       })
-      .eq("id", localOrder.id)
-      .select("redemption_code")
-      .single();
+      .eq("id", localOrder.id);
 
     if (updateError) {
       console.error("Error al actualizar la orden a aprobada:", updateError);
@@ -247,12 +243,19 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Consultar el estado final de la orden para saber a qué usuario se asignó
+    const { data: finalOrder } = await supabaseAdmin
+      .from("orders")
+      .select("user_id")
+      .eq("id", localOrder.id)
+      .single();
+
     return new Response(
       JSON.stringify({
         success: true,
         status: "approved",
         credentials: deliveredCredentials,
-        redemptionCode: updatedOrder?.redemption_code,
+        userId: finalOrder?.user_id || localOrder.user_id,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

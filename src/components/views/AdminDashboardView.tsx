@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { m, AnimatePresence } from 'motion/react';
 import { supabase } from '../../lib/supabaseClient';
 import { getCachedData, invalidateCache, invalidateCacheByPrefix } from '../../lib/queryCache';
@@ -23,16 +24,19 @@ import {
   Home,
   LayoutDashboard,
   Key,
-  Terminal,
   Upload,
   ChevronDown,
   MessageSquare,
+  Plus,
 } from 'lucide-react';
 import { CatalogManager } from '../admin/CatalogManager';
 import { PaymentMethodsManager } from '../admin/PaymentMethodsManager';
 import { StorageManager } from '../admin/StorageManager';
 import { PoolCorreosManager } from '../admin/PoolCorreosManager';
 import { SupportTicketsManager } from '../admin/SupportTicketsManager';
+import { ActivitiesAdminManager } from '../admin/ActivitiesAdminManager';
+import { InvitationCodesManager } from '../admin/InvitationCodesManager';
+import { ListTodo, Ticket } from 'lucide-react';
 import './AdminDashboardView.css';
 import '../../styles/data-table.css';
 
@@ -80,9 +84,14 @@ interface AdminOrder {
 
 export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate }: Props) {
   const { signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState<
-    'orders' | 'users' | 'catalog' | 'payment-methods' | 'storage' | 'pool-correos' | 'webhook-tester' | 'tickets'
-  >('orders');
+  const { tab } = useParams<{ tab: string }>();
+  const navigate = useNavigate();
+  const activeTab = (tab || 'orders') as 'orders' | 'users' | 'catalog' | 'payment-methods' | 'storage' | 'pool-correos' | 'tickets' | 'activities' | 'webhooks' | 'secrets' | 'invitation-codes';
+
+  const setActiveTab = (newTab: string) => {
+    navigate(`/admin/${newTab}`);
+  };
+
   const [orderStatusFilter, setOrderStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [userRoleFilter, setUserRoleFilter] = useState<'all' | 'super_admin' | 'admin' | 'user'>('all');
   const [userStatusFilter, setUserStatusFilter] = useState<'all' | 'active' | 'suspended'>('all');
@@ -93,68 +102,34 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
   const [searchQuery, setSearchQuery] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  const [userPermissions, setUserPermissions] = useState<string[]>([]);
-  const [isPermissionsLoading, setIsPermissionsLoading] = useState(false);
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
   const [isUserBanned, setIsUserBanned] = useState(false);
 
-  /* Webhook Tester states */
-  const [testFirstName, setTestFirstName] = useState('');
-  const [testLastName, setTestLastName] = useState('');
-  const [testEmail, setTestEmail] = useState('');
-  const [testOrderId, setTestOrderId] = useState('');
-  const [isSendingTest, setIsSendingTest] = useState(false);
-  const [testResult, setTestResult] = useState<{
-    success: boolean;
-    message?: string;
-    error?: string;
-    details?: string;
-    webhookUrl?: string;
-  } | null>(null);
-  const [urlType, setUrlType] = useState<'test' | 'prod' | 'custom'>('test');
-  const [baseWebhookUrl, setBaseWebhookUrl] = useState('');
-  const [testWebhookUrl, setTestWebhookUrl] = useState('');
-  const [isSavingUrl, setIsSavingUrl] = useState(false);
 
-  /* Fetch configured webhook URL settings dynamically when opening the tester tab */
-  useEffect(() => {
-    if (activeTab !== 'webhook-tester') return;
-    let active = true;
-    const fetchSettings = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('system_settings')
-          .select('value')
-          .eq('key', 'n8n_webhook_url')
-          .maybeSingle();
-        if (error) throw error;
-        if (active && data?.value) {
-          setBaseWebhookUrl(data.value);
-          const url = data.value;
-          if (url.includes('/webhook/') && !url.includes('/webhook-test/')) {
-            setTestWebhookUrl(url.replace('/webhook/', '/webhook-test/'));
-          } else {
-            setTestWebhookUrl(url);
-          }
-        } else {
-          /* Fallback if settings table is empty: query Edge Function default URL */
-          const { data: edgeData } = await supabase.functions.invoke('activate-order', {
-            body: { isTest: true, getSettings: true },
-          });
-          if (active && edgeData?.webhookUrl) {
-            setBaseWebhookUrl(edgeData.webhookUrl);
-            setTestWebhookUrl(edgeData.webhookUrl);
-          }
-        }
-      } catch (err) {
-        console.error('Error fetching webhook settings:', err);
-      }
-    };
-    fetchSettings();
-    return () => {
-      active = false;
-    };
-  }, [activeTab]);
+
+
+
+  interface SystemSetting {
+    key: string;
+    value: string;
+    description: string | null;
+    is_secret?: boolean;
+    updated_at: string;
+  }
+
+  /* Webhook & Secret states */
+  const [webhooksList, setWebhooksList] = useState<SystemSetting[]>([]);
+  const [secretsList, setSecretsList] = useState<SystemSetting[]>([]);
+  const [isSettingsLoading, setIsSettingsLoading] = useState(false);
+  const [decryptedSecrets, setDecryptedSecrets] = useState<Record<string, string>>({});
+
+  // Modal states for creating/editing a setting
+  const [isSettingModalOpen, setIsSettingModalOpen] = useState(false);
+  const [settingKey, setSettingKey] = useState('');
+  const [settingValue, setSettingValue] = useState('');
+  const [settingDesc, setSettingDesc] = useState('');
+  const [isEditingSetting, setIsEditingSetting] = useState(false);
+  const [isSavingSetting, setIsSavingSetting] = useState(false);
 
   /* Lock body scroll while admin panel is open to provide fixed desktop-class dashboard layout */
   useEffect(() => {
@@ -163,6 +138,58 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
       document.body.classList.remove('no-scroll');
     };
   }, []);
+
+  /* Fetch settings when tabs are active */
+  const loadWebhooks = useCallback(async () => {
+    setIsSettingsLoading(true);
+    setErrorMsg('');
+    try {
+      const { data, error } = await supabase
+        .from('view_system_webhooks')
+        .select('*')
+        .order('key', { ascending: true });
+      if (error) throw error;
+      setWebhooksList(data || []);
+    } catch (err: unknown) {
+      console.error('Error fetching webhooks:', err);
+      setErrorMsg('Error al cargar webhooks: ' + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setIsSettingsLoading(false);
+    }
+  }, [setErrorMsg]);
+
+  const loadSecrets = useCallback(async () => {
+    setIsSettingsLoading(true);
+    setErrorMsg('');
+    try {
+      const { data, error } = await supabase
+        .rpc('list_system_secrets');
+      if (error) throw error;
+      setSecretsList(data || []);
+    } catch (err: unknown) {
+      console.error('Error fetching secrets:', err);
+      setErrorMsg('Error al cargar secretos: ' + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setIsSettingsLoading(false);
+    }
+  }, [setErrorMsg]);
+
+  useEffect(() => {
+    let active = true;
+    const loadAsync = async () => {
+      await Promise.resolve();
+      if (!active) return;
+      if (activeTab === 'webhooks') {
+        await loadWebhooks();
+      } else if (activeTab === 'secrets') {
+        await loadSecrets();
+      }
+    };
+    loadAsync();
+    return () => {
+      active = false;
+    };
+  }, [activeTab, loadWebhooks, loadSecrets]);
 
   /* Data lists */
   const [orders, setOrders] = useState<AdminOrder[]>([]);
@@ -313,7 +340,7 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
     const hasData = 
       (activeTab === 'orders' && hasLoadedOrdersRef.current) ||
       (activeTab === 'users' && hasLoadedUsersRef.current) ||
-      ['storage', 'pool-correos', 'webhook-tester', 'tickets'].includes(activeTab);
+      ['storage', 'pool-correos', 'tickets', 'webhooks', 'secrets', 'invitation-codes'].includes(activeTab);
 
     if (!hasData) {
       setIsLoading(true);
@@ -328,6 +355,10 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
         await fetchUsers(force);
       } else if (activeTab === 'storage') {
         setRefreshTrigger((prev) => prev + 1);
+      } else if (activeTab === 'webhooks') {
+        await loadWebhooks();
+      } else if (activeTab === 'secrets') {
+        await loadSecrets();
       }
     } catch (err: unknown) {
       console.error('Error reloading admin data:', err);
@@ -335,7 +366,7 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
       setIsLoading(false);
       setIsBackgroundLoading(false);
     }
-  }, [activeTab, fetchOrders, fetchUsers, setRefreshTrigger, setErrorMsg]);
+  }, [activeTab, fetchOrders, fetchUsers, loadWebhooks, loadSecrets, setRefreshTrigger, setErrorMsg]);
 
   useEffect(() => {
     let active = true;
@@ -407,7 +438,6 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
     setSelectedRole(user.roles[0] || 'user');
     setIsUserBanned(user.is_banned);
     setIsRoleDropdownOpen(false);
-    await loadUserPermissions(user);
   };
 
   /* Unified User settings save handler */
@@ -421,7 +451,6 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
         console.log('Simulating user updates in development mock:', {
           role: selectedRole,
           banned: isUserBanned,
-          permissions: userPermissions
         });
         
         // Simular cambios en la lista local de usuarios
@@ -433,7 +462,6 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
         
         setSelectedUser(null);
         setSelectedRole('');
-        setUserPermissions([]);
         setIsUserBanned(false);
         return;
       }
@@ -457,38 +485,9 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
         if (activeError) throw activeError;
       }
 
-      // 3. Save Permissions
-      const { data: currentPermsData, error: fetchError } = await supabase
-        .from('user_permissions')
-        .select('permission')
-        .eq('user_id', selectedUser.id);
-      if (fetchError) throw fetchError;
-      const currentPerms = (currentPermsData || []).map((p) => p.permission);
-      const permsToAdd = userPermissions.filter((p) => !currentPerms.includes(p));
-      const permsToRemove = currentPerms.filter((p) => !userPermissions.includes(p));
-
-      if (permsToAdd.length > 0) {
-        const { error: insertError } = await supabase.from('user_permissions').insert(
-          permsToAdd.map((p) => ({
-            user_id: selectedUser.id,
-            permission: p,
-          }))
-        );
-        if (insertError) throw insertError;
-      }
-      if (permsToRemove.length > 0) {
-        const { error: deleteError } = await supabase
-          .from('user_permissions')
-          .delete()
-          .eq('user_id', selectedUser.id)
-          .in('permission', permsToRemove);
-        if (deleteError) throw deleteError;
-      }
-
       invalidateCache('admin_users');
       setSelectedUser(null);
       setSelectedRole('');
-      setUserPermissions([]);
       setIsUserBanned(false);
       await fetchUsers(true);
     } catch (err: unknown) {
@@ -521,101 +520,104 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
     }
   };
 
-  /* Load permissions for selected user */
-  const loadUserPermissions = async (user: AdminUser) => {
-    setIsPermissionsLoading(true);
-    setUserPermissions([]);
-    try {
-      const { data, error } = await supabase
-        .from('user_permissions')
-        .select('permission')
-        .eq('user_id', user.id);
-      if (error) throw error;
-      setUserPermissions((data || []).map((p) => p.permission));
-    } catch (err) {
-      console.error('Error loading user permissions:', err);
-    } finally {
-      setIsPermissionsLoading(false);
-    }
+
+
+  const handleOpenAddSettingModal = () => {
+    setSettingKey('');
+    setSettingValue('');
+    setSettingDesc('');
+    setIsEditingSetting(false);
+    setIsSettingModalOpen(true);
   };
 
-  const handleUrlTypeChange = (type: 'test' | 'prod' | 'custom') => {
-    setUrlType(type);
-    const targetUrl =
-      baseWebhookUrl ||
-      'https://ventusn8n.smartcontacts.cloud/webhook-test/8f448518-ab20-4aa7-a024-446ebb6e9c32';
-    if (type === 'test') {
-      if (targetUrl.includes('/webhook/') && !targetUrl.includes('/webhook-test/')) {
-        setTestWebhookUrl(targetUrl.replace('/webhook/', '/webhook-test/'));
-      } else {
-        setTestWebhookUrl(targetUrl);
-      }
-    } else if (type === 'prod') {
-      if (targetUrl.includes('/webhook-test/')) {
-        setTestWebhookUrl(targetUrl.replace('/webhook-test/', '/webhook/'));
-      } else {
-        setTestWebhookUrl(targetUrl);
-      }
-    }
+  const handleOpenEditSettingModal = (setting: SystemSetting) => {
+    setSettingKey(setting.key);
+    // Para los secretos, dejamos el input vacío para que escriban un nuevo valor a reemplazar
+    setSettingValue(activeTab === 'secrets' ? '' : setting.value);
+    setSettingDesc(setting.description || '');
+    setIsEditingSetting(true);
+    setIsSettingModalOpen(true);
   };
 
-  const handleSaveProductionUrl = async () => {
-    if (!testWebhookUrl.trim()) return;
-    setIsSavingUrl(true);
-    try {
-      const { error } = await supabase.from('system_settings').upsert({
-        key: 'n8n_webhook_url',
-        value: testWebhookUrl.trim(),
-        updated_at: new Date().toISOString(),
-      });
-      if (error) throw error;
-      setBaseWebhookUrl(testWebhookUrl.trim());
-      alert('¡URL del Webhook guardada con éxito en el sistema!');
-    } catch (err: unknown) {
-      console.error('Error saving webhook URL:', err);
-      alert(
-        'Error al guardar la URL del Webhook: ' + (err instanceof Error ? err.message : String(err))
-      );
-    } finally {
-      setIsSavingUrl(false);
-    }
-  };
-
-  const handleSendTestWebhook = async (e: React.FormEvent) => {
+  const handleSaveSetting = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSendingTest(true);
-    setTestResult(null);
+    if (!settingKey.trim() || !settingValue.trim()) return;
+    setIsSavingSetting(true);
     try {
-      const { data, error } = await supabase.functions.invoke('activate-order', {
-        body: {
-          isTest: true,
-          orderId: testOrderId.trim() || undefined,
-          firstName: testFirstName.trim() || undefined,
-          lastName: testLastName.trim() || undefined,
-          email: testEmail.trim() || undefined,
-          webhookUrl: testWebhookUrl.trim() || undefined,
-        },
-      });
-      if (error) {
-        throw new Error(error.message || 'Error al invocar la Edge Function.');
+      const isSecret = activeTab === 'secrets';
+      if (isSecret) {
+        const { error } = await supabase.rpc('update_system_secret', {
+          p_name: settingKey.trim(),
+          p_secret: settingValue.trim(),
+          p_description: settingDesc.trim() || null
+        });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('system_settings').upsert({
+          key: settingKey.trim(),
+          value: settingValue.trim(),
+          description: settingDesc.trim() || null,
+          is_secret: false,
+          updated_at: new Date().toISOString()
+        });
+        if (error) throw error;
       }
-      setTestResult({
-        success: data?.success ?? false,
-        message: data?.message,
-        error: data?.error,
-        details: data?.details,
-        webhookUrl: data?.webhookUrl,
-      });
+      setIsSettingModalOpen(false);
+      if (isSecret) {
+        await loadSecrets();
+      } else {
+        await loadWebhooks();
+      }
     } catch (err: unknown) {
-      console.error('Error in handleSendTestWebhook:', err);
-      setTestResult({
-        success: false,
-        error: err instanceof Error ? err.message : String(err),
-      });
+      console.error('Error saving setting:', err);
+      alert('Error al guardar la configuración: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
-      setIsSendingTest(false);
+      setIsSavingSetting(false);
     }
   };
+
+  const handleDeleteSetting = async (key: string) => {
+    if (!window.confirm(`¿Estás seguro de eliminar el parámetro "${key}"?`)) return;
+    try {
+      const { error } = await supabase
+        .from('system_settings')
+        .delete()
+        .eq('key', key);
+      if (error) throw error;
+      if (activeTab === 'secrets') {
+        await loadSecrets();
+      } else {
+        await loadWebhooks();
+      }
+    } catch (err: unknown) {
+      console.error('Error deleting setting:', err);
+      alert('Error al eliminar: ' + (err instanceof Error ? err.message : String(err)));
+    }
+  };
+
+  const handleToggleSecretReveal = async (key: string) => {
+    if (decryptedSecrets[key]) {
+      setDecryptedSecrets(prev => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+      return;
+    }
+    try {
+      const { data, error } = await supabase.rpc('get_system_secret', { p_name: key });
+      if (error) throw error;
+      setDecryptedSecrets(prev => ({
+        ...prev,
+        [key]: data || ''
+      }));
+    } catch (err: unknown) {
+      console.error('Error revealing secret:', err);
+      alert('Error al revelar secreto: ' + (err instanceof Error ? err.message : String(err)));
+    }
+  };
+
+
 
   const formatCOP = (val: number | null) => {
     if (!val) return '$0 COP';
@@ -670,10 +672,17 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
         return 'Gestor de Archivos';
       case 'pool-correos':
         return 'Pool de Correos';
-      case 'webhook-tester':
-        return 'Probador de Webhook n8n';
+      case 'invitation-codes':
+        return 'Códigos de Invitación';
+
       case 'tickets':
         return 'Tickets de Soporte';
+      case 'activities':
+        return 'Gestión de Actividades';
+      case 'webhooks':
+        return 'Webhooks del Sistema';
+      case 'secrets':
+        return 'Secretos y APIs';
       default:
         return 'Panel de Administración';
     }
@@ -778,6 +787,18 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
             </button>
             <button
               type="button"
+              className={`sidebar-nav-item${activeTab === 'activities' ? ' active' : ''}`}
+              onClick={() => {
+                setActiveTab('activities');
+                setSearchQuery('');
+                setIsSidebarOpen(false);
+              }}
+            >
+              <ListTodo size={18} />
+              <span>Actividades / Tareas</span>
+            </button>
+            <button
+              type="button"
               className={`sidebar-nav-item${activeTab === 'pool-correos' ? ' active' : ''}`}
               onClick={() => {
                 setActiveTab('pool-correos');
@@ -787,6 +808,18 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
             >
               <Key size={18} />
               <span>Pool de Correos</span>
+            </button>
+            <button
+              type="button"
+              className={`sidebar-nav-item${activeTab === 'invitation-codes' ? ' active' : ''}`}
+              onClick={() => {
+                setActiveTab('invitation-codes');
+                setSearchQuery('');
+                setIsSidebarOpen(false);
+              }}
+            >
+              <Ticket size={18} />
+              <span>Códigos de Invitación</span>
             </button>
           </div>
 
@@ -817,24 +850,33 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
               <HardDrive size={18} />
               <span>Archivos</span>
             </button>
-          </div>
-
-          {/* GROUP 3: HERRAMIENTAS */}
-          <div className="sidebar-nav-group">
-            <div className="sidebar-nav-group-label">Herramientas</div>
             <button
               type="button"
-              className={`sidebar-nav-item${activeTab === 'webhook-tester' ? ' active' : ''}`}
+              className={`sidebar-nav-item${activeTab === 'webhooks' ? ' active' : ''}`}
               onClick={() => {
-                setActiveTab('webhook-tester');
+                setActiveTab('webhooks');
                 setSearchQuery('');
                 setIsSidebarOpen(false);
               }}
             >
-              <Terminal size={18} />
-              <span>Probador Webhook</span>
+              <RefreshCw size={18} />
+              <span>Webhooks del Sistema</span>
+            </button>
+            <button
+              type="button"
+              className={`sidebar-nav-item${activeTab === 'secrets' ? ' active' : ''}`}
+              onClick={() => {
+                setActiveTab('secrets');
+                setSearchQuery('');
+                setIsSidebarOpen(false);
+              }}
+            >
+              <Key size={18} />
+              <span>Secretos y APIs</span>
             </button>
           </div>
+
+
 
           {/* GROUP 4: APLICACIÓN */}
           <div className="sidebar-nav-group">
@@ -1359,6 +1401,12 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
                 </div>
               )}
 
+              {activeTab === 'invitation-codes' && (
+                <div>
+                  <InvitationCodesManager />
+                </div>
+              )}
+
               {activeTab === 'payment-methods' && (
                 <div>
                   <PaymentMethodsManager />
@@ -1377,204 +1425,281 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
                 </div>
               )}
 
-              {activeTab === 'webhook-tester' && (
+              {activeTab === 'activities' && (
+                <div>
+                  <ActivitiesAdminManager />
+                </div>
+              )}
+
+              {activeTab === 'webhooks' && (
                 <div className="admin-editor-card" style={{ background: '#ffffff', border: '1.5px solid var(--beige-dark)', padding: '24px', borderRadius: '20px' }}>
-                  <div className="admin-editor-header" style={{ display: 'flex', gap: '12px', alignItems: 'center', borderBottom: '1px solid var(--beige-light)', paddingBottom: '12px', marginBottom: '20px' }}>
-                    <Terminal size={24} style={{ color: 'var(--orange-deep)' }} />
-                    <div>
-                      <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800 }}>Probador de Webhook n8n</h3>
-                      <p style={{ margin: 0, fontSize: '0.85rem', opacity: 0.7 }}>
-                        Envía un payload de prueba al webhook de activación externo de n8n para simular un despacho seguro.
-                      </p>
+                  <div className="admin-editor-header" style={{ display: 'flex', gap: '12px', alignItems: 'center', borderBottom: '1px solid var(--beige-light)', paddingBottom: '12px', marginBottom: '20px', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                      <RefreshCw size={24} style={{ color: 'var(--orange-deep)' }} />
+                      <div>
+                        <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800 }}>Webhooks del Sistema</h3>
+                        <p style={{ margin: 0, fontSize: '0.85rem', opacity: 0.7 }}>
+                          Administra los endpoints de integración n8n y callbacks de pasarelas de pago.
+                        </p>
+                      </div>
                     </div>
+                    <button
+                      type="button"
+                      className="btn-add-plan"
+                      onClick={handleOpenAddSettingModal}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', margin: 0, padding: '8px 16px' }}
+                    >
+                      <Plus size={16} /> Agregar Webhook
+                    </button>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', alignItems: 'start' }}>
-                    {/* Formulario */}
-                    <form onSubmit={handleSendTestWebhook} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                      <div className="form-group">
-                        <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '6px' }}>Tipo de URL de Webhook</label>
-                        <div className="auth-toggle-container" style={{ margin: 0, width: '100%', display: 'flex' }}>
-                          <button
-                            type="button"
-                            className={`auth-toggle-btn${urlType === 'test' ? ' active' : ''}`}
-                            onClick={() => handleUrlTypeChange('test')}
-                            style={{ flex: 1 }}
-                          >
-                            De Prueba (test)
-                          </button>
-                          <button
-                            type="button"
-                            className={`auth-toggle-btn${urlType === 'prod' ? ' active' : ''}`}
-                            onClick={() => handleUrlTypeChange('prod')}
-                            style={{ flex: 1 }}
-                          >
-                            De Producción (prod)
-                          </button>
-                          <button
-                            type="button"
-                            className={`auth-toggle-btn${urlType === 'custom' ? ' active' : ''}`}
-                            onClick={() => handleUrlTypeChange('custom')}
-                            style={{ flex: 1 }}
-                          >
-                            Personalizada
-                          </button>
-                        </div>
-                      </div>
+                  {isSettingsLoading ? (
+                    <div style={{ textAlign: 'center', padding: '3rem' }}>
+                      <div className="loading-spinner" style={{ margin: '0 auto' }} />
+                    </div>
+                  ) : webhooksList.length === 0 ? (
+                    <div style={{ padding: '3rem', textAlign: 'center', background: '#faf6f0', borderRadius: '16px', border: '1.5px dashed var(--beige-dark)' }}>
+                      <AlertTriangle size={32} style={{ color: 'var(--orange-base)', opacity: 0.6, marginBottom: '0.5rem', margin: '0 auto' }} />
+                      <p style={{ margin: 0, fontSize: '0.9rem', opacity: 0.7 }}>No hay webhooks del sistema configurados.</p>
+                    </div>
+                  ) : (
+                    <div className="dt-container">
+                      <table className="dt-table">
+                        <thead>
+                          <tr>
+                            <th>Clave (Key)</th>
+                            <th>Descripción / Propósito</th>
+                            <th>Valor (Webhook URL)</th>
+                            <th>Último Cambio</th>
+                            <th>Acciones</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {webhooksList.map((setting) => (
+                            <tr key={setting.key}>
+                              <td>
+                                <code style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--brown-dark)' }}>
+                                  {setting.key}
+                                </code>
+                              </td>
+                              <td style={{ fontSize: '0.85rem', color: '#666', maxWidth: '300px', whiteSpace: 'normal', wordBreak: 'break-word' }}>
+                                {setting.description || <span style={{ opacity: 0.4 }}>Sin descripción</span>}
+                              </td>
+                              <td>
+                                <span style={{ fontFamily: 'monospace', fontSize: '0.85rem', wordBreak: 'break-all' }}>
+                                  {setting.value}
+                                </span>
+                              </td>
+                              <td style={{ fontSize: '0.8rem', opacity: 0.7 }}>
+                                {new Date(setting.updated_at).toLocaleString()}
+                              </td>
+                              <td>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                  <button
+                                    type="button"
+                                    className="dt-row-btn success"
+                                    onClick={() => handleOpenEditSettingModal(setting)}
+                                    style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                                  >
+                                    Editar
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="dt-row-btn danger"
+                                    onClick={() => handleDeleteSetting(setting.key)}
+                                    style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                                  >
+                                    Eliminar
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
 
-                      <div className="form-group">
-                        <label htmlFor="testWebhookUrl" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '6px' }}>URL del Webhook Destino</label>
+              {activeTab === 'secrets' && (
+                <div className="admin-editor-card" style={{ background: '#ffffff', border: '1.5px solid var(--beige-dark)', padding: '24px', borderRadius: '20px' }}>
+                  <div className="admin-editor-header" style={{ display: 'flex', gap: '12px', alignItems: 'center', borderBottom: '1px solid var(--beige-light)', paddingBottom: '12px', marginBottom: '20px', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                      <Key size={24} style={{ color: 'var(--orange-deep)' }} />
+                      <div>
+                        <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800 }}>Secretos y APIs</h3>
+                        <p style={{ margin: 0, fontSize: '0.85rem', opacity: 0.7 }}>
+                          Administra claves de API y credenciales de forma segura. Los valores reales están enmascarados desde la base de datos y nunca se exponen al navegador.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn-add-plan"
+                      onClick={handleOpenAddSettingModal}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', margin: 0, padding: '8px 16px' }}
+                    >
+                      <Plus size={16} /> Agregar Secreto
+                    </button>
+                  </div>
+
+                  {isSettingsLoading ? (
+                    <div style={{ textAlign: 'center', padding: '3rem' }}>
+                      <div className="loading-spinner" style={{ margin: '0 auto' }} />
+                    </div>
+                  ) : secretsList.length === 0 ? (
+                    <div style={{ padding: '3rem', textAlign: 'center', background: '#faf6f0', borderRadius: '16px', border: '1.5px dashed var(--beige-dark)' }}>
+                      <AlertTriangle size={32} style={{ color: 'var(--orange-base)', opacity: 0.6, marginBottom: '0.5rem', margin: '0 auto' }} />
+                      <p style={{ margin: 0, fontSize: '0.9rem', opacity: 0.7 }}>No hay secretos de sistema configurados.</p>
+                    </div>
+                  ) : (
+                    <div className="dt-container">
+                      <table className="dt-table">
+                        <thead>
+                          <tr>
+                            <th>Clave (Key)</th>
+                            <th>Descripción / Propósito</th>
+                            <th>Valor (Value)</th>
+                            <th>Último Cambio</th>
+                            <th>Acciones</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {secretsList.map((setting) => (
+                            <tr key={setting.key}>
+                              <td>
+                                <code style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--brown-dark)' }}>
+                                  {setting.key}
+                                </code>
+                                <span style={{ fontSize: '0.75rem', background: '#fee2e2', color: '#ef4444', padding: '2px 6px', borderRadius: '4px', marginLeft: '6px', fontWeight: 800 }}>
+                                  SECRETO
+                                </span>
+                              </td>
+                              <td style={{ fontSize: '0.85rem', color: '#666', maxWidth: '300px', whiteSpace: 'normal', wordBreak: 'break-word' }}>
+                                {setting.description || <span style={{ opacity: 0.4 }}>Sin descripción</span>}
+                              </td>
+                              <td>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <span style={{ fontFamily: 'monospace', fontSize: '0.85rem', wordBreak: 'break-all' }}>
+                                    {decryptedSecrets[setting.key] ? decryptedSecrets[setting.key] : '••••••••••••••••'}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    style={{ border: 'none', background: 'none', padding: '2px', cursor: 'pointer', opacity: 0.6 }}
+                                    onClick={() => handleToggleSecretReveal(setting.key)}
+                                    title={decryptedSecrets[setting.key] ? "Ocultar valor" : "Mostrar valor"}
+                                  >
+                                    {decryptedSecrets[setting.key] ? <X size={14} /> : <Search size={14} />}
+                                  </button>
+                                </div>
+                              </td>
+                              <td style={{ fontSize: '0.8rem', opacity: 0.7 }}>
+                                {new Date(setting.updated_at).toLocaleString()}
+                              </td>
+                              <td>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                  <button
+                                    type="button"
+                                    className="dt-row-btn success"
+                                    onClick={() => handleOpenEditSettingModal(setting)}
+                                    style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                                  >
+                                    Reemplazar Valor
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Add / Edit Setting Modal */}
+              {isSettingModalOpen && (
+                <div className="custom-modal-backdrop" onClick={() => setIsSettingModalOpen(false)}>
+                  <div className="custom-modal-card" style={{ maxWidth: '480px' }} onClick={(e) => e.stopPropagation()}>
+                    <div className="custom-modal-header">
+                      <h4 className="custom-modal-title">
+                        {isEditingSetting ? (activeTab === 'secrets' ? 'Reemplazar Secreto' : 'Editar Webhook') : (activeTab === 'secrets' ? 'Nuevo Secreto' : 'Nuevo Webhook')}
+                      </h4>
+                      <button type="button" className="custom-modal-close" onClick={() => setIsSettingModalOpen(false)}>
+                        <X size={18} />
+                      </button>
+                    </div>
+
+                    <form onSubmit={handleSaveSetting} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      <div className="custom-modal-field">
+                        <label htmlFor="settingKey">Clave (Key)</label>
                         <input
+                          id="settingKey"
                           type="text"
-                          id="testWebhookUrl"
-                          placeholder={baseWebhookUrl ? 'https://...' : 'Cargando URL configurada desde el servidor...'}
-                          value={testWebhookUrl}
-                          onChange={(e) => setTestWebhookUrl(e.target.value)}
-                          disabled={urlType !== 'custom' || !baseWebhookUrl}
-                          style={{
-                            width: '100%',
-                            padding: '12px',
-                            border: '1.5px solid var(--beige-dark)',
-                            borderRadius: '10px',
-                            backgroundColor: urlType !== 'custom' || !baseWebhookUrl ? 'var(--beige-light)' : 'white',
-                            opacity: urlType !== 'custom' || !baseWebhookUrl ? 0.75 : 1,
-                          }}
+                          className="custom-modal-input"
+                          placeholder={activeTab === 'secrets' ? "Ej: n8n_api_key" : "Ej: n8n_webhook_url"}
+                          value={settingKey}
+                          onChange={(e) => setSettingKey(e.target.value)}
+                          disabled={isEditingSetting}
+                          required
                         />
-                        <span style={{ fontSize: '0.75rem', opacity: 0.6, marginTop: '4px', display: 'block' }}>
-                          {!baseWebhookUrl && 'Obteniendo variables de entorno...'}
-                          {baseWebhookUrl && urlType === 'test' && 'Usa el webhook test de n8n para pruebas inmediatas.'}
-                          {baseWebhookUrl && urlType === 'prod' && 'Usa el webhook de producción permanente.'}
-                          {baseWebhookUrl && urlType === 'custom' && 'Escribe cualquier endpoint URL válido.'}
-                        </span>
-                        {baseWebhookUrl && (
-                          <div style={{ marginTop: '8px' }}>
-                            <button
-                              type="button"
-                              className="btn-admin-secondary"
-                              onClick={handleSaveProductionUrl}
-                              disabled={isSavingUrl || !testWebhookUrl}
-                              style={{ padding: '6px 12px', borderRadius: '8px', fontSize: '0.8rem', cursor: 'pointer' }}
-                            >
-                              {isSavingUrl ? 'Guardando...' : '💾 Guardar como URL del Sistema'}
-                            </button>
-                          </div>
+                        {!isEditingSetting && (
+                          <span style={{ fontSize: '0.75rem', opacity: 0.6, marginTop: '4px', display: 'block' }}>
+                            Una vez creada, la clave no puede modificarse (solo su valor y descripción).
+                          </span>
                         )}
                       </div>
 
-                      <div className="form-group">
-                        <label htmlFor="testFirstName" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '6px' }}>Primer Nombre (firstName)</label>
-                        <input
-                          type="text"
-                          id="testFirstName"
-                          placeholder="Ej. Juan"
-                          value={testFirstName}
-                          onChange={(e) => setTestFirstName(e.target.value)}
-                          style={{ width: '100%', padding: '12px', border: '1.5px solid var(--beige-dark)', borderRadius: '10px' }}
+                      <div className="custom-modal-field">
+                        <label htmlFor="settingDesc">Descripción / Propósito</label>
+                        <textarea
+                          id="settingDesc"
+                          className="custom-modal-input"
+                          placeholder={activeTab === 'secrets' ? "Ej: API Key para conectar con n8n" : "Ej: Webhook de producción"}
+                          value={settingDesc}
+                          onChange={(e) => setSettingDesc(e.target.value)}
+                          rows={2}
+                          style={{ resize: 'vertical', minHeight: '60px' }}
                         />
                       </div>
 
-                      <div className="form-group">
-                        <label htmlFor="testLastName" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '6px' }}>Apellido (lastName)</label>
+                      <div className="custom-modal-field">
+                        <label htmlFor="settingValue">{activeTab === 'secrets' ? (isEditingSetting ? 'Nuevo Valor del Secreto' : 'Valor del Secreto') : 'Dirección Webhook (URL)'}</label>
                         <input
-                          type="text"
-                          id="testLastName"
-                          placeholder="Ej. Pérez"
-                          value={testLastName}
-                          onChange={(e) => setTestLastName(e.target.value)}
-                          style={{ width: '100%', padding: '12px', border: '1.5px solid var(--beige-dark)', borderRadius: '10px' }}
+                          id="settingValue"
+                          type={activeTab === 'secrets' ? "password" : "url"}
+                          className="custom-modal-input"
+                          placeholder={activeTab === 'secrets' ? "Ingresa la clave secreta..." : "https://..."}
+                          value={settingValue}
+                          onChange={(e) => setSettingValue(e.target.value)}
+                          required
                         />
                       </div>
 
-                      <div className="form-group">
-                        <label htmlFor="testEmail" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '6px' }}>Correo Electrónico a Activar (email)</label>
-                        <input
-                          type="email"
-                          id="testEmail"
-                          placeholder="Ej. juan.perez@example.com"
-                          value={testEmail}
-                          onChange={(e) => setTestEmail(e.target.value)}
-                          style={{ width: '100%', padding: '12px', border: '1.5px solid var(--beige-dark)', borderRadius: '10px' }}
-                        />
-                      </div>
-
-                      <div className="form-group">
-                        <label htmlFor="testOrderId" style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '6px' }}>ID de Orden Asociada (orderId - opcional)</label>
-                        <input
-                          type="text"
-                          id="testOrderId"
-                          placeholder="Ej. a7190306-a078-41db-aaa4-8ca92cd7021c"
-                          value={testOrderId}
-                          onChange={(e) => setTestOrderId(e.target.value)}
-                          style={{ width: '100%', padding: '12px', border: '1.5px solid var(--beige-dark)', borderRadius: '10px' }}
-                        />
-                        <span style={{ fontSize: '0.75rem', opacity: 0.6, marginTop: '4px', display: 'block' }}>
-                          Si se deja vacío, la Edge Function usará un UUID genérico de prueba.
-                        </span>
-                      </div>
-
-                      <button
-                        type="submit"
-                        className="btn-add-plan"
-                        disabled={isSendingTest}
-                        style={{ padding: '12px 24px', fontSize: '0.95rem', fontWeight: 800, margin: '10px 0 0 0' }}
-                      >
-                        {isSendingTest ? 'Enviando Simulación...' : 'Enviar Simulación de Webhook'}
-                      </button>
-                    </form>
-
-                    {/* Previsualización del Payload & Resultados */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                      <div style={{ background: '#1e1e1e', color: '#d4d4d4', padding: '16px', borderRadius: '12px', border: '1px solid #333' }}>
-                        <h4 style={{ margin: '0 0 10px 0', fontSize: '0.85rem', textTransform: 'uppercase', color: '#9cdcfe', fontWeight: 800 }}>
-                          Payload JSON a Enviar:
-                        </h4>
-                        <pre style={{ margin: 0, fontFamily: 'monospace', fontSize: '0.8rem', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-                          {JSON.stringify(
-                            {
-                              isTest: true,
-                              orderId: testOrderId.trim() || 'test-order-uuid-12345',
-                              userId: userId,
-                              userEmail: userEmail,
-                              productTitle: 'Producto de Prueba (Simulación)',
-                              firstName: testFirstName.trim() || 'TestNombre',
-                              lastName: testLastName.trim() || 'TestApellido',
-                              email: testEmail.trim().toLowerCase() || 'test@example.com',
-                              activatedAt: new Date().toISOString().split('T')[0] + 'T00:00:00.000Z',
-                              activationIndex: 1,
-                              totalQuantity: 1,
-                              apiKey: 'API_KEY_N8N (Inyectado por Supabase)',
-                            },
-                            null,
-                            2
-                          )}
-                        </pre>
-                      </div>
-
-                      {testResult && (
-                        <div
-                          className="admin-editor-card"
-                          style={{
-                            background: testResult.success ? '#f0fdf4' : '#fef2f2',
-                            border: testResult.success ? '1.5px solid #bbf7d0' : '1.5px solid #fecaca',
-                            padding: '16px',
-                            borderRadius: '12px',
-                          }}
+                      <div className="custom-modal-footer">
+                        <button
+                          type="button"
+                          className="btn-modal-action secondary"
+                          onClick={() => setIsSettingModalOpen(false)}
+                          disabled={isSavingSetting}
                         >
-                          <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', fontWeight: 800, color: testResult.success ? '#15803d' : '#b91c1c' }}>
-                            Resultado de la Simulación:
-                          </h4>
-                          <p style={{ margin: '0 0 8px 0', fontSize: '0.85rem' }}>
-                            <strong>Estado:</strong> {testResult.success ? '✅ Éxito' : '❌ Error'}
-                          </p>
-                          <pre style={{ margin: 0, fontFamily: 'monospace', fontSize: '0.75rem', whiteSpace: 'pre-wrap', wordBreak: 'break-all', color: '#333' }}>
-                            {JSON.stringify(testResult, null, 2)}
-                          </pre>
-                        </div>
-                      )}
-                    </div>
+                          Cancelar
+                        </button>
+                        <button
+                          type="submit"
+                          className="btn-modal-action primary"
+                          disabled={isSavingSetting}
+                        >
+                          {isSavingSetting ? 'Guardando...' : '💾 Guardar'}
+                        </button>
+                      </div>
+                    </form>
                   </div>
                 </div>
               )}
+
+
             </div>
           )}
         </div>
@@ -1592,23 +1717,24 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
                 e.currentTarget.click();
               }
             }}
-            className="modal-backdrop"
+            className="custom-modal-backdrop"
             onClick={() => setSelectedOrder(null)}
           >
             <m.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="modal-card"
+              className="custom-modal-card"
+              style={{ maxWidth: '520px' }}
               onClick={(e) => e.stopPropagation()}
               onKeyDown={(e) => e.stopPropagation()}
             >
-              <header className="modal-header">
-                <h3>Revisión de Orden #{selectedOrder.id.slice(0, 8)}</h3>
-                <button type="button" className="close-btn" onClick={() => setSelectedOrder(null)}>
+              <div className="custom-modal-header">
+                <h4 className="custom-modal-title">Revisión de Orden #{selectedOrder.id.slice(0, 8)}</h4>
+                <button type="button" className="custom-modal-close" onClick={() => setSelectedOrder(null)}>
                   <X size={18} />
                 </button>
-              </header>
+              </div>
               <div className="modal-body">
                 <div className="order-details-grid">
                   <div className="detail-item">
@@ -1637,9 +1763,9 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
 
                 {selectedOrder.receipt_url && (
                   <div style={{ marginTop: '10px' }}>
-                    <label style={{ fontWeight: '700', color: 'var(--brown-dark)', display: 'block', marginBottom: '6px' }}>
+                    <span style={{ fontWeight: '700', color: 'var(--brown-dark)', display: 'block', marginBottom: '6px' }}>
                       Soporte de Pago Cargado por el Cliente:
-                    </label>
+                    </span>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
                       <img
                         src={selectedOrder.receipt_url.replace('/object/nequi-comprobantes/', '/object/public/nequi-comprobantes/')}
@@ -1657,22 +1783,7 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
                         href={selectedOrder.receipt_url.replace('/object/nequi-comprobantes/', '/object/public/nequi-comprobantes/')}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="btn-admin-secondary"
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '6px',
-                          textDecoration: 'none',
-                          textAlign: 'center',
-                          backgroundColor: 'var(--beige-light, #f8f3eb)',
-                          color: 'var(--brown-dark, #2a1a0a)',
-                          border: '1px solid rgba(184, 168, 136, 0.35)',
-                          width: '100%',
-                          padding: '10px',
-                          borderRadius: '10px',
-                          fontWeight: 700,
-                        }}
+                        className="btn-admin-secondary btn-receipt-view"
                       >
                         🔍 Abrir Comprobante en pestaña nueva ↗
                       </a>
@@ -1708,10 +1819,10 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
                   </div>
                 )}
               </div>
-              <footer className="modal-footer">
+              <div className="custom-modal-footer">
                 <button
                   type="button"
-                  className="btn-admin-secondary"
+                  className="btn-modal-action secondary"
                   disabled={actionPending}
                   onClick={() => setSelectedOrder(null)}
                 >
@@ -1719,8 +1830,8 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
                 </button>
                 <button
                   type="button"
-                  className="btn-admin-secondary"
-                  style={{ color: '#dc2626', borderColor: '#fecaca' }}
+                  className="btn-modal-action secondary"
+                  style={{ color: '#dc2626', border: '2px solid #fecaca' }}
                   disabled={actionPending}
                   onClick={() => handleRejectOrder(selectedOrder.id)}
                 >
@@ -1728,14 +1839,14 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
                 </button>
                 <button
                   type="button"
-                  className="btn-add-plan"
+                  className="btn-modal-action primary"
                   disabled={actionPending}
                   onClick={() => handleApproveOrder(selectedOrder.id)}
                   style={{ margin: 0 }}
                 >
                   {actionPending ? 'Procesando...' : 'Confirmar Pago & Aprobar'}
                 </button>
-              </footer>
+              </div>
             </m.div>
           </div>
         )}
@@ -1753,37 +1864,36 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
                 e.currentTarget.click();
               }
             }}
-            className="modal-backdrop"
+            className="custom-modal-backdrop"
             onClick={() => {
               setSelectedUser(null);
               setSelectedRole('');
               setIsUserBanned(false);
-              setUserPermissions([]);
             }}
           >
             <m.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="modal-card"
+              className="custom-modal-card"
+              style={{ maxWidth: '480px' }}
               onClick={(e) => e.stopPropagation()}
               onKeyDown={(e) => e.stopPropagation()}
             >
-              <header className="modal-header">
-                <h3>Gestionar Usuario</h3>
+              <div className="custom-modal-header">
+                <h4 className="custom-modal-title">Gestionar Usuario</h4>
                 <button
                   type="button"
-                  className="close-btn"
+                  className="custom-modal-close"
                   onClick={() => {
                     setSelectedUser(null);
                     setSelectedRole('');
                     setIsUserBanned(false);
-                    setUserPermissions([]);
                   }}
                 >
                   <X size={18} />
                 </button>
-              </header>
+              </div>
               <div className="modal-body">
                 <div className="modal-user-profile">
                   <div className="sidebar-avatar" style={{ margin: 0 }}>
@@ -1849,40 +1959,7 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
                 </div>
 
                 {/* PERMISOS ADICIONALES */}
-                <div className="form-group" style={{ marginTop: '4px' }}>
-                  <label htmlFor="perm-invite-checkbox" style={{ fontWeight: '700', color: 'var(--brown-dark)', display: 'block', marginBottom: '8px' }}>
-                    Permisos Especiales:
-                  </label>
-                  {isPermissionsLoading ? (
-                    <div style={{ padding: '12px 0', textAlign: 'center' }}>
-                      <div className="loading-spinner" style={{ margin: '0 auto', width: '20px', height: '20px' }}></div>
-                      <p style={{ marginTop: '6px', fontSize: '0.8rem' }}>Cargando permisos...</p>
-                    </div>
-                  ) : (
-                    <label className="permission-checkbox-card">
-                      <input
-                        id="perm-invite-checkbox"
-                        type="checkbox"
-                        checked={userPermissions.includes('access_invited_products')}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setUserPermissions([...userPermissions, 'access_invited_products']);
-                          } else {
-                            setUserPermissions(userPermissions.filter((p) => p !== 'access_invited_products'));
-                          }
-                        }}
-                      />
-                      <div>
-                        <span style={{ fontWeight: '700', display: 'block', color: 'var(--brown-dark)' }}>
-                          Acceso a Productos de Invitado (Platzi/Actividades)
-                        </span>
-                        <span style={{ fontSize: '0.78rem', opacity: 0.6, display: 'block', marginTop: '2px', lineHeight: 1.4 }}>
-                          Permite al usuario visualizar y canjear los productos marcados como exclusivos.
-                        </span>
-                      </div>
-                    </label>
-                  )}
-                </div>
+
 
                 {/* ESTADO DE CUENTA (BLOQUEO) */}
                 <div className="form-group" style={{ marginTop: '4px' }}>
@@ -1917,30 +1994,29 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
                   </div>
                 )}
               </div>
-              <footer className="modal-footer">
+              <div className="custom-modal-footer">
                 <button
                   type="button"
-                  className="btn-modal-cancel"
+                  className="btn-modal-action secondary"
                   disabled={actionPending}
                   onClick={() => {
                     setSelectedUser(null);
                     setSelectedRole('');
                     setIsUserBanned(false);
-                    setUserPermissions([]);
                   }}
                 >
                   Cancelar
                 </button>
                 <button
                   type="button"
-                  className="btn-modal-submit"
+                  className="btn-modal-action primary"
                   disabled={actionPending}
                   onClick={handleSaveUserManagement}
                   style={{ margin: 0 }}
                 >
                   {actionPending ? 'Guardando...' : 'Guardar Cambios'}
                 </button>
-              </footer>
+              </div>
             </m.div>
           </div>
         )}

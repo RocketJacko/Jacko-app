@@ -1,3 +1,20 @@
+/* Wrapper contenedor */
+.dock-nav-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+@media (max-width: 767px) {
+  .dock-nav-wrapper {
+    top: auto;
+    bottom: 0;
+  }
+}
+
 /* Barra superior centrada */
 .dock-nav-top-bar {
   position: absolute;
@@ -54,9 +71,31 @@
   height: 26px;
 }
 
-/* Ocultar el nav en celulares, solo visible desde tablets en adelante */
+/* Responsivo: transformarse en barra inferior flotante en celulares */
 @media (max-width: 767px) {
-  #dock-nav-top {
-    display: none !important;
+  .dock-nav-top-bar {
+    position: fixed !important;
+    top: auto !important;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
+    padding: 6px 10px !important;
+    border-radius: 20px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+    width: auto !important;
+    max-width: 90vw !important;
+  }
+
+  .dock-links-container-top {
+    gap: 8px !important;
+  }
+
+  .dock-btn-top {
+    width: 46px !important;
+    height: 46px !important;
+    border-radius: 12px !important;
+  }
+
+  .dock-btn-top svg {
+    width: 22px !important;
+    height: 22px !important;
   }
 }

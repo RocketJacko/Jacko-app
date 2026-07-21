@@ -1,11 +1,10 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { PriceCalculator } from "../../domain/cart/PriceCalculator";
 import { useGeoLocation } from "../../hooks/useGeoLocation";
 import { useOrderSubscription } from "../../hooks/useOrderSubscription";
 import {
   ArrowLeft,
   ShoppingBag,
-  X,
   Plus,
   Minus,
   ChevronDown,
@@ -17,10 +16,8 @@ import "./CheckoutView.css";
 // Import subcomponents
 import { PlanSelector } from './checkout/PlanSelector';
 import { PaymentReceipt } from './checkout/PaymentReceipt';
-import { NequiPaymentForm } from './checkout/NequiPaymentForm';
-import { BinancePaymentForm } from './checkout/BinancePaymentForm';
-import { RedirectPanel } from './checkout/RedirectPanel';
-import { PayLaterPaymentForm } from './checkout/PayLaterPaymentForm';
+import { PaymentModalDialog } from './checkout/PaymentModalDialog';
+import { getAvailablePaymentMethods } from './checkout/paymentUtils';
 import { PaypalLogoSVG, BinanceLogoSVG, BreBLogoSVG } from './checkout/Logos';
 
 // Import and re-export types for backward compatibility
@@ -31,6 +28,7 @@ interface CheckoutViewProps {
   userId: string;
   product: Product;
   paymentMethods: PaymentMethod[];
+  initialQuantity?: number;
   onBackToCatalog: () => void;
   onSuccess: (orderId: string) => void;
   onNavigateToDashboard?: () => void;
@@ -40,11 +38,12 @@ export function CheckoutView({
   userId,
   product,
   paymentMethods,
+  initialQuantity = 1,
   onBackToCatalog,
   onSuccess,
   onNavigateToDashboard,
 }: CheckoutViewProps) {
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState(initialQuantity);
   const [showFullDesc, setShowFullDesc] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
@@ -84,15 +83,7 @@ export function CheckoutView({
     }
   };
 
-  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null);
   const [openAccordion, setOpenAccordion] = useState<string | null>('accordion-0');
-
-  // Modal Flow Step
-  const [checkoutStep, setCheckoutStep] = useState<'select_method' | 'fill_form'>('select_method');
-
-  // Guest Checkout fields
-  const [guestName, setGuestName] = useState('');
-  const [guestEmail, setGuestEmail] = useState('');
 
   const handleBackClick = () => {
     onBackToCatalog();
@@ -100,9 +91,7 @@ export function CheckoutView({
 
   // Flow states
   const [isProcessing, setIsProcessing] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
   const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
-  const formContainerRef = useRef<HTMLDivElement>(null);
 
   // Total Calculations
   const isIncludedInSubscription = false;
@@ -142,16 +131,7 @@ export function CheckoutView({
   const savings = savingsUsd * exchangeRate;
 
   const hasMoneyPrice = basePriceUsd > 0;
-
-  const filteredPaymentMethods = paymentMethods.filter((method) => {
-    const isLocal =
-      method.type === 'bre_b' || method.type === 'nequi' || method.type === 'mercadopago';
-    const isIntl = method.type === 'paypal' || method.type === 'binance';
-    if (!isColombia) {
-      return isIntl && (method.type === 'paypal' || method.type === 'binance');
-    }
-    return isLocal || isIntl;
-  });
+  const filteredPaymentMethods = getAvailablePaymentMethods(paymentMethods, isColombia);
 
   const formatMoney = (amountLocal: number) => {
     const hasDecimals = userCurrency !== 'COP';
@@ -215,6 +195,7 @@ export function CheckoutView({
       <div className="checkout-card">
         {receiptData ? (
           <PaymentReceipt
+            key={receiptData.referenceId}
             receiptData={receiptData}
             quantity={quantity}
             onBackToCatalog={onBackToCatalog}
@@ -240,7 +221,6 @@ export function CheckoutView({
                     selectedPlan={selectedPlan}
                     onSelectPlan={(plan) => {
                       setSelectedPlan(plan);
-                      setErrorMsg('');
                       setOpenAccordion('accordion-0');
                     }}
                   />
@@ -358,20 +338,7 @@ export function CheckoutView({
               </div>
 
               {selectedPlan?.id === 'pago-unico' && quantity === 3 && (
-                <div
-                  style={{
-                    marginTop: '-4px',
-                    marginBottom: '16px',
-                    padding: '10px 12px',
-                    background: 'rgba(43, 138, 62, 0.08)',
-                    border: '1.5px dashed rgba(43, 138, 62, 0.4)',
-                    color: '#2b8a3e',
-                    borderRadius: '12px',
-                    fontSize: '0.85rem',
-                    fontWeight: 700,
-                    textAlign: 'center',
-                  }}
-                >
+                <div style={PROMO_BANNER_STYLE}>
                   🎉 ¡Lleva 4 unidades por el mismo precio de 3! Sube la cantidad a 4.
                 </div>
               )}
@@ -416,8 +383,7 @@ export function CheckoutView({
                         setUserCurrency('USD');
                         setIsColombia(false);
                       }
-                      setSelectedMethod(null);
-                      setCheckoutStep('select_method');
+                      setShowPaymentModal(false);
                     }}
                   >
                     {userCurrency === 'USD'
@@ -470,283 +436,39 @@ export function CheckoutView({
                   </div>
                 </div>
 
-                {userId === 'guest' && (
-                  <div
-                    style={{
-                      marginTop: '1.5rem',
-                      background: 'rgba(0,0,0,0.02)',
-                      padding: '15px',
-                      borderRadius: '12px',
-                    }}
-                  >
-                    <h4 style={{ margin: '0 0 10px 0', fontSize: '0.9rem' }}>Datos del Comprador</h4>
-                    <div style={{ marginBottom: '10px' }}>
-                      <input
-                        aria-label="Nombre Completo"
-                        type="text"
-                        placeholder="Nombre Completo"
-                        value={guestName}
-                        onChange={(e) => {
-                          setGuestName(e.target.value);
-                          setErrorMsg('');
-                        }}
-                        style={{ width: '100%', padding: '8px', border: '1px solid var(--beige-dark)', borderRadius: '6px' }}
-                      />
-                    </div>
-                    <div style={{ marginBottom: '0' }}>
-                      <input
-                        aria-label="Correo Electrónico"
-                        type="email"
-                        placeholder="Correo Electrónico"
-                        value={guestEmail}
-                        onChange={(e) => {
-                          setGuestEmail(e.target.value);
-                          setErrorMsg('');
-                        }}
-                        style={{ width: '100%', padding: '8px', border: '1px solid var(--beige-dark)', borderRadius: '6px' }}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                <button
-                  type="button"
-                  className="checkout-action-button"
-                  style={{ marginTop: '2.5rem', width: '100%' }}
-                  onClick={() => {
-                    if (userId === 'guest') {
-                      if (!guestName.trim() || !guestEmail.trim()) {
-                        setErrorMsg(
-                          'Por favor ingresa tu Nombre Completo y Correo Electrónico para continuar.'
-                        );
-                        return;
-                      }
-                      if (!guestEmail.includes('@')) {
-                        setErrorMsg('Por favor ingresa un correo electrónico válido.');
-                        return;
-                      }
-                    }
-                    setCheckoutStep('select_method');
-                    setShowPaymentModal(true);
-                  }}
-                >
-                  <ShoppingBag size={18} /> Continuar con el Pago
-                </button>
+                    <button
+                      type="button"
+                      className="checkout-action-button"
+                      disabled={isProcessing}
+                      onClick={() => setShowPaymentModal(true)}
+                    >
+                      <ShoppingBag size={18} /> Continuar con el Pago
+                    </button>
               </div>
 
-              {/* Modal de Opciones de Pago */}
-              {showPaymentModal && (
-                <div
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      e.currentTarget.click();
-                    }
-                  }}
-                  className="modal-backdrop"
-                  onClick={() => !isProcessing && setShowPaymentModal(false)}
-                >
-                  <div className="modal-card" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
-                    <div className="modal-header">
-                      <h3>Pago Seguro</h3>
-                      <button
-                        type="button"
-                        className="close-btn"
-                        onClick={() => !isProcessing && setShowPaymentModal(false)}
-                        disabled={isProcessing}
-                        aria-label="Cerrar modal"
-                      >
-                        <X size={20} />
-                      </button>
-                    </div>
-
-                    <div className="order-summary-mini">
-                      <div className="summary-row">
-                        <span>Concepto:</span>
-                        <strong>
-                          {quantity > 1 ? `${quantity}x ` : ''}
-                          {product.title}
-                        </strong>
-                      </div>
-                      <div className="summary-row">
-                        <span>Total a pagar:</span>
-                        <strong>{totalPriceFormatted}</strong>
-                      </div>
-                    </div>
-
-                    <div className="modal-body">
-                      {checkoutStep === 'select_method' ? (
-                        <>
-                          <div className="form-group">
-                            <label
-                              htmlFor="payment-select"
-                              style={{ display: 'block', marginBottom: '0.75rem', fontWeight: 600 }}
-                            >
-                              Selecciona tu método de pago:
-                            </label>
-                            <select
-                              id="payment-select"
-                              value={selectedMethod?.type || ''}
-                              onChange={(e) => {
-                                if (e.target.value === 'other') {
-                                  setSelectedMethod({
-                                    name: 'Pagas Después (Cuenta Nueva)',
-                                    type: 'other',
-                                    account_value: null,
-                                    instructions: null,
-                                    qr_image_url: null,
-                                    is_active: true,
-                                  });
-                                } else {
-                                  const found = filteredPaymentMethods.find(
-                                    (m) => m.type === e.target.value
-                                  );
-                                  setSelectedMethod(found || null);
-                                }
-                                setErrorMsg('');
-                              }}
-                              disabled={isProcessing}
-                              style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--beige-dark)' }}
-                            >
-                              <option value="" disabled>
-                                -- Selecciona una opción --
-                              </option>
-                              {hasMoneyPrice
-                                ? filteredPaymentMethods.map((method) => (
-                                    <option key={method.type} value={method.type}>
-                                      {method.name}
-                                    </option>
-                                  ))
-                                : null}
-                              {selectedPlan?.require_new_account && (
-                                <option value="other">Pagas Después (Cuenta Nueva Pre-inscrita)</option>
-                              )}
-                            </select>
-                          </div>
-                          <div style={{ marginTop: '2rem' }}>
-                            <button
-                              type="button"
-                              className="checkout-action-button"
-                              style={{ width: '100%', margin: 0 }}
-                              disabled={selectedMethod === null || isProcessing}
-                              onClick={() => {
-                                setErrorMsg('');
-                                setCheckoutStep('fill_form');
-                              }}
-                            >
-                              Continuar con {selectedMethod?.name || 'el Pago'}
-                            </button>
-                          </div>
-                        </>
-                      ) : (
-                        <div ref={formContainerRef} className="payment-form-container">
-                          <div style={{ marginBottom: '1.5rem' }}>
-                            <button
-                              type="button"
-                              className="btn-back-step"
-                              onClick={() => setCheckoutStep('select_method')}
-                              disabled={isProcessing}
-                              style={{ background: 'none', border: 'none', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontWeight: 700 }}
-                            >
-                              <ArrowLeft size={16} /> Cambiar método de pago
-                            </button>
-                          </div>
-                          {selectedMethod !== null &&
-                            (selectedMethod.type === 'nequi' || selectedMethod.type === 'bre_b') && (
-                              <NequiPaymentForm
-                                selectedMethod={selectedMethod}
-                                productId={product.id}
-                                productTitle={product.title}
-                                quantity={quantity}
-                                userId={userId}
-                                selectedPlan={selectedPlan}
-                                totalPrice={totalPrice}
-                                formatMoney={formatMoney}
-                                isProcessing={isProcessing}
-                                onProcessingChange={setIsProcessing}
-                                onPaymentSuccess={(_, receipt) => {
-                                  setReceiptData(receipt);
-                                }}
-                                onPaymentError={setErrorMsg}
-                                onBackToCatalog={onBackToCatalog}
-                                guestEmail={userId === 'guest' ? guestEmail : undefined}
-                                guestName={userId === 'guest' ? guestName : undefined}
-                                exchangeRate={exchangeRate}
-                              />
-                            )}
-                          {selectedMethod !== null &&
-                            (selectedMethod.type === 'paypal' ||
-                              selectedMethod.type === 'mercadopago') && (
-                              <RedirectPanel
-                                selectedMethod={selectedMethod}
-                                productId={product.id}
-                                productTitle={product.title}
-                                quantity={quantity}
-                                userId={userId}
-                                selectedPlan={selectedPlan}
-                                totalPrice={totalPrice}
-                                formatMoney={formatMoney}
-                                isProcessing={isProcessing}
-                                onProcessingChange={setIsProcessing}
-                                onPaymentSuccess={(_, receipt) => {
-                                  setReceiptData(receipt);
-                                }}
-                                onPaymentError={setErrorMsg}
-                                guestEmail={userId === 'guest' ? guestEmail : undefined}
-                                guestName={userId === 'guest' ? guestName : undefined}
-                              />
-                            )}
-                          {selectedMethod !== null && selectedMethod.type === 'other' && (
-                            <PayLaterPaymentForm
-                              userId={userId}
-                              productId={product.id}
-                              productTitle={product.title}
-                              quantity={quantity}
-                              totalPrice={totalPrice}
-                              selectedPlan={selectedPlan}
-                              formatMoney={formatMoney}
-                              isProcessing={isProcessing}
-                              onProcessingChange={setIsProcessing}
-                              onPaymentSuccess={(_, receipt) => {
-                                setReceiptData(receipt);
-                              }}
-                              onPaymentError={setErrorMsg}
-                            />
-                          )}
-                          {selectedMethod !== null && selectedMethod.type === 'binance' && (
-                            <BinancePaymentForm
-                              selectedMethod={selectedMethod}
-                              productId={product.id}
-                              productTitle={product.title}
-                              quantity={quantity}
-                              userId={userId}
-                              selectedPlan={selectedPlan}
-                              totalPrice={totalPrice}
-                              formatMoney={formatMoney}
-                              isProcessing={isProcessing}
-                              onProcessingChange={setIsProcessing}
-                              onPaymentSuccess={(_, receipt) => {
-                                setReceiptData(receipt);
-                              }}
-                              onPaymentError={setErrorMsg}
-                              guestEmail={userId === 'guest' ? guestEmail : undefined}
-                              guestName={userId === 'guest' ? guestName : undefined}
-                            />
-                          )}
-                        </div>
-                      )}
-                      {errorMsg && (
-                        <div className="checkout-error-feedback" style={{ marginTop: '15px' }}>
-                          <X size={16} />
-                          <span>{errorMsg}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
+              {/* Modal de Opciones de Pago Desacoplado */}
+              <PaymentModalDialog
+                isOpen={showPaymentModal}
+                isProcessing={isProcessing}
+                product={product}
+                quantity={quantity}
+                userId={userId}
+                selectedPlan={selectedPlan}
+                totalPrice={totalPrice}
+                totalPriceFormatted={totalPriceFormatted}
+                hasMoneyPrice={hasMoneyPrice}
+                filteredPaymentMethods={filteredPaymentMethods}
+                exchangeRate={exchangeRate}
+                formatMoney={formatMoney}
+                onClose={() => setShowPaymentModal(false)}
+                onProcessingChange={setIsProcessing}
+                onPaymentSuccess={(_, receipt) => {
+                  setReceiptData(receipt);
+                  setShowPaymentModal(false);
+                }}
+                onPaymentError={() => {}}
+                onBackToCatalog={onBackToCatalog}
+              />
             </div>
           </>
         )}
@@ -754,3 +476,16 @@ export function CheckoutView({
     </div>
   );
 }
+
+const PROMO_BANNER_STYLE: React.CSSProperties = {
+  marginTop: '-4px',
+  marginBottom: '16px',
+  padding: '10px 12px',
+  background: 'rgba(43, 138, 62, 0.08)',
+  border: '1.5px dashed rgba(43, 138, 62, 0.4)',
+  color: '#2b8a3e',
+  borderRadius: '12px',
+  fontSize: '0.85rem',
+  fontWeight: 700,
+  textAlign: 'center',
+};

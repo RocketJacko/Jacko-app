@@ -15,9 +15,8 @@
   grid-template-columns: 1.1fr 1.3fr;
   width: 100%;
   max-width: 1050px;
-  background: rgba(250, 246, 240, 0.95);
-  backdrop-filter: blur(20px);
-  border: 2px solid rgba(212, 98, 26, 0.2);
+  background: var(--white-warm);
+  border: 3px solid var(--brown-dark);
   border-radius: 28px;
   overflow: hidden;
   box-shadow: 0 30px 60px rgba(42, 26, 10, 0.15),
@@ -40,7 +39,7 @@
 .checkout-summary-col {
   background: linear-gradient(135deg, rgba(232, 221, 200, 0.9) 0%, rgba(212, 196, 168, 0.9) 100%);
   padding: 3rem 2.5rem;
-  border-right: 1.5px solid rgba(212, 98, 26, 0.15);
+  border-right: 3px solid var(--brown-dark);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -3387,29 +3386,6 @@ body:has(.checkout-container) .member-header {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(42, 26, 10, 0.45);
-  backdrop-filter: blur(8px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  animation: backdropFadeIn 0.25s ease-out;
-}
-
-.modal-card {
-  background: var(--white-warm, #FAF6F0);
-  border: 2px solid rgba(212, 98, 26, 0.25);
-  border-radius: 24px;
-  max-width: 480px;
-  width: 90%;
-  box-shadow: 0 20px 50px rgba(42, 26, 10, 0.18), 0 0 80px rgba(212, 98, 26, 0.05);
-  overflow: hidden;
-  animation: modalSlideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;

@@ -2,7 +2,6 @@ import { Check } from "lucide-react";
 import { supabase } from "../../../lib/supabaseClient";
 import type { PricingPlan, ReceiptData } from "./types";
 interface PayLaterPaymentFormProps {
-  userId: string;
   productId: string;
   productTitle: string;
   quantity: number;
@@ -15,7 +14,6 @@ interface PayLaterPaymentFormProps {
   onPaymentError: (error: string) => void;
 }
 export function PayLaterPaymentForm({
-  userId,
   productId,
   productTitle,
   quantity,
@@ -34,7 +32,6 @@ export function PayLaterPaymentForm({
       const { data: order, error: orderError } = await supabase
         .from("orders")
         .insert({
-          user_id: userId,
           product_id: productId,
           amount_cop: totalPrice,
           points_used: 0,
@@ -107,18 +104,7 @@ export function PayLaterPaymentForm({
           Una vez habilitada la cuenta, recibirás las instrucciones de pago.
         </li>{" "}
       </ul>{" "}
-      <div
-        style={{
-          padding: "10px 12px",
-          background: "rgba(212, 98, 26, 0.08)",
-          borderLeft: "4px solid #d4621a",
-          borderRadius: "8px",
-          fontSize: "0.85rem",
-          color: "#b24f11",
-          fontWeight: 500,
-          marginBottom: "20px",
-        }}
-      >
+      <div style={WARNING_BANNER_STYLE}>
         {" "}
         ⚠️ <strong>Nota:</strong> Esta opción solo aplica para la entrega de
         cuentas nuevas pre-inscritas. Si prefieres activar tu cuenta personal
@@ -134,3 +120,14 @@ export function PayLaterPaymentForm({
     </div>
   );
 }
+
+const WARNING_BANNER_STYLE: React.CSSProperties = {
+  padding: "10px 12px",
+  background: "rgba(212, 98, 26, 0.08)",
+  borderLeft: "4px solid #d4621a",
+  borderRadius: "8px",
+  fontSize: "0.85rem",
+  color: "#b24f11",
+  fontWeight: 500,
+  marginBottom: "20px",
+};

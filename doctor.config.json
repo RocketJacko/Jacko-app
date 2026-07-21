@@ -1,7 +1,0 @@
-{
-  "ignore": {
-    "files": [
-      "dist/assets/supabase-client-*.js"
-    ]
-  }
-}

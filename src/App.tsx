@@ -1,9 +1,7 @@
-import { useState, useEffect, useRef, lazy, Suspense } from "react";
-import { m } from "motion/react";
-import { ActivateOverlay } from "./components/canvas/ActivateOverlay";
-import { DockNav } from "./components/layout/DockNav";
+import { useState, useEffect, lazy, Suspense } from "react";
+import { m, AnimatePresence } from "motion/react";
+import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { MemberHeader } from "./components/layout/MemberHeader";
-import { HomePage } from "./pages/HomePage";
 import { ProfileCompletionModal } from "./components/modals/ProfileCompletionModal";
 import { SupportTicketModal } from "./components/modals/SupportTicketModal";
 import { NetworkBanner } from "./components/layout/NetworkBanner";
@@ -11,23 +9,30 @@ import { useAuth } from "./context/AuthContext";
 import { warmupConnection } from "./lib/supabaseClient";
 import { ErrorBoundary } from "./components/layout/ErrorBoundary";
 import { ChatBot } from "./components/ui/ChatBot";
-import { ViewSlot } from "./components/layout/ViewSlot";
 import { LoadingScreen } from "./components/layout/LoadingScreen";
 import { usePaymentRedirects } from "./hooks/usePaymentRedirects";
+import { CustomAlertModal } from "./components/views/dashboard/components/CustomAlertModal";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import "./App.css";
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 export type AppView = 'landing' | 'dashboard' | 'catalogo' | 'admin' | 'profile';
 
-// ─── Lazy views ──────────────────────────────────────────────────────────────
-const DashboardView = lazy(() =>
-  import('./components/views/DashboardView').then((m) => ({ default: m.DashboardView }))
+// ─── Lazy Pages ──────────────────────────────────────────────────────────────
+const LandingPage = lazy(() =>
+  import('./pages/LandingPage').then((m) => ({ default: m.LandingPage }))
 );
-const CatalogView = lazy(() =>
-  import('./components/views/CatalogView').then((m) => ({ default: m.CatalogView }))
+const DashboardPage = lazy(() =>
+  import('./pages/DashboardPage').then((m) => ({ default: m.DashboardPage }))
 );
-const AdminDashboardView = lazy(() =>
-  import('./components/views/AdminDashboardView').then((m) => ({ default: m.AdminDashboardView }))
+const CatalogPage = lazy(() =>
+  import('./pages/CatalogPage').then((m) => ({ default: m.CatalogPage }))
+);
+const CheckoutPage = lazy(() =>
+  import('./pages/CheckoutPage').then((m) => ({ default: m.CheckoutPage }))
+);
+const AdminPage = lazy(() =>
+  import('./pages/AdminPage').then((m) => ({ default: m.AdminPage }))
 );
 const ProfileView = lazy(() =>
   import('./components/views/ProfileView').then((m) => ({ default: m.ProfileView }))
@@ -66,14 +71,25 @@ function ViewFallback() {
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 export default function App() {
-  const [isIntroFinished, setIsIntroFinished] = useState(false);
-  const [currentView, setCurrentView] = useState<AppView>('landing');
+  const navigate = useNavigate();
+  const location = useLocation();
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showUserProfileModal, setShowUserProfileModal] = useState(false);
   const [isVerifyingRedirect, setIsVerifyingRedirect] = useState(false);
-  const [dashboardTab, setDashboardTab] = useState<'panel' | 'history'>('panel');
+  const [dashboardTab, setDashboardTab] = useState<'panel' | 'history' | 'activities'>('panel');
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
-  const { session, isSessionLoading, isStaff, isSuperAdmin } = useAuth();
+  const [globalModal, setGlobalModal] = useState<{ title: string; message: string } | null>(null);
+  const [globalToast, setGlobalToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const { session, isSessionLoading, isStaff } = useAuth();
+
+  // Deducir currentView a partir del pathname de React Router
+  const currentView: AppView = location.pathname.startsWith('/admin')
+    ? 'admin'
+    : location.pathname.startsWith('/dashboard')
+    ? 'dashboard'
+    : location.pathname.startsWith('/catalogo')
+    ? 'catalogo'
+    : 'landing';
 
   // Escuchar el evento global para abrir el modal de soporte
   useEffect(() => {
@@ -86,83 +102,92 @@ export default function App() {
     };
   }, []);
 
-  // Ref para evitar stale closures en efectos asíncronos
-  const currentViewRef = useRef(currentView);
+  // Escuchar eventos globales para notificaciones (toasts y modals)
   useEffect(() => {
-    currentViewRef.current = currentView;
-  }, [currentView]);
+    const handleShowToast = (e: Event) => {
+      const customEvent = e as CustomEvent<{ message: string; type: 'success' | 'error' }>;
+      if (customEvent.detail) {
+        setGlobalToast(customEvent.detail);
+      }
+    };
+    const handleShowModal = (e: Event) => {
+      const customEvent = e as CustomEvent<{ title: string; message: string }>;
+      if (customEvent.detail) {
+        setGlobalModal(customEvent.detail);
+      }
+    };
+    window.addEventListener('show-toast', handleShowToast);
+    window.addEventListener('show-modal', handleShowModal);
+    return () => {
+      window.removeEventListener('show-toast', handleShowToast);
+      window.removeEventListener('show-modal', handleShowModal);
+    };
+  }, []);
 
-  // Calentar la conexión con Supabase al arrancar (free-tier duerme por inactividad)
+  // Limpiar el toast automáticamente tras 4 segundos
+  useEffect(() => {
+    if (globalToast) {
+      const timer = setTimeout(() => {
+        setGlobalToast(null);
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [globalToast]);
+
+  const showModal = (title: string, message: string) => {
+    setGlobalModal({ title, message });
+  };
+
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setGlobalToast({ message, type });
+  };
+
+  // Calentar la conexión con Supabase al arrancar
   useEffect(() => {
     warmupConnection();
   }, []);
 
   // Captura de redirecciones de pago
-  usePaymentRedirects(session, setCurrentView, setIsVerifyingRedirect);
+  usePaymentRedirects(
+    session,
+    (view) => navigate(view === 'landing' ? '/' : `/${view}`),
+    setIsVerifyingRedirect,
+    showModal,
+    showToast
+  );
 
   // Redirección reactiva basada en sesión
   useEffect(() => {
-    let active = true;
-    const handleRedirect = async () => {
-      await Promise.resolve();
-      if (!active) return;
-      if (isSessionLoading) return;
-      if (session) {
-        setIsIntroFinished(true);
-        setShowProfileModal(true);
-        if (currentViewRef.current === 'landing') {
-          setCurrentView('dashboard');
-          localStorage.removeItem('jacko_selected_plan');
-          localStorage.removeItem('jacko_just_registered');
-        }
-      } else {
-        setShowProfileModal(false);
-        setCurrentView('landing');
-      }
-    };
-    handleRedirect();
-    return () => {
-      active = false;
-    };
-  }, [session, isSessionLoading]);
-
-  // Escuchador de navegación global para redirección directa
-  useEffect(() => {
-    const handleNavigate = (e: Event) => {
-      const customEvent = e as CustomEvent<{ view: AppView }>;
-      if (customEvent.detail && customEvent.detail.view) {
-        if (customEvent.detail.view === 'profile') {
-          setShowUserProfileModal(true);
+    if (isSessionLoading) return;
+    if (session) {
+      setShowProfileModal(true);
+      if (location.pathname === '/') {
+        const pendingPlan = localStorage.getItem('jacko_trigger_checkout_slug');
+        if (pendingPlan) {
+          navigate("/checkout", { replace: true });
         } else {
-          setCurrentView(customEvent.detail.view);
+          navigate("/dashboard", { replace: true });
         }
+        localStorage.removeItem('jacko_selected_plan');
+        localStorage.removeItem('jacko_just_registered');
       }
-    };
-    window.addEventListener('app-navigate', handleNavigate);
-    return () => {
-      window.removeEventListener('app-navigate', handleNavigate);
-    };
-  }, []);
-
-  // Callback de la intro
-  const handleIntroComplete = (completed: boolean) => {
-    if (isIntroFinished !== completed) {
-      setIsIntroFinished(completed);
+    } else {
+      setShowProfileModal(false);
     }
-  };
+  }, [session, isSessionLoading, location.pathname, navigate]);
 
-  // Pantalla de carga de sesión
+
+  // Pantalla de carga de sesión inicial
   if (isSessionLoading) {
     return <LoadingScreen />;
   }
 
-  // Render principal
   return (
     <div style={{ position: 'relative', minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#ffffff' }}>
       {/* Banner global de estado de red */}
       <NetworkBanner />
 
-      {/* Modal de perfil completo — bloqueante, se muestra sobre todo lo demás */}
+      {/* Modal de perfil completo — bloqueante */}
       {session && showProfileModal && (
         <ProfileCompletionModal
           userId={session.user.id}
@@ -171,7 +196,7 @@ export default function App() {
         />
       )}
 
-      {/* Modal de perfil del usuario — accesible voluntariamente desde el menú */}
+      {/* Modal de perfil del usuario — accesible voluntariamente */}
       {session && showUserProfileModal && (
         <ErrorBoundary>
           <Suspense fallback={null}>
@@ -186,7 +211,7 @@ export default function App() {
 
       {/* Overlay de verificación de redirección de PayPal */}
       {isVerifyingRedirect && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(26,10,10,0.85)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 9999, color: 'var(--white-warm)' }}>
+        <div className="paypal-redirect-overlay">
           <m.div
             animate={{ rotate: 360 }}
             transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
@@ -205,23 +230,6 @@ export default function App() {
         </div>
       )}
 
-      {/* Overlay de entrada - solo si no está logueado */}
-      {!session && <ActivateOverlay onStart={() => console.log('Experiencia iniciada')} />}
-
-      {/* DockNav — solo si NO hay sesión activa */}
-      {!session && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000, pointerEvents: 'none' }}>
-          <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-            <DockNav
-              isVisible={isIntroFinished}
-              currentView={currentView as 'landing' | 'dashboard' | 'catalogo' | 'admin'}
-              onViewChange={(view) => setCurrentView(view)}
-              isStaff={isStaff}
-            />
-          </div>
-        </div>
-      )}
-
       {/* MemberHeader — solo con sesión activa y fuera del panel admin */}
       {session && currentView !== 'admin' && (
         <MemberHeader
@@ -230,7 +238,7 @@ export default function App() {
             if (view === 'profile') {
               setShowUserProfileModal(true);
             } else {
-              setCurrentView(view);
+              navigate(view === 'landing' ? '/' : `/${view}`);
               if (view === 'dashboard' && tab) {
                 setDashboardTab(tab);
               }
@@ -241,7 +249,7 @@ export default function App() {
         />
       )}
 
-      {/* Vistas keep-alive */}
+      {/* Sistema de Rutas y Transición de Páginas */}
       <main
         style={{
           flex: '1 0 auto',
@@ -254,68 +262,105 @@ export default function App() {
           paddingTop: (session && currentView !== 'admin' && currentView !== 'landing') ? '80px' : '0'
         }}
       >
-        {/* Landing — siempre disponible (no requiere sesión) */}
-        <ViewSlot isActive={currentView === 'landing'}>
-          <HomePage onComplete={handleIntroComplete} />
-        </ViewSlot>
+        <Suspense fallback={<ViewFallback />}>
+          <Routes>
+            {/* Ruta Landing Pública */}
+            <Route path="/" element={<LandingPage />} />
 
-        {/* Dashboard — requiere sesión activa */}
-        {session && (
-          <ViewSlot isActive={currentView === 'dashboard'}>
-            <ErrorBoundary>
-              <Suspense fallback={<ViewFallback />}>
-                <DashboardView
-                  userId={session.user.id}
-                  userEmail={session.user.email || ''}
-                  onNavigateToCatalog={() => setCurrentView('catalogo')}
-                  activeTab={dashboardTab}
-                  setActiveTab={setDashboardTab}
-                />
-              </Suspense>
-            </ErrorBoundary>
-          </ViewSlot>
-        )}
+            {/* Rutas Privadas del Usuario (Protegidas) */}
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <DashboardPage activeTab={dashboardTab} setActiveTab={setDashboardTab} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/catalogo"
+              element={
+                <ProtectedRoute>
+                  <CatalogPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/checkout"
+              element={
+                <ProtectedRoute>
+                  <CheckoutPage />
+                </ProtectedRoute>
+              }
+            />
 
-        {/* Catálogo — requiere sesión activa o modo invitado */}
-        {(session || currentView === 'catalogo') && (
-          <ViewSlot isActive={currentView === 'catalogo'}>
-            <ErrorBoundary>
-              <Suspense fallback={<ViewFallback />}>
-                <CatalogView
-                  userId={session ? session.user.id : 'guest'}
-                  onRedeemSuccess={() => {
-                    // Puede usarse para disparar recarga cruzada en el futuro
-                  }}
-                  onNavigateToDashboard={session ? () => setCurrentView('dashboard') : undefined}
-                />
-              </Suspense>
-            </ErrorBoundary>
-          </ViewSlot>
-        )}
+            {/* Rutas del Panel de Administración (Protegidas + Staff) */}
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute requireStaff>
+                  <Navigate to="/admin/orders" replace />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/:tab"
+              element={
+                <ProtectedRoute requireStaff>
+                  <AdminPage />
+                </ProtectedRoute>
+              }
+            />
 
-
-        {/* Admin — requiere sesión activa + permisos de staff */}
-        {session && isStaff && (
-          <ViewSlot isActive={currentView === 'admin'} className="admin-view-slot">
-            <ErrorBoundary>
-              <Suspense fallback={<ViewFallback />}>
-                <AdminDashboardView
-                  userId={session.user.id}
-                  userEmail={session.user.email || ''}
-                  isSuperAdmin={isSuperAdmin}
-                  onNavigate={(view) => setCurrentView(view)}
-                />
-              </Suspense>
-            </ErrorBoundary>
-          </ViewSlot>
-        )}
+            {/* Ruta fallback de redirección segura */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
       </main>
 
       {/* Botón flotante y ventana de chat de asistencia */}
-      <ChatBot currentView={currentView} onViewChange={(view) => setCurrentView(view)} />
+      <ChatBot currentView={currentView} onViewChange={(view) => navigate(view === 'landing' ? '/' : `/${view}`)} />
 
       {/* Modal de Tickets de Soporte */}
       <SupportTicketModal isOpen={isSupportModalOpen} onClose={() => setIsSupportModalOpen(false)} />
+
+      {/* Toast global de pagos y estado */}
+      <div className="custom-toast-container">
+        <AnimatePresence>
+          {globalToast && (
+            <m.div
+              initial={{ opacity: 0, y: 50, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.9 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              className={`custom-toast ${globalToast.type}`}
+            >
+              <div className="custom-toast-icon">
+                {globalToast.type === 'success' && '✨'}
+                {globalToast.type === 'error' && '⚠️'}
+              </div>
+              <div className="custom-toast-text">{globalToast.message}</div>
+              <button
+                type="button"
+                className="custom-toast-close"
+                onClick={() => setGlobalToast(null)}
+              >
+                ×
+              </button>
+            </m.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Modal global de avisos */}
+      <AnimatePresence>
+        {globalModal && (
+          <CustomAlertModal
+            title={globalModal.title}
+            message={globalModal.message}
+            onClose={() => setGlobalModal(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
