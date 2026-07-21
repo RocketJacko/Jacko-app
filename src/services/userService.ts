@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabaseClient';
+import { getSupabaseConfig } from '../lib/supabaseConfig';
 import { getCachedData } from '../lib/queryCache';
 import type { Profile, Order } from '../components/views/dashboard/types';
 
@@ -41,16 +42,25 @@ export const userService = {
 
   async verifyPaypalOrder(paypalOrderId: string): Promise<{ success: boolean; status: string; message?: string }> {
     const { data: sessionData } = await supabase.auth.getSession();
-    const tokenHeader = sessionData?.session?.access_token;
-    const { data, error } = await supabase.functions.invoke('paypal-capture-order', {
-      body: { paypalOrderId },
-      headers: tokenHeader ? { Authorization: `Bearer ${tokenHeader}` } : undefined,
+    const userToken = sessionData?.session?.access_token;
+    const { supabaseUrl, supabaseAnonKey } = getSupabaseConfig();
+
+    const res = await fetch(`${supabaseUrl}/functions/v1/paypal-capture-order`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': supabaseAnonKey,
+        'Authorization': `Bearer ${userToken || supabaseAnonKey}`,
+      },
+      body: JSON.stringify({ paypalOrderId }),
     });
-    if (error) {
-      throw new Error(error.message || 'El pago aún no ha sido completado o no se pudo verificar.');
+
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data) {
+      throw new Error(data?.error || `Error ${res.status} al verificar el pago.`);
     }
-    if (!data) {
-      throw new Error('No se recibió respuesta del servidor de verificación.');
+    if (data.error) {
+      throw new Error(data.error);
     }
     return data;
   },

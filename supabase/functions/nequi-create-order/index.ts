@@ -310,8 +310,8 @@ Deno.serve(async (req) => {
               nequi_payment_method: bestLog.payment_method,
               nequi_match_score: bestScore,
               nequi_match_status: "auto_approved",
-              // NOTA: El trigger BEFORE UPDATE en orders interceptará esta actualización a 'approved' 
-              -- y transferirá la propiedad del placeholder 0000...0000 al usuario real aprovisionado
+              // El trigger BEFORE UPDATE en orders interceptará esta actualización a 'approved'
+              // y transferirá la propiedad del placeholder 0000...0000 al usuario real aprovisionado
             })
             .eq("id", order.id);
 
