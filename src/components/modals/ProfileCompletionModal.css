@@ -74,3 +74,19 @@
   text-align: center;
   margin: 0;
 }
+
+/* ── Mobile: larger touch target for avatar button ── */
+@media (max-width: 600px) {
+  .avatar-btn {
+    width: 96px;
+    height: 96px;
+  }
+  /* Ensure inputs don't trigger iOS zoom */
+  .custom-modal-input {
+    font-size: 16px;
+  }
+  .btn-modal-action {
+    min-height: 48px;
+    min-width: 44px;
+  }
+}

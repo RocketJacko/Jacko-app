@@ -9,7 +9,8 @@ import {
   User,
   ShoppingBag,
   Menu,
-  X
+  X,
+  Trophy,
 } from 'lucide-react';
 import './MemberHeader.css';
 
@@ -281,6 +282,62 @@ export function MemberHeader({
           </div>
         </div>
       </div>
+
+      {/* ── Bottom Navigation Bar (mobile only) ── */}
+      <nav className="member-bottom-nav" aria-label="Navegación principal">
+        <button
+          type="button"
+          className={`bottom-nav-item${currentView === 'dashboard' ? ' active' : ''}`}
+          onClick={() => { onViewChange('dashboard', 'panel'); }}
+          aria-label="Mi Panel"
+        >
+          <LayoutDashboard size={22} />
+          <span>Mi Panel</span>
+        </button>
+        <button
+          type="button"
+          className={`bottom-nav-item${currentView === 'dashboard' ? ' active' : ''}`}
+          onClick={() => { onViewChange('dashboard', 'activities'); }}
+          aria-label="Desafíos"
+          style={{ display: currentView === 'dashboard' ? 'flex' : 'flex' }}
+        >
+          <Trophy size={22} />
+          <span>Desafíos</span>
+        </button>
+        <button
+          type="button"
+          className={`bottom-nav-item${currentView === 'catalogo' ? ' active' : ''}`}
+          onClick={() => { onViewChange('catalogo'); }}
+          aria-label="Catálogo"
+        >
+          <Gift size={22} />
+          <span>Catálogo</span>
+        </button>
+        <button
+          type="button"
+          className="bottom-nav-item"
+          onClick={() => { onViewChange('profile'); }}
+          aria-label="Perfil"
+        >
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="" className="user-avatar-img-round" style={{ width: 22, height: 22 }} />
+          ) : (
+            <User size={22} />
+          )}
+          <span>Perfil</span>
+        </button>
+        {isStaff && (
+          <button
+            type="button"
+            className={`bottom-nav-item${currentView === 'admin' ? ' active' : ''}`}
+            onClick={() => { onViewChange('admin'); }}
+            aria-label="Admin"
+          >
+            <ShieldAlert size={22} />
+            <span>Admin</span>
+          </button>
+        )}
+      </nav>
 
       {/* Cajón Móvil */}
       {isMobileMenuOpen && (

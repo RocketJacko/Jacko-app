@@ -2,10 +2,8 @@
   position: relative;
   width: 100%;
   background-color: #ffffff;
-  height: 500vh; /* Ajustado para dar espacio al skater y a las secciones unificadas */
+  height: 500vh;
 }
-
-/* Snap Points eliminados para scroll fluido */
 
 .scroll-ef2-sticky {
   position: sticky;
@@ -16,6 +14,115 @@
   overflow: hidden;
   background: #ffffff;
   z-index: 10;
+  /* Permitir scroll vertical con el dedo para drive la animación */
+  touch-action: pan-y;
+}
+
+/* Register section overlay: desktop = absolute dentro del sticky */
+.register-overlay-wrap {
+  position: absolute;
+  inset: 0;
+  z-index: 51;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* ── Mobile: registro en flujo normal del documento ── */
+.scroll-ef2-section--mobile-register {
+  display: block;
+  width: 100%;
+  background: var(--beige-light, #e8ddc8);
+}
+
+/* ── Mobile: canvas a pantalla completa con tap-to-advance ── */
+.scroll-ef2-mobile-canvas-section {
+  position: relative;
+  width: 100%;
+  /* Exactamente un viewport: el canvas llena la pantalla */
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.mobile-canvas-fullscreen {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  /* El canvas dibuja con drawCover que ya maneja el aspect ratio */
+}
+
+.mobile-hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: clamp(80px, 15vw, 120px) clamp(1rem, 5vw, 2rem) 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.mobile-hero-overlay h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 11vw, 3.5rem);
+  line-height: 0.95;
+  color: var(--orange-deep);
+  text-shadow: 0 4px 12px rgba(232, 221, 200, 0.8);
+  margin: 0.75rem 0 0;
+}
+
+.mobile-hero-overlay h1 span {
+  color: var(--brown-dark);
+}
+
+/* Botón continuar: parte inferior de la pantalla, táctil grande */
+.mobile-tap-advance-btn {
+  position: absolute;
+  bottom: clamp(32px, 8vh, 64px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--orange-base);
+  color: #ffffff;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 50px;
+  padding: 16px 32px;
+  min-height: 56px;
+  min-width: 180px;
+  cursor: pointer;
+  box-shadow: 0 8px 32px rgba(212, 98, 26, 0.45);
+  white-space: nowrap;
+  /* Sin touch-action manipulation aquí porque ya lo hereda de button */
+}
+
+.mobile-tap-advance-btn:active {
+  transform: translateX(-50%) scale(0.96);
+}
+
+/* Barra de progreso de la animación */
+.mobile-anim-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: rgba(255,255,255,0.2);
+  z-index: 10;
+}
+
+.mobile-anim-bar {
+  height: 100%;
+  background: var(--orange-base);
+  transition: width 0.05s linear;
 }
 
 .skater-hero-overlay {
@@ -165,16 +272,17 @@
   position: absolute;
   inset: 0;
   z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   transition: opacity 0.5s ease;
+  /* No flex centering: el canvas debe ocupar todo el inset */
 }
 
 .skater-canvas-wrap canvas {
+  display: block;
   width: 100%;
   height: 100%;
-  display: block;
+  /* object-fit equivalente vía CSS: el drawCover en JS ya maneja el aspect ratio,
+     pero el elemento canvas debe llenar el contenedor completamente */
+  object-fit: cover;
 }
 
 /* Loader JACKO™ */

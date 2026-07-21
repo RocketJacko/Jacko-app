@@ -3,10 +3,16 @@
   width: 100%;
   max-width: 1000px;
   margin: 0 auto;
-  padding: 1.5rem 1.5rem 3rem 1.5rem;
+  padding: 1rem 1rem 3rem 1rem;
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+@media (min-width: 480px) {
+  .pricing-slider-section {
+    padding: 1.5rem 1.5rem 3rem 1.5rem;
+  }
 }
 
 /* Encabezado */
@@ -23,10 +29,10 @@
 .pricing-title {
   font-family: var(--font-display);
   color: var(--brown-dark);
-  font-size: 2.75rem;
+  font-size: clamp(1.6rem, 6vw, 2.75rem);
   font-weight: 800;
   line-height: 1.15;
-  letter-spacing: -1px;
+  letter-spacing: -0.5px;
   margin: 0;
 }
 
@@ -131,10 +137,18 @@
   -webkit-backdrop-filter: blur(16px);
   border: 1.5px solid rgba(212, 163, 88, 0.22) !important;
   padding: 1rem 0.5rem;
-  height: 510px !important; /* Altura estricta para anular el efecto de salto */
+  /* Auto height on mobile so content fits; fixed on desktop to prevent layout jump */
+  height: auto;
+  min-height: 360px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+}
+
+@media (min-width: 768px) {
+  .pricing-calc-card {
+    height: 510px !important;
+  }
 }
 
 .pricing-calc-card:hover {
@@ -296,10 +310,18 @@
   box-shadow: 0 15px 45px rgba(21, 10, 3, 0.25);
   padding: 1rem 0.5rem;
   color: var(--white-warm);
-  height: 510px !important; /* Altura estricta para anular el efecto de salto */
+  /* Auto height on mobile so full card is visible */
+  height: auto;
+  min-height: 360px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+}
+
+@media (min-width: 768px) {
+  .pricing-summary-card {
+    height: 510px !important;
+  }
 }
 
 .pricing-summary-card:hover {
@@ -341,10 +363,17 @@
 .summary-price-box {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(212, 163, 88, 0.15);
-  padding: 1.5rem;
+  padding: 1rem 1.25rem;
   border-radius: 16px;
-  margin-bottom: 2rem;
+  margin-bottom: 1.25rem;
   transition: all 0.3s ease;
+}
+
+@media (min-width: 768px) {
+  .summary-price-box {
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
 }
 
 .price-display-text {
@@ -394,8 +423,15 @@
 .summary-benefits-list {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  margin-bottom: 2.5rem;
+  gap: 12px;
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .summary-benefits-list {
+    gap: 14px;
+    margin-bottom: 2.5rem;
+  }
 }
 
 .benefit-item {

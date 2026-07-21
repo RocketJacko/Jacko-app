@@ -1,12 +1,14 @@
+/* ── Mobile-first catalog container ── */
 .catalog-container {
-  min-height: 100vh;
-  padding: 8rem 2rem 4rem 2rem;
+  min-height: 100dvh;
+  /* mobile base: minimal padding; grows at larger breakpoints */
+  padding: clamp(5rem, 12vw, 8rem) clamp(0.75rem, 4vw, 2rem) clamp(5rem, 8vw, 4rem);
   background-color: var(--beige-light);
   display: flex;
   justify-content: center;
   align-items: flex-start;
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
   width: 100%;
 }
 
@@ -30,7 +32,23 @@
 
 @media (max-width: 768px) {
   .catalog-container {
-    padding: 7rem 1.25rem 3rem 1.25rem;
+    padding: 5.5rem 0.875rem 5.5rem 0.875rem; /* bottom for dock space */
+  }
+}
+
+@media (max-width: 480px) {
+  .category-pill {
+    padding: 10px 14px;
+    min-height: 44px;
+    font-size: 0.8rem;
+  }
+  .catalog-search-input {
+    font-size: 16px; /* prevent iOS zoom */
+    min-height: 48px;
+  }
+  .card-redeem-button {
+    min-height: 48px;
+    font-size: 0.85rem;
   }
 }
 

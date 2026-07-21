@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState, useEffect } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState, useEffect, useCallback } from 'react';
 import { m, useScroll, useSpring, useTransform, useMotionValueEvent } from 'motion/react';
 import { useImageSequence } from '../../hooks/useImageSequence';
 import { getCanvasBackingDpr } from '../../lib/canvasDpr';
@@ -84,19 +84,87 @@ export function ScrollEscudoFase2Bridge({
   const isTransitioningToInicio = useRef(false);
   const isTransitioningToSkater = useRef(false);
 
+  /* ── Mobile detection ── */
+  const checkMobile = useCallback(() => window.innerWidth <= 768, []);
+  const [isMobileMode, setIsMobileMode] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 768);
 
-
-  /* Bloquear scroll de la página una vez terminada la animación 3D */
   useEffect(() => {
-    if (activeOverlay !== 'skater') {
-      document.body.style.overflow = 'hidden';
-    } else {
+    const handleResize = () => setIsMobileMode(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  /* En mobile-register: el body scrollea normalmente (sin overflow bloqueado) */
+  const isMobileRegister = isMobileMode && activeOverlay === 'register';
+
+  useEffect(() => {
+    if (isMobileRegister) {
+      // Liberar completamente el body para scroll nativo iOS/Android
       document.body.style.overflow = '';
+      document.body.style.overflowX = '';
+      document.body.style.overflowY = '';
     }
     return () => {
       document.body.style.overflow = '';
+      document.body.style.overflowX = '';
+      document.body.style.overflowY = '';
     };
-  }, [activeOverlay]);
+  }, [isMobileRegister]);
+
+  /* ── Mobile tap-to-advance: en mobile NO usamos scroll-drive de 500vh.
+     El usuario ve la animación completa en un solo viewport y toca para avanzar. ── */
+  const [mobileTapPhase, setMobileTapPhase] = useState<'idle' | 'animating' | 'done'>('idle');
+  const [mobileAnimProgress, setMobileAnimProgress] = useState(0);
+  const mobileAnimFrame = useRef<number | null>(null);
+
+  const runMobileAnimation = useCallback(() => {
+    if (!canvasRef.current || !ready || images.length === 0) {
+      setActiveOverlay('register');
+      return;
+    }
+    setMobileTapPhase('animating');
+    const totalFrames = n;
+    const duration = 1800; // ms
+    const startTime = performance.now();
+
+    const tick = (now: number) => {
+      const elapsed = now - startTime;
+      const p = Math.min(1, elapsed / duration);
+      setMobileAnimProgress(p);
+      const frameIndex = Math.min(totalFrames - 1, Math.floor(p * totalFrames));
+      const img = images[frameIndex];
+      if (img && img.complete && canvasRef.current) {
+        drawCover(canvasRef.current, img, { ...escudoDraw, opaque: false });
+      }
+      if (p < 1) {
+        mobileAnimFrame.current = requestAnimationFrame(tick);
+      } else {
+        setMobileTapPhase('done');
+        setActiveOverlay('register');
+        onComplete?.(true);
+      }
+    };
+    mobileAnimFrame.current = requestAnimationFrame(tick);
+  }, [ready, images, n, escudoDraw, onComplete]);
+
+  useEffect(() => {
+    return () => {
+      if (mobileAnimFrame.current) cancelAnimationFrame(mobileAnimFrame.current);
+    };
+  }, []);
+
+  /* Escuchar el evento del ActivateOverlay para iniciar la animación mobile
+     directamente al pulsar "Comenzar", sin requerir tap adicional */
+  useEffect(() => {
+    if (!isMobileMode) return;
+    const handleMobileStart = () => {
+      if (mobileTapPhase === 'idle') {
+        runMobileAnimation();
+      }
+    };
+    window.addEventListener('jacko-mobile-start', handleMobileStart);
+    return () => window.removeEventListener('jacko-mobile-start', handleMobileStart);
+  }, [isMobileMode, mobileTapPhase, runMobileAnimation]);
 
   /* Notificar al App.tsx para activar la sección de registro al terminar */
   useMotionValueEvent(smoothProgress, 'change', (latest) => {
@@ -167,18 +235,93 @@ export function ScrollEscudoFase2Bridge({
       canvas.width = window.innerWidth * dpr;
       canvas.height = window.innerHeight * dpr;
       if (ready && images.length > 0) {
-        const latest = smoothProgress.get();
-        const skaterProgress = Math.min(1, Math.max(0, latest / 0.7));
-        const frameIndex = Math.min(n - 1, Math.max(0, Math.floor(skaterProgress * n)));
-        const img = images[frameIndex];
-        if (img) drawCover(canvas, img, { ...escudoDraw, opaque: false });
+        if (isMobileMode) {
+          // Mobile: dibujar siempre el primer frame como estado de reposo
+          const img = images[0];
+          if (img) drawCover(canvas, img, { ...escudoDraw, opaque: false });
+        } else {
+          const latest = smoothProgress.get();
+          const skaterProgress = Math.min(1, Math.max(0, latest / 0.7));
+          const frameIndex = Math.min(n - 1, Math.max(0, Math.floor(skaterProgress * n)));
+          const img = images[frameIndex];
+          if (img) drawCover(canvas, img, { ...escudoDraw, opaque: false });
+        }
       }
     };
 
     window.addEventListener('resize', handleResize);
     handleResize();
     return () => window.removeEventListener('resize', handleResize);
-  }, [ready, images, n, escudoDraw, smoothProgress]);
+  }, [ready, images, n, escudoDraw, smoothProgress, isMobileMode]);
+
+  /* ── MOBILE RENDER ──
+     En mobile NO usamos el modelo de 500vh scroll-drive.
+     Mostramos el canvas a pantalla completa con un tap para lanzar
+     la animación. Al terminar, el registro aparece en flujo normal
+     del documento para que el body scrollee con el dedo. */
+  if (isMobileMode) {
+    if (isMobileRegister) {
+      // Fase final: registro scrolleable con body nativo
+      return (
+        <section
+          id={id}
+          className="scroll-ef2-section--mobile-register"
+          aria-label={ariaLabel}
+        >
+          <RegisterPage />
+        </section>
+      );
+    }
+
+    // Fase canvas: pantalla completa, tap para avanzar
+    return (
+      <section
+        id={id}
+        className="scroll-ef2-mobile-canvas-section"
+        aria-label={ariaLabel}
+      >
+        {/* Canvas fullscreen */}
+        <canvas
+          ref={canvasRef}
+          className="mobile-canvas-fullscreen"
+          aria-hidden
+        />
+
+        {/* Hero overlay */}
+        {mobileTapPhase === 'idle' && (
+          <div className="mobile-hero-overlay">
+            <div className="hero-eyebrow">
+              <span className="dot" />JACKO™ — Actívate Ya
+            </div>
+            <h1>
+              Ideas en<br />
+              movimiento,<br />
+              <span>estilo en acción</span>
+            </h1>
+          </div>
+        )}
+
+        {/* Botón tap-to-advance */}
+        {mobileTapPhase === 'idle' && (
+          <button
+            className="mobile-tap-advance-btn"
+            onClick={runMobileAnimation}
+            aria-label="Ver animación y continuar al registro"
+          >
+            <span>Continuar</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+        )}
+
+        {/* Indicador de animación en curso */}
+        {mobileTapPhase === 'animating' && (
+          <div className="mobile-anim-progress" aria-live="polite">
+            <div className="mobile-anim-bar" style={{ width: `${mobileAnimProgress * 100}%` }} />
+          </div>
+        )}
+      </section>
+    );
+  }
 
   return (
     <section id={id} ref={sectionRef} className="scroll-ef2-section" aria-label={ariaLabel}>
@@ -264,15 +407,15 @@ export function ScrollEscudoFase2Bridge({
           <canvas ref={canvasRef} aria-hidden />
         </m.div>
 
-        {/* SECCIÓN DE REGISTRO */}
+        {/* SECCIÓN DE REGISTRO — desktop/tablet: overlay dentro del sticky */}
         <m.div
+          className="register-overlay-wrap"
           initial={{ opacity: 0 }}
           animate={{
             opacity: activeOverlay === 'register' ? 1 : 0,
             pointerEvents: activeOverlay === 'register' ? 'auto' : 'none',
           }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          style={{ position: 'absolute', inset: 0, zIndex: 51, overflowY: 'auto' }}
         >
           <RegisterPage />
         </m.div>

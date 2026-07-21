@@ -357,6 +357,40 @@
   .profile-input--sm {
     width: 100%;
   }
+  /* Force single column on small phones — override inline grid */
+  .pvm-card .profile-fields,
+  .profile-fields {
+    grid-template-columns: 1fr !important;
+  }
+  /* Prevent iOS zoom on inputs */
+  .profile-input,
+  .profile-dial-trigger-input {
+    font-size: 16px !important;
+  }
+  /* Wider dial select on mobile */
+  .profile-dial-select-wrapper {
+    width: 100% !important;
+  }
+  .profile-phone-row {
+    flex-direction: column;
+  }
+  .profile-dial-dropdown {
+    width: 100%;
+    left: 0;
+  }
+  .btn-profile-save {
+    min-height: 48px;
+    width: 100%;
+    justify-content: center;
+  }
+  .profile-footer-actions {
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px;
+  }
+  .profile-section {
+    padding: 16px;
+  }
 }
 
 /* ── Estilos de comportamiento Modal (Profile View Modal - PVM) ── */
@@ -370,18 +404,32 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem;
+  /* Mobile: no padding so card fills screen */
+  padding: 0;
   overflow: hidden;
+}
+
+@media (min-width: 480px) {
+  .pvm-overlay {
+    padding: 1rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .pvm-overlay {
+    padding: 1.5rem;
+  }
 }
 
 .pvm-card {
   background: linear-gradient(155deg, #fdfaf5 0%, #f5efe2 60%, #ede4d0 100%);
   border: 1px solid rgba(212, 163, 88, 0.25);
-  border-radius: 28px;
-  padding: 2.5rem 2.25rem 2rem;
+  /* Mobile: full screen */
+  border-radius: 0;
+  padding: 1.5rem 1rem 2rem;
   width: 100%;
   max-width: 680px;
-  max-height: 90vh;
+  max-height: 100dvh;
   overflow-y: auto;
   box-shadow:
     0 40px 100px rgba(0, 0, 0, 0.55),
@@ -404,6 +452,22 @@
   to {
     transform: scale(1);
     opacity: 1;
+  }
+}
+
+@media (min-width: 480px) {
+  .pvm-card {
+    border-radius: 20px;
+    padding: 2rem 1.5rem 2rem;
+    max-height: 95dvh;
+  }
+}
+
+@media (min-width: 768px) {
+  .pvm-card {
+    border-radius: 28px;
+    padding: 2.5rem 2.25rem 2rem;
+    max-height: 90dvh;
   }
 }
 

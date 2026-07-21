@@ -259,7 +259,7 @@ export default function App() {
           height: currentView === 'admin' ? '100vh' : 'auto',
           minHeight: currentView === 'admin' ? '100vh' : 'auto',
           overflow: currentView === 'admin' ? 'hidden' : 'visible',
-          paddingTop: (session && currentView !== 'admin' && currentView !== 'landing') ? '80px' : '0'
+          paddingTop: (session && currentView !== 'admin' && currentView !== 'landing') ? 'clamp(60px, 8vw, 80px)' : '0'
         }}
       >
         <Suspense fallback={<ViewFallback />}>
