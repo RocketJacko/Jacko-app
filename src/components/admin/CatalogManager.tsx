@@ -244,26 +244,56 @@ function useCatalogManager() {
   };
 
   const handleDeleteProduct = async (id: string, title: string) => {
-    if (!window.confirm(`¿Estás seguro de eliminar el producto "${title}"? Esta acción borrará registros históricos.`)) {
+    if (!window.confirm(`¿Estás seguro de eliminar el producto "${title}"?\n\nSi tiene órdenes u otras referencias, se desactivará en su lugar para preservar el historial.`)) {
       return;
     }
     setIsLoading(true);
     try {
-      const { error } = await supabase.from('products').delete().eq('id', id);
-      if (error) throw error;
+      // Intentar eliminación física primero
+      const { error: deleteError } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', id);
 
-      await supabase.rpc('admin_log_action', {
-        _action: 'delete_product',
-        _target_table: 'products',
-        _target_id: null,
-        _payload: { deleted_id: id, title }
-      });
+      if (deleteError) {
+        // Si falla por FK constraint, hacer soft-delete (desactivar)
+        const isConstraintError =
+          deleteError.code === '23503' ||
+          deleteError.message?.toLowerCase().includes('foreign key') ||
+          deleteError.message?.toLowerCase().includes('violates');
+
+        if (isConstraintError) {
+          const { error: softError } = await supabase
+            .from('products')
+            .update({ is_active: false })
+            .eq('id', id);
+          if (softError) throw softError;
+
+          await supabase.rpc('admin_log_action', {
+            _action: 'deactivate_product',
+            _target_table: 'products',
+            _target_id: id,
+            _payload: { id, title, reason: 'soft_delete_due_to_fk_constraint' }
+          });
+
+          alert(`El producto "${title}" no pudo eliminarse porque tiene registros históricos asociados. Fue desactivado en su lugar.`);
+        } else {
+          throw deleteError;
+        }
+      } else {
+        await supabase.rpc('admin_log_action', {
+          _action: 'delete_product',
+          _target_table: 'products',
+          _target_id: null,
+          _payload: { deleted_id: id, title }
+        });
+      }
 
       invalidateCacheByPrefix('catalog_products');
       setSelectedProducts(prev => prev.filter(pId => pId !== id));
       await fetchProducts();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Error al eliminar el producto.');
+      alert('Error al eliminar el producto: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
       setIsLoading(false);
     }
@@ -271,16 +301,21 @@ function useCatalogManager() {
 
   const handleToggleActiveProduct = async (prod: Product) => {
     const newStatus = !prod.is_active;
-    
+
+    // Actualización optimista en UI
     setProducts(prev => prev.map(p => p.id === prod.id ? { ...p, is_active: newStatus } : p));
 
     try {
-      const { error } = await supabase
-        .from('products')
-        .update({ is_active: newStatus })
-        .eq('id', prod.id);
+      // Usar RPC save_product_with_plans para evitar restricciones de RLS
+      // sobre la vista products_with_plans; solo se actualiza is_active.
+      const { error } = await supabase.rpc('save_product_with_plans', {
+        p_product_id: prod.id,
+        p_product_data: { is_active: newStatus },
+        p_plans_data: null,
+      });
 
       if (error) {
+        // Revertir UI si falla
         setProducts(prev => prev.map(p => p.id === prod.id ? { ...p, is_active: !newStatus } : p));
         throw error;
       }
@@ -301,33 +336,71 @@ function useCatalogManager() {
   const handleDeleteMultipleProducts = async () => {
     if (selectedProducts.length === 0) return;
 
-    if (!window.confirm(`¿Estás seguro de eliminar permanentemente los ${selectedProducts.length} productos seleccionados? Esta acción borrará registros históricos.`)) {
+    if (!window.confirm(`¿Estás seguro de eliminar los ${selectedProducts.length} productos seleccionados?\n\nLos que tengan historial asociado serán desactivados en lugar de eliminados.`)) {
       return;
     }
     setIsLoading(true);
     try {
       const selectedSet = new Set(selectedProducts);
       const productsToDelete = products.filter(p => selectedSet.has(p.id));
-      const deletedTitles = productsToDelete.map(p => p.title).join(', ');
 
-      const { error } = await supabase
-        .from('products')
-        .delete().in('id', selectedProducts);
-        
-      if (error) throw error;
+      const hardDeleteIds: string[] = [];
+      const softDeleteIds: string[] = [];
 
-      await supabase.rpc('admin_log_action', {
-        _action: 'delete_multiple_products',
-        _target_table: 'products',
-        _target_id: null,
-        _payload: { deleted_ids: selectedProducts, titles: deletedTitles }
-      });
+      // Intentar eliminar uno a uno para manejar FK constraints por producto
+      await Promise.all(
+        productsToDelete.map(async (prod) => {
+          const { error } = await supabase
+            .from('products')
+            .delete()
+            .eq('id', prod.id);
+
+          if (error) {
+            const isConstraint =
+              error.code === '23503' ||
+              error.message?.toLowerCase().includes('foreign key') ||
+              error.message?.toLowerCase().includes('violates');
+
+            if (isConstraint) {
+              // Soft-delete para productos con historial
+              await supabase
+                .from('products')
+                .update({ is_active: false })
+                .eq('id', prod.id);
+              softDeleteIds.push(prod.id);
+            } else {
+              // Re-lanzar errores inesperados
+              throw error;
+            }
+          } else {
+            hardDeleteIds.push(prod.id);
+          }
+        })
+      );
+
+      if (hardDeleteIds.length > 0) {
+        await supabase.rpc('admin_log_action', {
+          _action: 'delete_multiple_products',
+          _target_table: 'products',
+          _target_id: null,
+          _payload: { deleted_ids: hardDeleteIds }
+        });
+      }
+      if (softDeleteIds.length > 0) {
+        await supabase.rpc('admin_log_action', {
+          _action: 'deactivate_multiple_products',
+          _target_table: 'products',
+          _target_id: null,
+          _payload: { deactivated_ids: softDeleteIds, reason: 'soft_delete_due_to_fk_constraint' }
+        });
+        alert(`${softDeleteIds.length} producto(s) tenían historial asociado y fueron desactivados en lugar de eliminados.`);
+      }
 
       invalidateCacheByPrefix('catalog_products');
       setSelectedProducts([]);
       await fetchProducts();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Error al eliminar los productos seleccionados.');
+      alert(err instanceof Error ? err.message : 'Error al procesar la eliminación de los productos seleccionados.');
     } finally {
       setIsLoading(false);
     }
