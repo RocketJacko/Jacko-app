@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabaseClient';
+import { getSupabaseConfig } from '../lib/supabaseConfig';
 import { invalidateCache, invalidateCacheByPrefix } from '../lib/queryCache';
 import type { AppView } from '../App';
 
@@ -32,13 +33,26 @@ export function usePaymentRedirects(
           setIsVerifyingRedirect(true);
           try {
             const { data: sessionData } = await supabase.auth.getSession();
-            const tokenHeader = sessionData?.session?.access_token;
-            const { data, error } = await supabase.functions.invoke('paypal-capture-order', {
-              body: { paypalOrderId: token },
-              headers: tokenHeader ? { Authorization: `Bearer ${tokenHeader}` } : undefined,
-            });
-            if (error || !data) {
-              throw new Error(error?.message || 'Error al capturar el pago en el servidor.');
+            const userToken = sessionData?.session?.access_token;
+            const { supabaseUrl, supabaseAnonKey } = getSupabaseConfig();
+
+            // Fetch directo: evita que supabase.functions.invoke sobreescriba
+            // el Authorization header con el anon key en vez del JWT del usuario.
+            const captureRes = await fetch(
+              `${supabaseUrl}/functions/v1/paypal-capture-order`,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'apikey': supabaseAnonKey,
+                  'Authorization': `Bearer ${userToken || supabaseAnonKey}`,
+                },
+                body: JSON.stringify({ paypalOrderId: token }),
+              }
+            );
+            const data = await captureRes.json().catch(() => null);
+            if (!captureRes.ok || !data) {
+              throw new Error(data?.error || `Error ${captureRes.status} al capturar el pago.`);
             }
             if (data.success && data.status === 'approved') {
               if (session) {

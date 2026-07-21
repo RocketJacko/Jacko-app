@@ -1,45 +1,49 @@
 import { supabase } from '../supabaseClient';
+import { getSupabaseConfig } from '../supabaseConfig';
 import type { PaymentHandler, PaymentRequest, PaymentResponse } from './PaymentHandler';
 
 export abstract class BasePaymentHandler implements PaymentHandler {
   protected abstract getFunctionName(): string;
-  
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  protected abstract buildRequestBody(request: PaymentRequest): Record<string, any>;
-  
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  protected abstract parseResponse(data: any): Partial<PaymentResponse>;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  protected getInvokeOptions(): Record<string, any> {
-    return {};
-  }
+  protected abstract buildRequestBody(request: PaymentRequest): Record<string, any>;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  protected abstract parseResponse(data: any): Partial<PaymentResponse>;
 
   async initiate(request: PaymentRequest): Promise<PaymentResponse> {
     try {
       const functionName = this.getFunctionName();
       const body = this.buildRequestBody(request);
-      const options = this.getInvokeOptions();
 
-      // Ensure user's access token is explicitly sent to Edge Functions
+      // Obtener el JWT del usuario activo
       const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData?.session?.access_token;
-      const headers = {
-        ...(options.headers || {}),
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      };
+      const userToken = sessionData?.session?.access_token;
 
-      const { data, error } = await supabase.functions.invoke(functionName, {
-        body,
-        ...options,
-        headers,
+      const { supabaseUrl, supabaseAnonKey } = getSupabaseConfig();
+      const functionUrl = `${supabaseUrl}/functions/v1/${functionName}`;
+
+      // Usar fetch directo: supabase.functions.invoke inyecta el anon key
+      // en Authorization y puede sobreescribir el JWT del usuario.
+      const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': supabaseAnonKey,
+          'Authorization': `Bearer ${userToken || supabaseAnonKey}`,
+        },
+        body: JSON.stringify(body),
       });
 
-      if (error || !data) {
-        return {
-          success: false,
-          error: error?.message || `Error al conectar con la pasarela de pagos.`,
-        };
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok || !data) {
+        const errorMsg = data?.error || `Error ${response.status} al conectar con la pasarela de pagos.`;
+        return { success: false, error: errorMsg };
+      }
+
+      if (data.error) {
+        return { success: false, error: data.error };
       }
 
       return {
@@ -49,10 +53,7 @@ export abstract class BasePaymentHandler implements PaymentHandler {
       };
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : 'Error desconocido al procesar el pago.';
-      return {
-        success: false,
-        error: message,
-      };
+      return { success: false, error: message };
     }
   }
 }
