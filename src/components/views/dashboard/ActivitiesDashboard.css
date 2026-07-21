@@ -635,7 +635,38 @@
   background-color: var(--brown-dark);
 }
 
-/* Responsivo para móviles angostos (max-width: 480px) */
+/* ── Mobile-first improvements ── */
+@media (max-width: 600px) {
+  .activity-dashboard-card {
+    padding: 1.1rem 1rem;
+    border-radius: 18px;
+  }
+
+  .activity-dashboard-title {
+    font-size: 1rem;
+  }
+
+  /* Increase touch target for expand button */
+  .btn-toggle-expand {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+  }
+
+  /* Checkbox bigger touch target */
+  .task-checkbox-container {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+  }
+
+  /* Action buttons full width */
+  .btn-task-action {
+    min-height: 44px;
+    padding: 10px 14px;
+  }
+}
+
 @media (max-width: 480px) {
   .task-validation-failed-wrapper {
     flex-direction: column;
@@ -650,6 +681,7 @@
 
   .task-text-input {
     max-width: 100%;
+    font-size: 16px; /* prevent iOS zoom */
   }
 
   .task-validation-error-text {

@@ -11,10 +11,25 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png', 'robots.txt'],
+      includeAssets: [
+        'favicon.svg',
+        'apple-touch-icon.png',
+        'pwa-192x192.png',
+        'pwa-512x512.png',
+        'robots.txt',
+        'offline.html',
+      ],
       manifest: false, // Usar el public/manifest.json existente
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+        // Precache the offline fallback page
+        additionalManifestEntries: [
+          { url: '/offline.html', revision: '1' },
+        ],
+        // Show offline.html when a navigation request fails (no network)
+        navigateFallback: '/offline.html',
+        // Do NOT use the offline fallback for admin routes (already excluded from mobile layout)
+        navigateFallbackDenylist: [/^\/admin/],
         runtimeCaching: [
           {
             // Peticiones a Supabase API y Auth: NetworkOnly (Cero caché local)
@@ -43,9 +58,22 @@ export default defineConfig({
             options: {
               cacheName: 'images-cache',
               expiration: {
-                maxEntries: 50,
+                maxEntries: 60,
                 maxAgeSeconds: 60 * 60 * 24 * 30, // 30 días
               },
+            },
+          },
+          {
+            // Unsplash images (product thumbnails)
+            urlPattern: /^https:\/\/images\.unsplash\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'unsplash-images',
+              expiration: {
+                maxEntries: 40,
+                maxAgeSeconds: 60 * 60 * 24 * 7, // 7 días
+              },
+              cacheableResponse: { statuses: [0, 200] },
             },
           },
         ],

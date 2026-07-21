@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>JACKO™ — Sin conexión</title>
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#0a0a0f" />
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body {
+        height: 100%;
+        font-family: 'Nunito', system-ui, sans-serif;
+        background: #F8F7F4;
+        color: #2a1a0a;
+        -webkit-font-smoothing: antialiased;
+      }
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: env(safe-area-inset-top, 16px) env(safe-area-inset-right, 16px)
+                 env(safe-area-inset-bottom, 16px) env(safe-area-inset-left, 16px);
+        min-height: 100dvh;
+      }
+      .card {
+        background: #fff;
+        border-radius: 28px;
+        border: 1.5px solid #E6E2DA;
+        padding: 2.5rem 2rem;
+        max-width: 400px;
+        width: 100%;
+        text-align: center;
+        box-shadow: 0 10px 40px rgba(42, 26, 10, 0.06);
+      }
+      .icon {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        background: rgba(212, 98, 26, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+      }
+      .icon svg { width: 36px; height: 36px; color: #d4621a; }
+      h1 {
+        font-size: 1.5rem;
+        font-weight: 800;
+        margin-bottom: 0.75rem;
+        color: #2a1a0a;
+      }
+      p {
+        font-size: 0.95rem;
+        color: #6B7280;
+        line-height: 1.6;
+        margin-bottom: 1.75rem;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #d4621a;
+        color: #fff;
+        border: none;
+        padding: 14px 28px;
+        border-radius: 14px;
+        font-size: 1rem;
+        font-weight: 800;
+        cursor: pointer;
+        min-height: 48px;
+        min-width: 44px;
+        touch-action: manipulation;
+        transition: background 0.2s;
+        text-decoration: none;
+      }
+      .btn:hover { background: #b84a0a; }
+      .logo {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #b84a0a;
+        letter-spacing: 0.05em;
+        margin-bottom: 1.5rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="logo">JACKO™</div>
+      <div class="icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M1 1l22 22"/>
+          <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/>
+          <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/>
+          <path d="M10.71 5.05A16 16 0 0 1 22.56 9"/>
+          <path d="M1.42 9a16 16 0 0 1 4.7-2.88"/>
+          <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+          <line x1="12" y1="20" x2="12.01" y2="20"/>
+        </svg>
+      </div>
+      <h1>Sin conexión</h1>
+      <p>No hay conexión a internet en este momento. Verifica tu red y vuelve a intentarlo.</p>
+      <button class="btn" onclick="window.location.reload()">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="1 4 1 10 7 10"/>
+          <path d="M3.51 15a9 9 0 1 0 .49-4"/>
+        </svg>
+        Intentar de nuevo
+      </button>
+    </div>
+  </body>
+</html>

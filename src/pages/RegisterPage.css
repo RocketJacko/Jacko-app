@@ -1,3 +1,4 @@
+/* ── Mobile-first register section ── */
 .register-section {
   min-height: 100%;
   width: 100%;
@@ -5,7 +6,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 30px 20px 0;
+  /* mobile base padding */
+  padding: 20px 12px 0;
   position: relative;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -21,7 +23,7 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding-bottom: 2.5rem;
+  padding-bottom: 2rem;
   box-sizing: border-box;
 }
 
@@ -44,17 +46,30 @@
   font-weight: 600;
 }
 
-@media (min-width: 768px) {
+/* ── Scale up for larger screens ── */
+@media (min-width: 480px) {
   .register-section {
-    padding-top: 40px;
+    padding: 24px 20px 0;
   }
 }
 
-@media (max-width: 600px) {
+@media (min-width: 768px) {
   .register-section {
-    padding: 20px 12px 0;
+    padding: 40px 24px 0;
   }
-  .register-container {
-    padding-bottom: 1.5rem;
+}
+
+/* ── Ensure inputs don't trigger iOS zoom ── */
+@media (max-width: 600px) {
+  .register-form-wrapper input,
+  .register-form-wrapper select,
+  .register-form-wrapper textarea {
+    font-size: 16px;
+  }
+  .btn-link-login-direct {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }

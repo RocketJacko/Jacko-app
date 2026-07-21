@@ -561,4 +561,86 @@
   .member-user-zone {
     display: none !important;
   }
+  /* Reduce header height on mobile */
+  .member-header {
+    height: 60px;
+  }
+  .member-header-container {
+    padding: 0 1rem;
+  }
+  .member-header-brand .logo-text {
+    font-size: 1.5rem;
+  }
+  /* Ensure hamburger has 44x44 touch target */
+  .member-menu-toggle {
+    width: 44px;
+    height: 44px;
+    justify-content: center;
+  }
+}
+
+/* ── Bottom Nav Bar (mobile only, z-index above content, below modals) ── */
+.member-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: rgba(248, 243, 235, 0.97);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1.5px solid rgba(212, 98, 26, 0.12);
+  z-index: 999;
+  align-items: stretch;
+  justify-content: space-around;
+  padding: 0;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  box-shadow: 0 -4px 20px rgba(42, 26, 10, 0.06);
+}
+
+.bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  flex: 1;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--brown-dark);
+  opacity: 0.55;
+  font-family: var(--font-body);
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 8px 4px;
+  min-height: 44px;
+  touch-action: manipulation;
+  transition: opacity 0.2s, color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.bottom-nav-item:active {
+  opacity: 0.8;
+}
+
+.bottom-nav-item.active {
+  opacity: 1;
+  color: var(--orange-base);
+}
+
+.bottom-nav-item svg {
+  flex-shrink: 0;
+}
+
+.bottom-nav-item span {
+  line-height: 1;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .member-bottom-nav {
+    display: flex;
+  }
 }
