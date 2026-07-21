@@ -80,7 +80,36 @@ const fetchWithResiliency = async (
 
   // Auth endpoints: sin timeout, sin retry — el SDK de Supabase los maneja
   if (isAuth) {
-    return fetch(input, init);
+    // [DIAG] Log de diagnostico para endpoints de auth
+    const headers = (init?.headers || {}) as Record<string, string>;
+    const apiKey   = headers['apikey']        || headers['Apikey']        || '';
+    const authHdr  = headers['Authorization'] || headers['authorization'] || '';
+    console.log('[v0:diag] AUTH REQUEST ────────────────────────');
+    console.log('[v0:diag] URL:', url);
+    console.log('[v0:diag] Origin:', window.location.origin);
+    console.log('[v0:diag] apikey presente:', apiKey.length > 10 && !apiKey.startsWith("'") && !apiKey.endsWith("'"));
+    console.log('[v0:diag] Authorization presente:', authHdr.length > 10);
+    console.log('[v0:diag] apikey sin espacios/comillas:', apiKey === apiKey.trim() && !apiKey.includes("'"));
+
+    const response = await fetch(input, init);
+
+    // Clonar para poder leer el body sin consumirlo
+    const clone = response.clone();
+    if (!response.ok) {
+      try {
+        const json = await clone.json();
+        console.error('[v0:diag] AUTH ERROR RESPONSE ─────────────────');
+        console.error('[v0:diag] HTTP Status:', response.status, response.statusText);
+        console.error('[v0:diag] Error code:', json?.error_code || json?.code || json?.error || 'N/A');
+        console.error('[v0:diag] Error message:', json?.message || json?.msg || JSON.stringify(json));
+        console.error('[v0:diag] Raw payload:', json);
+      } catch {
+        console.error('[v0:diag] AUTH ERROR HTTP:', response.status, response.statusText, '(body no parseable)');
+      }
+    } else {
+      console.log('[v0:diag] AUTH RESPONSE OK — HTTP', response.status);
+    }
+    return response;
   }
 
   // Edge Functions: timeout largo (50s) — operaciones como activate-order pueden tardar ~45s
@@ -103,6 +132,17 @@ const fetchWithResiliency = async (
         return response;
 
       case 'no-retry':
+        // [DIAG] Log errores permanentes
+        if (!response.ok) {
+          response.clone().json().then(json => {
+            console.error('[v0:diag] REQUEST ERROR ──────────────────────────');
+            console.error('[v0:diag] URL:', url);
+            console.error('[v0:diag] HTTP Status:', response.status, response.statusText);
+            console.error('[v0:diag] Payload:', json);
+          }).catch(() => {
+            console.error('[v0:diag] REQUEST ERROR HTTP:', response.status, url);
+          });
+        }
         // Devolver la response tal cual — Supabase client la interpreta como error
         return response;
 
