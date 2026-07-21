@@ -46,6 +46,7 @@ fix.cjs
 
 # External docs (not part of source)
 binance-spot-api-docs/
+spec-kit/
 
 # Supabase backend infra (separate repo)
 supabase/
