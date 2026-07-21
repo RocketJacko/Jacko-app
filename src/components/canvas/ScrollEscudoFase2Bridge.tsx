@@ -85,7 +85,6 @@ export function ScrollEscudoFase2Bridge({
   const isTransitioningToSkater = useRef(false);
 
   /* ── Mobile detection ── */
-  const checkMobile = useCallback(() => window.innerWidth <= 768, []);
   const [isMobileMode, setIsMobileMode] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 768);
 
   useEffect(() => {
