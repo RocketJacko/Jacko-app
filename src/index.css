@@ -53,13 +53,20 @@
 *::before,
 *::after {
   box-sizing: border-box;
-  /* Eliminate 300ms tap delay on all interactive elements */
-  touch-action: manipulation;
 }
 
-/* Restore scroll/pan for elements that need it */
-input, select, textarea {
-  touch-action: auto;
+/* Eliminar el retraso de 300ms SOLO en elementos interactivos,
+   sin tocar pan-y (scroll vertical con el dedo) en contenedores */
+button,
+[role="button"],
+a,
+label,
+input[type="submit"],
+input[type="button"],
+input[type="checkbox"],
+input[type="radio"],
+select {
+  touch-action: manipulation;
 }
 
 html {
