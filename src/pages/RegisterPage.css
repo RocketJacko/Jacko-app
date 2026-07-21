@@ -9,7 +9,7 @@
   /* mobile base padding */
   padding: 20px 12px 0;
   position: relative;
-  overflow-y: auto;
+  overflow-y: visible;
   overscroll-behavior: contain;
   box-sizing: border-box;
 }

@@ -86,11 +86,13 @@ export function ScrollEscudoFase2Bridge({
 
 
 
-  /* Bloquear scroll de la página una vez terminada la animación 3D */
+  /* Bloquear scroll de la página solo en la fase skater.
+     En la fase register dejamos scroll libre para que mobile pueda navegar. */
   useEffect(() => {
-    if (activeOverlay !== 'skater') {
-      document.body.style.overflow = 'hidden';
+    if (activeOverlay === 'skater') {
+      document.body.style.overflow = '';
     } else {
+      // En register: liberar el scroll del body para que el contenido sea accesible en móvil
       document.body.style.overflow = '';
     }
     return () => {
@@ -266,13 +268,13 @@ export function ScrollEscudoFase2Bridge({
 
         {/* SECCIÓN DE REGISTRO */}
         <m.div
+          className="register-overlay-wrap"
           initial={{ opacity: 0 }}
           animate={{
             opacity: activeOverlay === 'register' ? 1 : 0,
             pointerEvents: activeOverlay === 'register' ? 'auto' : 'none',
           }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          style={{ position: 'absolute', inset: 0, zIndex: 51, overflowY: 'auto' }}
         >
           <RegisterPage />
         </m.div>
