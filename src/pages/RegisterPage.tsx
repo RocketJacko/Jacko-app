@@ -76,7 +76,8 @@ export function RegisterPage() {
                 fontSize: "0.95rem",
                 fontWeight: 700,
                 opacity: 0.8,
-                transition: "opacity 0.2s"
+                transition: "opacity 0.2s",
+                marginTop: "24px"
               }}
               onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
               onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.8")}

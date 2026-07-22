@@ -27,6 +27,41 @@ interface ChatBotProps {
 export function ChatBot({ currentView, onViewChange }: ChatBotProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLandingIntroFinished, setIsLandingIntroFinished] = useState(false);
+  const [isFooterVisible, setIsFooterVisible] = useState(false);
+
+  // Escuchar visibilidad del footer mediante IntersectionObserver
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsFooterVisible(entry.isIntersecting);
+      },
+      {
+        root: null,
+        threshold: 0.05, // Trigger cuando aparezca un 5% del footer
+      }
+    );
+
+    const target = document.querySelector('.jacko-footer');
+    if (target) {
+      observer.observe(target);
+    } else {
+      const interval = setInterval(() => {
+        const tgt = document.querySelector('.jacko-footer');
+        if (tgt) {
+          observer.observe(tgt);
+          clearInterval(interval);
+        }
+      }, 500);
+      return () => {
+        clearInterval(interval);
+        observer.disconnect();
+      };
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
 
   // Escuchar el estado de la animación de la landing page
   useEffect(() => {
@@ -246,10 +281,12 @@ export function ChatBot({ currentView, onViewChange }: ChatBotProps) {
     }
   };
 
-  // Ocultar chat si estamos en la Landing Page y la animación del skater aún está activa
-  const isHidden = currentView === '/' || currentView === 'landing' || currentView === ''
-    ? !isLandingIntroFinished
-    : false;
+  // Ocultar chat si el footer no está en pantalla, o si estamos en intro de Landing Page
+  const isHidden = !isFooterVisible || (
+    currentView === '/' || currentView === 'landing' || currentView === ''
+      ? !isLandingIntroFinished
+      : false
+  );
 
   if (isHidden) {
     return null;
