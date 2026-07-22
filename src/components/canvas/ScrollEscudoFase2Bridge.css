@@ -16,6 +16,10 @@
   z-index: 10;
   /* Permitir scroll vertical con el dedo para drive la animación */
   touch-action: pan-y;
+  /* Forzar aceleración por hardware para evitar lag del elemento sticky en iOS/Safari */
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+  will-change: transform;
 }
 
 /* Register section overlay: desktop = absolute dentro del sticky */
@@ -179,6 +183,9 @@
   z-index: 1;
   transition: opacity 0.5s ease;
   /* No flex centering: el canvas debe ocupar todo el inset */
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+  will-change: transform;
 }
 
 .skater-canvas-wrap canvas {
@@ -188,6 +195,9 @@
   /* object-fit equivalente vía CSS: el drawCover en JS ya maneja el aspect ratio,
      pero el elemento canvas debe llenar el contenedor completamente */
   object-fit: cover;
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+  will-change: transform;
 }
 
 /* Loader JACKO™ */
