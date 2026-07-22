@@ -3,9 +3,17 @@ import { m, AnimatePresence } from 'motion/react';
 import { supabase } from '../../lib/supabaseClient';
 import { invalidateCache, invalidateCacheByPrefix } from '../../lib/queryCache';
 import { useNetworkStatus } from '../../hooks/useNetworkStatus';
-import { TrendingUp, RefreshCw, ShoppingBag, Trophy, Ticket, Loader2 } from 'lucide-react';
+import { RefreshCw, Ticket, Loader2 } from 'lucide-react';
+import { cn } from '../../lib/utils';
+import { IoHomeOutline, IoTrophyOutline, IoReceiptOutline } from 'react-icons/io5';
 import './DashboardView.css';
 import { userService } from '../../services/userService';
+
+const menuItems = [
+  { id: 'panel', title: 'Resumen', icon: <IoHomeOutline />, gradientFrom: '#a955ff', gradientTo: '#ea51ff' },
+  { id: 'activities', title: 'Desafíos', icon: <IoTrophyOutline />, gradientFrom: '#56CCF2', gradientTo: '#2F80ED' },
+  { id: 'history', title: 'Historial', icon: <IoReceiptOutline />, gradientFrom: '#FF9966', gradientTo: '#FF5E62' }
+] as const;
 
 // Import subcomponents
 import { DashboardStats } from './dashboard/DashboardStats';
@@ -255,31 +263,54 @@ export function DashboardView({
         ) : (
           <>
             {/* Tab Navigation Selector */}
-            <div className="dashboard-tabs">
-              <button
-                type="button"
-                className={`tab-btn${activeTab === 'panel' ? ' active' : ''}`}
-                onClick={() => setActiveTab('panel')}
-              >
-                <TrendingUp size={16} />
-                <span>Mi Resumen</span>
-              </button>
-              <button
-                type="button"
-                className={`tab-btn${activeTab === 'activities' ? ' active' : ''}`}
-                onClick={() => setActiveTab('activities')}
-              >
-                <Trophy size={16} />
-                <span>Mis Desafíos</span>
-              </button>
-              <button
-                type="button"
-                className={`tab-btn${activeTab === 'history' ? ' active' : ''}`}
-                onClick={() => setActiveTab('history')}
-              >
-                <ShoppingBag size={16} />
-                <span>Historial</span>
-              </button>
+            <div className="flex justify-center mb-8 mt-2 w-full">
+              <ul className="flex gap-4 md:gap-6 flex-wrap justify-center p-2 rounded-2xl bg-white/30 backdrop-blur-md shadow-sm border border-white/20">
+                {menuItems.map(({ id, title, icon, gradientFrom, gradientTo }) => {
+                  const isActive = activeTab === id;
+                  return (
+                    <li
+                      key={id}
+                      onClick={() => setActiveTab(id)}
+                      style={{ 
+                        '--gradient-from': gradientFrom, 
+                        '--gradient-to': gradientTo 
+                      } as React.CSSProperties}
+                      className={cn(
+                        "relative w-[56px] h-[56px] md:w-[60px] md:h-[60px] bg-white shadow-md rounded-full flex items-center justify-center transition-all duration-500 group cursor-pointer",
+                        isActive ? "w-[150px] md:w-[180px] shadow-none" : "hover:w-[150px] md:hover:w-[180px] hover:shadow-none"
+                      )}
+                    >
+                      {/* Gradient background on hover/active */}
+                      <span className={cn(
+                        "absolute inset-0 rounded-full bg-[linear-gradient(45deg,var(--gradient-from),var(--gradient-to))] transition-all duration-500",
+                        isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                      )}></span>
+                      
+                      {/* Blur glow */}
+                      <span className={cn(
+                        "absolute top-[8px] inset-x-0 h-full rounded-full bg-[linear-gradient(45deg,var(--gradient-from),var(--gradient-to))] blur-[12px] -z-10 transition-all duration-500",
+                        isActive ? "opacity-40" : "opacity-0 group-hover:opacity-40"
+                      )}></span>
+
+                      {/* Icon */}
+                      <span className={cn(
+                        "relative z-10 transition-all duration-500 delay-0",
+                        isActive ? "scale-0" : "group-hover:scale-0"
+                      )}>
+                        <span className="text-xl md:text-2xl text-gray-500">{icon}</span>
+                      </span>
+
+                      {/* Title */}
+                      <span className={cn(
+                        "absolute text-white uppercase tracking-wide text-xs md:text-sm font-bold transition-all duration-500",
+                        isActive ? "scale-100" : "scale-0 group-hover:scale-100 delay-150"
+                      )}>
+                        {title}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
             </div>
 
             <div className="tab-content">
