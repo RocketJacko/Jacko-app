@@ -234,6 +234,7 @@ export default function App() {
       {session && currentView !== 'admin' && (
         <MemberHeader
           currentView={currentView}
+          dashboardTab={dashboardTab}
           onViewChange={(view, tab) => {
             if (view === 'profile') {
               setShowUserProfileModal(true);

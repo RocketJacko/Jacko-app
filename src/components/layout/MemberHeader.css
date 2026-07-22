@@ -583,20 +583,23 @@
 .member-bottom-nav {
   display: none;
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 64px;
-  background: rgba(248, 243, 235, 0.97);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-top: 1.5px solid rgba(212, 98, 26, 0.12);
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  width: auto;
+  max-width: 92vw;
+  height: 60px;
+  background: rgba(45, 26, 12, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(232, 221, 200, 0.2);
+  border-radius: 20px;
   z-index: 999;
-  align-items: stretch;
-  justify-content: space-around;
-  padding: 0;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  box-shadow: 0 -4px 20px rgba(42, 26, 10, 0.06);
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  box-shadow: 0 8px 32px rgba(21, 10, 3, 0.35);
+  transition: all 0.3s ease-in-out;
 }
 
 .bottom-nav-item {
