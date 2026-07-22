@@ -51,33 +51,7 @@ export function useGeoLocation(): GeoLocationState {
         console.warn('Error reading URL params:', e);
       }
 
-      // 1. Try ip-api.com using client's IP address
-      try {
-        const ipRes = await fetch('https://api.ipify.org?format=json');
-        if (ipRes.ok) {
-          const { ip } = await ipRes.json();
-          const geoRes = await fetch(`http://ip-api.com/json/${ip}?fields=status,message,country,countryCode,currency,city`);
-          if (geoRes.ok) {
-            const geoData = await geoRes.json();
-            if (geoData && geoData.status === 'success' && active) {
-              const detected = geoData.currency || 'COP';
-              const isCo = geoData.countryCode === 'CO';
-              setUserCurrency(detected);
-              setLocalCurrency(detected);
-              setIsColombia(isCo);
-              setDetectedIsColombia(isCo);
-              setDetectedCountryCode(geoData.countryCode || 'CO');
-              setDetectedCity(geoData.city || '');
-              setIsLoading(false);
-              return;
-            }
-          }
-        }
-      } catch (err) {
-        console.warn('Error detecting country with ip-api.com, trying fallback:', err);
-      }
-
-      // 2. Fallback to HTTPS-friendly ipapi.co
+      // 1. Try HTTPS-friendly ipapi.co directly (single request, secure)
       try {
         const res = await fetch('https://ipapi.co/json/');
         if (res.ok) {
@@ -95,8 +69,8 @@ export function useGeoLocation(): GeoLocationState {
             return;
           }
         }
-      } catch (e) {
-        console.warn('Failed to fetch country from ipapi.co fallback:', e);
+      } catch (err) {
+        console.warn('Error detecting country with ipapi.co:', err);
       }
 
       if (active) {
