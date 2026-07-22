@@ -10,11 +10,11 @@
   -webkit-backdrop-filter: blur(16px);
   border: 1.5px solid rgba(212, 163, 88, 0.22) !important;
   padding: 1rem 0.5rem;
-  margin-top: 1rem;
+  margin-top: 0.25rem;
   /* Altura estrictamente fija para evitar cualquier variación visual en el tamaño de la tarjeta */
-  height: 570px !important;
-  min-height: 570px !important;
-  max-height: 570px !important;
+  height: 615px !important;
+  min-height: 615px !important;
+  max-height: 615px !important;
   flex-shrink: 0 !important;
   display: flex;
   flex-direction: column;
@@ -63,7 +63,7 @@
   flex-direction: column;
   justify-content: space-between;
   padding: 0.75rem 1rem 0.5rem 1rem !important;
-  overflow-y: auto;
+  overflow: hidden;
   /* Ocultar barra de desplazamiento visualmente para que se vea nativa y premium */
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none;  /* IE and Edge */

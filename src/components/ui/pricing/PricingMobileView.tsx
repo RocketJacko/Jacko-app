@@ -104,9 +104,9 @@ export const PricingMobileView: React.FC<PricingSharedProps> = ({
         <Card
           className={cn("pricing-mobile-card", !isFree && "premium-active")}
           style={{
-            height: "570px",
-            minHeight: "570px",
-            maxHeight: "570px",
+            height: "615px",
+            minHeight: "615px",
+            maxHeight: "615px",
             flexShrink: 0,
             overflow: "hidden"
           }}
