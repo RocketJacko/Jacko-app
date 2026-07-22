@@ -1,0 +1,279 @@
+/* Estilos Específicos para la Tarjeta Móvil Única */
+.pricing-mobile-card {
+  width: 100%;
+  max-width: 440px; /* Centrado y tamaño acotado en celulares grandes */
+  border-radius: 24px !important;
+  box-shadow: 0 8px 32px rgba(42, 26, 10, 0.04);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  background: rgba(250, 246, 240, 0.65) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1.5px solid rgba(212, 163, 88, 0.22) !important;
+  padding: 1rem 0.5rem;
+  margin-top: 1rem;
+  /* Altura estrictamente fija para evitar cualquier variación visual en el tamaño de la tarjeta */
+  height: 570px !important;
+  min-height: 570px !important;
+  max-height: 570px !important;
+  flex-shrink: 0 !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Estado Premium: Cambia a fondo oscuro premium */
+.pricing-mobile-card.premium-active {
+  background: linear-gradient(145deg, var(--brown-dark) 0%, #170b03 100%) !important;
+  border: 1.5px solid rgba(212, 163, 88, 0.4) !important;
+  box-shadow: 0 16px 48px rgba(21, 10, 3, 0.25);
+  color: var(--white-warm);
+}
+
+/* Eyebrow y Títulos */
+.mobile-plan-eyebrow {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--orange-base);
+}
+
+.pricing-mobile-card.premium-active .mobile-plan-eyebrow {
+  color: var(--beige-base);
+  opacity: 0.9;
+}
+
+.mobile-plan-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 4px 0 0 0;
+  color: var(--brown-dark);
+}
+
+.pricing-mobile-card.premium-active .mobile-plan-title {
+  color: var(--white-warm);
+}
+
+/* Cuerpo de la tarjeta */
+.pricing-mobile-body {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0.75rem 1rem 0.5rem 1rem !important;
+  overflow-y: auto;
+  /* Ocultar barra de desplazamiento visualmente para que se vea nativa y premium */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* IE and Edge */
+}
+
+.pricing-mobile-body::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
+/* Contenedores de los flujos de contenido */
+.mobile-premium-flow,
+.mobile-free-flow {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  flex-grow: 1;
+}
+
+/* Sección de Cantidad (Premium) */
+.mobile-qty-section {
+  margin-bottom: 1.25rem;
+}
+
+.mobile-qty-display-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.mobile-qty-label {
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--white-warm);
+  opacity: 0.8;
+}
+
+.pricing-mobile-card:not(.premium-active) .mobile-qty-label {
+  color: var(--brown-dark);
+}
+
+.mobile-qty-value {
+  font-family: var(--font-body);
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: var(--orange-light);
+}
+
+/* Descuentos Móviles */
+.mobile-discount-alert {
+  background: rgba(212, 98, 26, 0.12);
+  border: 1px dashed rgba(212, 98, 26, 0.4);
+  color: var(--white-warm);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  padding: 10px;
+  border-radius: 10px;
+  margin-top: 0.75rem;
+  text-align: center;
+}
+
+.mobile-discount-tip {
+  color: var(--white-warm);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  opacity: 0.5;
+  margin-top: 0.75rem;
+  text-align: center;
+}
+
+/* Caja de Precio Unificada (Premium) */
+.mobile-price-box {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(212, 163, 88, 0.15);
+  padding: 1rem;
+  border-radius: 14px;
+  margin-bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.mobile-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.mobile-price-amount {
+  font-family: var(--font-display);
+  font-size: 2.15rem;
+  color: var(--beige-base);
+  font-weight: 800;
+  display: flex;
+  align-items: baseline;
+}
+
+.price-currency-symbol {
+  font-size: 1.5rem;
+  margin-right: 2px;
+  font-weight: 700;
+}
+
+.mobile-price-currency {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--beige-base);
+}
+
+.mobile-price-period {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  opacity: 0.8;
+  color: var(--white-warm);
+}
+
+.mobile-price-discount-saved {
+  font-size: 0.75rem;
+  color: #34d399;
+  font-weight: 800;
+  margin-top: 6px;
+  background: rgba(52, 211, 153, 0.12);
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(52, 211, 153, 0.2);
+}
+
+/* Listado de Beneficios */
+.mobile-benefits-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 1.5rem;
+}
+
+/* Ajustes de color para checkmarks de beneficios */
+.pricing-mobile-card.premium-active .benefit-item span {
+  color: var(--white-warm);
+}
+
+.pricing-mobile-card:not(.premium-active) .benefit-item span {
+  color: var(--brown-dark);
+}
+
+/* Flujo Gratis */
+.mobile-free-desc {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--brown-dark);
+  opacity: 0.85;
+  line-height: 1.5;
+  margin-bottom: 1.25rem;
+}
+
+/* Botones de Acción Táctiles */
+.mobile-action-btn {
+  width: 100%;
+  border: none;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 800;
+  padding: 14px 20px;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease-in-out;
+}
+
+.mobile-action-btn:active {
+  transform: scale(0.98);
+}
+
+.mobile-action-btn.premium {
+  background: linear-gradient(to right, var(--orange-base), var(--orange-light));
+  color: var(--white-warm);
+  box-shadow: 0 4px 16px rgba(212, 98, 26, 0.3);
+}
+
+.mobile-action-btn.free {
+  background: var(--brown-dark);
+  color: var(--white-warm);
+  box-shadow: 0 4px 16px rgba(42, 26, 10, 0.2);
+}
+
+/* Footer de Tarjeta */
+.mobile-card-footer {
+  display: flex;
+  justify-content: space-around;
+  border-top: 1.5px solid rgba(212, 163, 88, 0.12);
+  padding: 1rem 1rem 0.25rem 1rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--brown-dark);
+  opacity: 0.65;
+}
+
+.pricing-mobile-card.premium-active .mobile-card-footer {
+  border-top-color: rgba(212, 163, 88, 0.15);
+  color: var(--white-warm);
+  opacity: 0.7;
+}
+
+.mobile-security-span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
