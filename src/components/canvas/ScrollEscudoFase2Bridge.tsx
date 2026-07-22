@@ -289,6 +289,14 @@ export function ScrollEscudoFase2Bridge({
     return () => window.removeEventListener('resize', handleResize);
   }, [ready, images, n, escudoDraw, smoothProgress, isMobileMode, firstFrameImg]);
 
+  const getLoaderText = () => {
+    if (status === 'error') return 'Error al cargar';
+    const pct = Math.round(loadProgress * 100);
+    if (pct < 35) return `Descargando gráficos: ${pct}%`;
+    if (pct < 75) return `Optimizando texturas: ${pct}%`;
+    return `Decodificando 3D: ${pct}%`;
+  };
+
   /* ── MOBILE RENDER ──
      En mobile NO usamos el modelo de 500vh scroll-drive.
      Mostramos el canvas a pantalla completa con un tap para lanzar
@@ -344,7 +352,7 @@ export function ScrollEscudoFase2Bridge({
             onClick={runMobileAnimation}
             aria-label="Ver animación y continuar al registro"
           >
-            <span>{ready ? 'Continuar' : `Preparando: ${Math.round(loadProgress * 100)}%`}</span>
+            <span>{ready ? 'Continuar' : getLoaderText()}</span>
             {ready && (
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             )}
@@ -368,9 +376,7 @@ export function ScrollEscudoFase2Bridge({
           <div className="jacko-loader-overlay">
             <div className="loader-content">
               <div className="loader-text">
-                {status === 'error'
-                  ? 'Error al cargar'
-                  : `Preparando 3D: ${Math.round(loadProgress * 100)}%`}
+                {getLoaderText()}
               </div>
               <div className="progress-container">
                 <div className="progress-bar" style={{ width: `${loadProgress * 100}%` }} />
