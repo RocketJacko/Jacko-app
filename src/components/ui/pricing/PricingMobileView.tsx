@@ -111,7 +111,7 @@ export const PricingMobileView: React.FC<PricingSharedProps> = ({
             overflow: "hidden"
           }}
         >
-          <CardHeader className="text-left p-4 pb-1">
+          <CardHeader className="text-left p-3 pb-0.5">
             <span className="mobile-plan-eyebrow">
               {isFree ? "Membresía Inicial" : "Suscripción Premium"}
             </span>
@@ -124,7 +124,7 @@ export const PricingMobileView: React.FC<PricingSharedProps> = ({
             </h3>
           </CardHeader>
 
-          <CardContent className="pricing-mobile-body p-4 pt-0">
+          <CardContent className="pricing-mobile-body p-3 pt-0">
             {/* Flujo Premium */}
             {!isFree ? (
               <div className="mobile-premium-flow">
@@ -243,23 +243,25 @@ export const PricingMobileView: React.FC<PricingSharedProps> = ({
             ) : (
               /* Flujo Gratis */
               <div className="mobile-free-flow">
-                <p className="mobile-free-desc">
-                  Accede a nuestros servicios básicos sin costos ni datos de tarjeta. Puedes escalar a un plan de volumen en cualquier momento.
-                </p>
+                <div className="mobile-free-content-group">
+                  <p className="mobile-free-desc">
+                    Accede a nuestros servicios básicos sin costos ni datos de tarjeta. Puedes escalar a un plan de volumen en cualquier momento.
+                  </p>
 
-                {/* Beneficios Gratis */}
-                <div className="mobile-benefits-list">
-                  <div className="benefit-item">
-                    <CheckCircle2 size={16} className="check-icon" />
-                    <span>1 cuenta gratuita de por vida</span>
-                  </div>
-                  <div className="benefit-item">
-                    <CheckCircle2 size={16} className="check-icon" />
-                    <span>Soporte básico comunitario</span>
-                  </div>
-                  <div className="benefit-item">
-                    <CheckCircle2 size={16} className="check-icon" />
-                    <span>Acceso al catálogo estándar</span>
+                  {/* Beneficios Gratis */}
+                  <div className="mobile-benefits-list">
+                    <div className="benefit-item">
+                      <CheckCircle2 size={16} className="check-icon" />
+                      <span>1 cuenta gratuita de por vida</span>
+                    </div>
+                    <div className="benefit-item">
+                      <CheckCircle2 size={16} className="check-icon" />
+                      <span>Soporte básico comunitario</span>
+                    </div>
+                    <div className="benefit-item">
+                      <CheckCircle2 size={16} className="check-icon" />
+                      <span>Acceso al catálogo estándar</span>
+                    </div>
                   </div>
                 </div>
 
