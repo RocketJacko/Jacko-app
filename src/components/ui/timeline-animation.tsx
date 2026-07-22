@@ -51,8 +51,7 @@ export const TimelineContent: React.FC<TimelineContentProps> = ({
     <MotionComponent
       className={className}
       initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, margin: "-100px" }}
+      animate="visible"
       variants={variants}
       custom={animationNum}
       {...props}
