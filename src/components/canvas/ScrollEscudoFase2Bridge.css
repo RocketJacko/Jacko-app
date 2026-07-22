@@ -38,7 +38,7 @@
   flex-direction: column;
   justify-content: flex-start;
   pointer-events: none;
-  padding-top: clamp(60px, 10vh, 100px);
+  padding-top: calc(env(safe-area-inset-top, 24px) + clamp(40px, 6vh, 60px));
 }
 
 .skater-hero-overlay h1 {
