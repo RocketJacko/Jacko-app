@@ -117,6 +117,7 @@ export default defineConfig({
     strictPort: false,
   },
   build: {
+    cssCodeSplit: true,
     rollupOptions: {
       output: {
         manualChunks(id) {
