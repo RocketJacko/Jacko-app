@@ -98,8 +98,8 @@ export function ScrollEscudoFase2Bridge({
   });
 
   const smoothProgress = useSpring(scrollYProgress, {
-    stiffness: 100,
-    damping: 30,
+    stiffness: 120,
+    damping: 32,
     restDelta: 0.001,
   });
 
