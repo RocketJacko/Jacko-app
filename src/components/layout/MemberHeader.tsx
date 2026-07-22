@@ -8,8 +8,6 @@ import {
   ShieldAlert,
   User,
   ShoppingBag,
-  Menu,
-  X,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { 
@@ -41,9 +39,6 @@ export function MemberHeader({
   userEmail
 }: Props) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [mobileAccountOpen, setMobileAccountOpen] = useState(true);
-  const [mobileExploreOpen, setMobileExploreOpen] = useState(true);
 
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [alias, setAlias] = useState<string | null>(null);
@@ -154,15 +149,6 @@ export function MemberHeader({
           )}
         </nav>
 
-        {/* Hamburguesa Toggle (solo mobile) */}
-        <button
-          type="button"
-          className="member-menu-toggle"
-          onClick={() => setIsMobileMenuOpen(true)}
-          aria-label="Abrir menú"
-        >
-          <Menu size={24} />
-        </button>
 
         {/* Zona usuario (solo desktop) */}
         <div ref={dropdownRef} className="member-user-zone">
@@ -412,149 +398,6 @@ export function MemberHeader({
           </nav>
         );
       })()}
-
-      {/* Cajón Móvil */}
-      {isMobileMenuOpen && (
-        <>
-          <div className="mobile-drawer-overlay" onClick={() => setIsMobileMenuOpen(false)} />
-          <div className="member-mobile-drawer">
-            <div className="member-nav-mobile">
-              <div className="mobile-drawer-header">
-                <button
-                  type="button"
-                  className="mobile-drawer-close"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  aria-label="Cerrar menú"
-                >
-                  <X size={18} />
-                </button>
-                <div className="mobile-avatar-circle">
-                  {alias ? alias.substring(0, 1).toUpperCase() : username.substring(0, 1).toUpperCase()}
-                </div>
-                <div className="mobile-username">{alias || username}</div>
-                <div className="mobile-email">{userEmail}</div>
-              </div>
-
-              <div className="mobile-menu-body">
-                {/* Sección 1: Mi Cuenta */}
-                <div className="mobile-menu-section">
-                  <button
-                    type="button"
-                    className="mobile-section-header"
-                    onClick={() => setMobileAccountOpen(!mobileAccountOpen)}
-                  >
-                    <div className="mobile-header-title-wrap">
-                      <User size={16} className="section-header-icon" />
-                      <span className="mobile-section-title">Mi Cuenta</span>
-                    </div>
-                    <span className={`section-chevron${mobileAccountOpen ? ' rotate' : ''}`}>▾</span>
-                  </button>
-
-                  {mobileAccountOpen && (
-                    <div className="mobile-section-content">
-                      <button
-                        type="button"
-                        className={`member-nav-link-mobile${currentView === 'dashboard' ? ' active' : ''}`}
-                        onClick={() => {
-                          onViewChange('dashboard', 'panel');
-                          setIsMobileMenuOpen(false);
-                        }}
-                      >
-                        <LayoutDashboard size={14} />
-                        <span>Mi Panel</span>
-                      </button>
-                      <button
-                        type="button"
-                        className={`member-nav-link-mobile${currentView === 'profile' ? ' active' : ''}`}
-                        onClick={() => {
-                          onViewChange('profile');
-                          setIsMobileMenuOpen(false);
-                        }}
-                      >
-                        <User size={14} />
-                        <span>Perfil</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="member-nav-link-mobile"
-                        onClick={() => {
-                          onViewChange('dashboard', 'history');
-                          setIsMobileMenuOpen(false);
-                        }}
-                      >
-                        <ShoppingBag size={14} />
-                        <span>Compras / Canjes</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Sección 2: Explorar */}
-                <div className="mobile-menu-section">
-                  <button
-                    type="button"
-                    className="mobile-section-header"
-                    onClick={() => setMobileExploreOpen(!mobileExploreOpen)}
-                  >
-                    <div className="mobile-header-title-wrap">
-                      <Gift size={16} className="section-header-icon" />
-                      <span className="mobile-section-title">Explorar</span>
-                    </div>
-                    <span className={`section-chevron${mobileExploreOpen ? ' rotate' : ''}`}>▾</span>
-                  </button>
-
-                  {mobileExploreOpen && (
-                    <div className="mobile-section-content">
-                      <button
-                        type="button"
-                        className={`member-nav-link-mobile${currentView === 'catalogo' ? ' active' : ''}`}
-                        onClick={() => {
-                          onViewChange('catalogo');
-                          setIsMobileMenuOpen(false);
-                        }}
-                      >
-                        <Gift size={14} />
-                        <span>Catálogo</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Acceso Admin en mobile */}
-                {isStaff && (
-                  <div className="mobile-menu-section">
-                    <button
-                      type="button"
-                      className={`btn-admin-access-mobile${currentView === 'admin' ? ' active' : ''}`}
-                      onClick={() => {
-                        onViewChange('admin');
-                        setIsMobileMenuOpen(false);
-                      }}
-                    >
-                      <ShieldAlert size={14} />
-                      <span>Panel Admin</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              <div className="mobile-menu-footer">
-                <button
-                  type="button"
-                  className="btn-logout-mobile"
-                  onClick={() => {
-                    handleLogout();
-                    setIsMobileMenuOpen(false);
-                  }}
-                >
-                  <LogOut size={14} />
-                  <span>Cerrar sesión</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
     </header>
   );
 }
