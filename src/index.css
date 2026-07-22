@@ -493,5 +493,17 @@ a:not([class]) {
   }
 }
 
+/* Ocultar barra de scroll de la página principal (HTML y Body) para una experiencia PWA inmersiva sin barras a los lados */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none !important;
+}
+
+html,
+body {
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important;  /* IE/Edge */
+}
+
 
 
