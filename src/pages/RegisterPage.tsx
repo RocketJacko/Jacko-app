@@ -7,9 +7,11 @@ import "./RegisterPage.css";
 
 export function RegisterPage() {
   const [showRegisterForm, setShowRegisterForm] = useState(false);
+  const [isFormRegisterMode, setIsFormRegisterMode] = useState(true);
 
   useEffect(() => {
     const handleOpenForm = () => {
+      setIsFormRegisterMode(false); // Iniciar sesión directo si se gatilla desde otro botón de login
       setShowRegisterForm(true);
     };
 
@@ -47,15 +49,21 @@ export function RegisterPage() {
             >
               <ArrowLeft size={16} /> Volver a los planes
             </button>
-            <RegisterForm />
+            <RegisterForm defaultIsRegister={isFormRegisterMode} />
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "20px" }}>
-            <LoopsPricingSlider onSelectFree={() => setShowRegisterForm(true)} />
+            <LoopsPricingSlider
+              onSelectFree={() => {
+                setIsFormRegisterMode(true);
+                setShowRegisterForm(true);
+              }}
+            />
             <button
               type="button"
               className="btn-link-login-direct"
               onClick={() => {
+                setIsFormRegisterMode(false);
                 setShowRegisterForm(true);
               }}
               style={{

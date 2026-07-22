@@ -7,7 +7,11 @@ import './RegisterForm.css';
 
 import { verificarDominioCorreoValido } from '../../lib/emailValidator';
 
-export function RegisterForm() {
+interface RegisterFormProps {
+  defaultIsRegister?: boolean;
+}
+
+export function RegisterForm({ defaultIsRegister = true }: RegisterFormProps) {
   const navigate = useNavigate();
   // Cargar estado inicial persistido si existe
   const savedState = (() => {
@@ -30,9 +34,9 @@ export function RegisterForm() {
   const [city, setCity] = useState<string>(savedState?.city || '');
   const [otpCode, setOtpCode] = useState('');
 
-  // Por defecto Registro (true)
+  // Por defecto Registro o lo especificado por prop
   const [isRegister, setIsRegister] = useState<boolean>(
-    savedState?.isRegister !== undefined ? savedState.isRegister : true
+    savedState?.isRegister !== undefined ? savedState.isRegister : defaultIsRegister
   );
   const [step, setStep] = useState<1 | 2 | 3>(savedState?.step || 1); // 1: Form, 2: OTP, 3: Success
   const [isLoading, setIsLoading] = useState(false);
@@ -42,6 +46,13 @@ export function RegisterForm() {
   const [statusType, setStatusType] = useState<'error' | 'success' | ''>(
     savedState ? 'success' : ''
   );
+
+  // Sincronizar el estado interno si cambia el prop y no hay estado persistido
+  useEffect(() => {
+    if (savedState === null) {
+      setIsRegister(defaultIsRegister);
+    }
+  }, [defaultIsRegister]);
 
   const { session, isSessionLoading } = useAuth();
 
