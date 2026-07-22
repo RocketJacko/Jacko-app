@@ -154,6 +154,11 @@ export const LoopsPricingSlider: React.FC<LoopsPricingSliderProps> = ({ onSelect
 
   const handleProceed = (e: React.MouseEvent) => {
     e.preventDefault();
+    try {
+      localStorage.removeItem("jacko_register_pending");
+    } catch (err) {
+      console.error(err);
+    }
     if (planType === "free") {
       localStorage.removeItem("jacko_trigger_checkout_slug");
       localStorage.removeItem("jacko_trigger_checkout_qty");

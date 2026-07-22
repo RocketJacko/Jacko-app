@@ -30,9 +30,9 @@ export function RegisterForm() {
   const [city, setCity] = useState<string>(savedState?.city || '');
   const [otpCode, setOtpCode] = useState('');
 
-  // Por defecto Iniciar Sesión (false)
+  // Por defecto Registro (true)
   const [isRegister, setIsRegister] = useState<boolean>(
-    savedState?.isRegister !== undefined ? savedState.isRegister : false
+    savedState?.isRegister !== undefined ? savedState.isRegister : true
   );
   const [step, setStep] = useState<1 | 2 | 3>(savedState?.step || 1); // 1: Form, 2: OTP, 3: Success
   const [isLoading, setIsLoading] = useState(false);
