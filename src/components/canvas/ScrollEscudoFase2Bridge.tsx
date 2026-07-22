@@ -43,6 +43,15 @@ export function ScrollEscudoFase2Bridge({
 
   const vaporizeFontSize = isMobile ? "40px" : "80px";
 
+  /* ── Mobile detection ── */
+  const [isMobileMode, setIsMobileMode] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobileMode(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const allUrls = useMemo(
     () => [...escudoFrameUrls, ...fase2FrameUrls, ...fase3FrameUrls],
     [escudoFrameUrls, fase2FrameUrls, fase3FrameUrls]
@@ -51,6 +60,37 @@ export function ScrollEscudoFase2Bridge({
   const { images, status, progress: loadProgress } = useImageSequence(allUrls);
   const ready = status === 'ready';
   const n = allUrls.length;
+
+  // Cargar el primer frame inmediatamente como placeholder
+  const [firstFrameImg, setFirstFrameImg] = useState<HTMLImageElement | null>(null);
+  useEffect(() => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.decoding = 'async';
+    img.onload = () => {
+      setFirstFrameImg(img);
+    };
+    img.src = escudoFrameUrls[0];
+  }, [escudoFrameUrls]);
+
+  // Bloquear scroll del body en desktop hasta que esté ready para evitar desincronización
+  useEffect(() => {
+    if (!ready && !isMobileMode) {
+      document.body.classList.add('no-scroll');
+    } else {
+      document.body.classList.remove('no-scroll');
+    }
+    return () => {
+      document.body.classList.remove('no-scroll');
+    };
+  }, [ready, isMobileMode]);
+
+  // Dibujar el primer frame en el canvas de inmediato al cargarse
+  useEffect(() => {
+    if (firstFrameImg && canvasRef.current && !ready) {
+      drawCover(canvasRef.current, firstFrameImg, { ...escudoDraw, opaque: false });
+    }
+  }, [firstFrameImg, ready, escudoDraw]);
 
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -84,14 +124,7 @@ export function ScrollEscudoFase2Bridge({
   const isTransitioningToInicio = useRef(false);
   const isTransitioningToSkater = useRef(false);
 
-  /* ── Mobile detection ── */
-  const [isMobileMode, setIsMobileMode] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 768);
 
-  useEffect(() => {
-    const handleResize = () => setIsMobileMode(window.innerWidth <= 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   /* En mobile-register: el body scrollea normalmente (sin overflow bloqueado) */
   const isMobileRegister = isMobileMode && activeOverlay === 'register';
@@ -245,13 +278,16 @@ export function ScrollEscudoFase2Bridge({
           const img = images[frameIndex];
           if (img) drawCover(canvas, img, { ...escudoDraw, opaque: false });
         }
+      } else if (firstFrameImg) {
+        // Dibujar primer frame de inmediato antes de completar el lote entero
+        drawCover(canvas, firstFrameImg, { ...escudoDraw, opaque: false });
       }
     };
 
     window.addEventListener('resize', handleResize);
     handleResize();
     return () => window.removeEventListener('resize', handleResize);
-  }, [ready, images, n, escudoDraw, smoothProgress, isMobileMode]);
+  }, [ready, images, n, escudoDraw, smoothProgress, isMobileMode, firstFrameImg]);
 
   /* ── MOBILE RENDER ──
      En mobile NO usamos el modelo de 500vh scroll-drive.
@@ -304,11 +340,14 @@ export function ScrollEscudoFase2Bridge({
         {mobileTapPhase === 'idle' && (
           <button
             className="mobile-tap-advance-btn"
+            disabled={!ready}
             onClick={runMobileAnimation}
             aria-label="Ver animación y continuar al registro"
           >
-            <span>Continuar</span>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            <span>{ready ? 'Continuar' : `Preparando: ${Math.round(loadProgress * 100)}%`}</span>
+            {ready && (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            )}
           </button>
         )}
 
@@ -328,14 +367,13 @@ export function ScrollEscudoFase2Bridge({
         {!ready && (
           <div className="jacko-loader-overlay">
             <div className="loader-content">
-              <div className="jacko-logo-loader">JACKO™</div>
-              <div className="progress-container">
-                <div className="progress-bar" style={{ width: `${loadProgress * 100}%` }} />
-              </div>
               <div className="loader-text">
                 {status === 'error'
                   ? 'Error al cargar'
-                  : `Cargando experiencia... ${Math.round(loadProgress * 100)}%`}
+                  : `Preparando 3D: ${Math.round(loadProgress * 100)}%`}
+              </div>
+              <div className="progress-container">
+                <div className="progress-bar" style={{ width: `${loadProgress * 100}%` }} />
               </div>
             </div>
           </div>
