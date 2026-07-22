@@ -156,25 +156,15 @@ export default function App() {
     showToast
   );
 
-  // Redirección reactiva basada en sesión
+  // Control de visibilidad del modal de perfil según estado de sesión
   useEffect(() => {
     if (isSessionLoading) return;
     if (session) {
       setShowProfileModal(true);
-      if (location.pathname === '/') {
-        const pendingPlan = localStorage.getItem('jacko_trigger_checkout_slug');
-        if (pendingPlan) {
-          navigate("/checkout", { replace: true });
-        } else {
-          navigate("/dashboard", { replace: true });
-        }
-        localStorage.removeItem('jacko_selected_plan');
-        localStorage.removeItem('jacko_just_registered');
-      }
     } else {
       setShowProfileModal(false);
     }
-  }, [session, isSessionLoading, location.pathname, navigate]);
+  }, [session, isSessionLoading]);
 
 
   // Pantalla de carga de sesión inicial
@@ -234,6 +224,7 @@ export default function App() {
       {session && currentView !== 'admin' && (
         <MemberHeader
           currentView={currentView}
+          activeDashboardTab={dashboardTab}
           onViewChange={(view, tab) => {
             if (view === 'profile') {
               setShowUserProfileModal(true);
@@ -259,7 +250,9 @@ export default function App() {
           height: currentView === 'admin' ? '100vh' : 'auto',
           minHeight: currentView === 'admin' ? '100vh' : 'auto',
           overflow: currentView === 'admin' ? 'hidden' : 'visible',
-          paddingTop: (session && currentView !== 'admin' && currentView !== 'landing') ? 'clamp(60px, 8vw, 80px)' : '0'
+          paddingTop: (session && currentView !== 'admin' && currentView !== 'landing') ? '68px' : '0',
+          paddingLeft: '12px',
+          paddingRight: '12px',
         }}
       >
         <Suspense fallback={<ViewFallback />}>

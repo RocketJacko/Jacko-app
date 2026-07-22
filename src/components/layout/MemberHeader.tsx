@@ -7,19 +7,22 @@ import {
   Gift,
   ShieldAlert,
   User,
-  ShoppingBag,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { 
   IoHomeOutline,
-  IoBarChartOutline, 
   IoGiftOutline, 
   IoShieldOutline, 
+  IoTrophyOutline,
+  IoReceiptOutline,
+  IoMenuOutline,
+  IoCloseOutline,
 } from 'react-icons/io5';
 import './MemberHeader.css';
 
 interface Props {
   currentView: 'landing' | 'dashboard' | 'catalogo' | 'admin' | 'profile';
+  activeDashboardTab?: 'panel' | 'history' | 'activities';
   onViewChange: (
     view: 'landing' | 'dashboard' | 'catalogo' | 'admin' | 'profile',
     tab?: 'panel' | 'history' | 'activities'
@@ -30,12 +33,12 @@ interface Props {
 
 export function MemberHeader({
   currentView,
+  activeDashboardTab = 'panel',
   onViewChange,
   isStaff = false,
   userEmail
 }: Props) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [alias, setAlias] = useState<string | null>(null);
   const { signOut, user } = useAuth();
@@ -105,44 +108,85 @@ export function MemberHeader({
   return (
     <header className="member-header">
       <div className="member-header-container">
-        {/* Brand logo */}
+        {/* Logo a la izquierda */}
         <button
           type="button"
           className="member-header-brand"
-          onClick={() => onViewChange('landing')}
+          onClick={() => onViewChange('dashboard', 'panel')}
           style={{ background: 'none', border: 'none', padding: 0 }}
         >
           <span className="logo-text">JACKO™</span>
         </button>
 
-        {/* Unified Header Navigation (Desktop & Mobile) */}
+        {/* Zona Derecha: Hamburguesa a la extrema derecha y menú desplegándose de Derecha a Izquierda hacia el logo */}
         {(() => {
+          const [isMenuOpen, setIsMenuOpen] = useState(false);
+          const [hoveredId, setHoveredId] = useState<string | null>(null);
+          const navRef = useRef<HTMLDivElement>(null);
+
+          // Cerrar menú al clic fuera
+          useEffect(() => {
+            const handleOutsideClick = (e: MouseEvent) => {
+              if (navRef.current && !navRef.current.contains(e.target as Node)) {
+                setIsMenuOpen(false);
+                setIsProfileOpen(false);
+              }
+            };
+            document.addEventListener('mousedown', handleOutsideClick);
+            return () => document.removeEventListener('mousedown', handleOutsideClick);
+          }, []);
+
           const headerLinks = [
             {
-              id: 'landing',
-              label: 'Inicio',
-              icon: <IoHomeOutline size={20} />,
+              id: 'panel',
+              label: 'Resumen',
+              icon: <IoHomeOutline size={18} />,
               gradientFrom: '#a955ff',
               gradientTo: '#ea51ff',
-              action: () => onViewChange('landing'),
-              isActive: currentView === 'landing',
+              action: () => {
+                onViewChange('dashboard', 'panel');
+                setIsMenuOpen(false);
+                setIsProfileOpen(false);
+              },
+              isActive: currentView === 'dashboard' && activeDashboardTab === 'panel',
             },
             {
-              id: 'dashboard',
-              label: 'Panel',
-              icon: <IoBarChartOutline size={20} />,
+              id: 'activities',
+              label: 'Desafíos',
+              icon: <IoTrophyOutline size={18} />,
               gradientFrom: '#56CCF2',
               gradientTo: '#2F80ED',
-              action: () => onViewChange('dashboard', 'panel'),
-              isActive: currentView === 'dashboard',
+              action: () => {
+                onViewChange('dashboard', 'activities');
+                setIsMenuOpen(false);
+                setIsProfileOpen(false);
+              },
+              isActive: currentView === 'dashboard' && activeDashboardTab === 'activities',
+            },
+            {
+              id: 'history',
+              label: 'Historial',
+              icon: <IoReceiptOutline size={18} />,
+              gradientFrom: '#FF9966',
+              gradientTo: '#FF5E62',
+              action: () => {
+                onViewChange('dashboard', 'history');
+                setIsMenuOpen(false);
+                setIsProfileOpen(false);
+              },
+              isActive: currentView === 'dashboard' && activeDashboardTab === 'history',
             },
             {
               id: 'catalogo',
               label: 'Premios',
-              icon: <IoGiftOutline size={20} />,
+              icon: <IoGiftOutline size={18} />,
               gradientFrom: '#FF9966',
               gradientTo: '#FF5E62',
-              action: () => onViewChange('catalogo'),
+              action: () => {
+                onViewChange('catalogo');
+                setIsMenuOpen(false);
+                setIsProfileOpen(false);
+              },
               isActive: currentView === 'catalogo',
             },
             ...(isStaff
@@ -150,10 +194,14 @@ export function MemberHeader({
                   {
                     id: 'admin',
                     label: 'Admin',
-                    icon: <IoShieldOutline size={20} />,
+                    icon: <IoShieldOutline size={18} />,
                     gradientFrom: '#80FF72',
                     gradientTo: '#7EE8FA',
-                    action: () => onViewChange('admin'),
+                    action: () => {
+                      onViewChange('admin');
+                      setIsMenuOpen(false);
+                      setIsProfileOpen(false);
+                    },
                     isActive: currentView === 'admin',
                   },
                 ]
@@ -161,190 +209,226 @@ export function MemberHeader({
           ];
 
           return (
-            <nav className="member-header-nav">
-              <ul className="flex gap-2 md:gap-3 items-center">
-                {headerLinks.map((link) => {
-                  const isActive = link.isActive;
-                  return (
-                    <li
-                      key={link.id}
-                      onClick={link.action}
-                      style={{
-                        '--gradient-from': link.gradientFrom,
-                        '--gradient-to': link.gradientTo,
-                      } as React.CSSProperties}
-                      className={cn(
-                        "relative w-[40px] h-[40px] md:w-[44px] md:h-[44px] bg-white rounded-full flex items-center justify-center transition-all duration-500 group cursor-pointer shadow-sm select-none border border-black/5",
-                        isActive ? "w-[110px] md:w-[130px] shadow-none" : "hover:w-[110px] md:hover:w-[130px]"
+            <div ref={navRef} className="relative flex items-center gap-2 ml-auto min-w-0 flex-shrink-0">
+              {/* Cinta horizontal desplegándose hacia la izquierda dentro del marco */}
+              <div className={cn(
+                "flex items-center gap-1 md:gap-2 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden",
+                isMenuOpen 
+                  ? "max-w-[calc(100vw-160px)] md:max-w-[550px] opacity-100 translate-x-0" 
+                  : "max-w-0 opacity-0 translate-x-4 pointer-events-none"
+              )}>
+                <ul className="flex gap-1 md:gap-2 items-center p-1 rounded-full bg-white/40 backdrop-blur-md border border-white/40 shadow-sm max-w-full overflow-x-auto no-scrollbar">
+                  {headerLinks.map((link) => {
+                    const isActive = link.isActive;
+                    const isHovered = hoveredId === link.id;
+                    const isExpanded = isHovered || isActive;
+
+                    return (
+                      <li
+                        key={link.id}
+                        onClick={link.action}
+                        onMouseEnter={() => setHoveredId(link.id)}
+                        onMouseLeave={() => setHoveredId(null)}
+                        style={{
+                          '--gradient-from': link.gradientFrom,
+                          '--gradient-to': link.gradientTo,
+                        } as React.CSSProperties}
+                        className={cn(
+                          "relative h-[36px] md:h-[40px] bg-white rounded-full flex items-center justify-center transition-all duration-500 group cursor-pointer shadow-sm select-none border border-black/5",
+                          isExpanded
+                            ? "w-[95px] md:w-[125px] shadow-none"
+                            : "w-[36px] md:w-[40px] hover:w-[95px] md:hover:w-[125px]"
+                        )}
+                        title={link.label}
+                      >
+                        <span className={cn(
+                          "absolute inset-0 rounded-full bg-[linear-gradient(45deg,var(--gradient-from),var(--gradient-to))] transition-all duration-500",
+                          isExpanded ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                        )}></span>
+                        
+                        <span className={cn(
+                          "absolute top-[4px] inset-x-0 h-full rounded-full bg-[linear-gradient(45deg,var(--gradient-from),var(--gradient-to))] blur-[8px] -z-10 transition-all duration-500",
+                          isExpanded ? "opacity-40" : "opacity-0 group-hover:opacity-40"
+                        )}></span>
+
+                        <span className={cn(
+                          "relative z-10 transition-all duration-500 delay-0 text-gray-600 flex items-center justify-center text-base md:text-lg",
+                          isExpanded ? "scale-0" : "group-hover:scale-0"
+                        )}>
+                          {link.icon}
+                        </span>
+
+                        <span className={cn(
+                          "absolute text-white uppercase tracking-wider text-[9px] md:text-[10px] font-extrabold transition-all duration-500 text-center px-1 truncate max-w-[75px] md:max-w-[100px]",
+                          isExpanded ? "scale-100" : "scale-0 group-hover:scale-100 delay-150"
+                        )}>
+                          {link.label}
+                        </span>
+                      </li>
+                    );
+                  })}
+
+                  {/* Botón de Perfil Integrado en la cinta */}
+                  <li
+                    onClick={() => setIsProfileOpen((p) => !p)}
+                    style={{
+                      '--gradient-from': '#FF512F',
+                      '--gradient-to': '#DD2476',
+                    } as React.CSSProperties}
+                    className={cn(
+                      "relative h-[36px] md:h-[40px] bg-white rounded-full flex items-center justify-center transition-all duration-500 group cursor-pointer shadow-sm select-none border border-black/5 list-none",
+                      isProfileOpen
+                        ? "w-[110px] md:w-[135px] shadow-none"
+                        : "w-[36px] md:w-[40px] hover:w-[110px] md:hover:w-[135px]"
+                    )}
+                    title={alias || userEmail}
+                  >
+                    <span className={cn(
+                      "absolute inset-0 rounded-full bg-[linear-gradient(45deg,var(--gradient-from),var(--gradient-to))] transition-all duration-500",
+                      isProfileOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                    )}></span>
+                    
+                    <span className={cn(
+                      "absolute top-[4px] inset-x-0 h-full rounded-full bg-[linear-gradient(45deg,var(--gradient-from),var(--gradient-to))] blur-[8px] -z-10 transition-all duration-500",
+                      isProfileOpen ? "opacity-40" : "opacity-0 group-hover:opacity-40"
+                    )}></span>
+
+                    <span className={cn(
+                      "relative z-10 w-full h-full transition-all duration-500 delay-0 text-gray-600 flex items-center justify-center text-base md:text-lg overflow-hidden rounded-full",
+                      isProfileOpen ? "scale-0" : "group-hover:scale-0"
+                    )}>
+                      {avatarUrl ? (
+                        <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover rounded-full" />
+                      ) : (
+                        <User size={18} />
                       )}
-                      title={link.label}
-                    >
-                      {/* Gradient background on hover/active */}
-                      <span className={cn(
-                        "absolute inset-0 rounded-full bg-[linear-gradient(45deg,var(--gradient-from),var(--gradient-to))] transition-all duration-500",
-                        isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                      )}></span>
-                      
-                      {/* Blur glow */}
-                      <span className={cn(
-                        "absolute top-[6px] inset-x-0 h-full rounded-full bg-[linear-gradient(45deg,var(--gradient-from),var(--gradient-to))] blur-[8px] -z-10 transition-all duration-500",
-                        isActive ? "opacity-40" : "opacity-0 group-hover:opacity-40"
-                      )}></span>
+                    </span>
 
-                      {/* Icon */}
-                      <span className={cn(
-                        "relative z-10 transition-all duration-500 delay-0 text-gray-600 flex items-center justify-center text-lg md:text-xl",
-                        isActive ? "scale-0" : "group-hover:scale-0"
-                      )}>
-                        {link.icon}
-                      </span>
+                    <span className={cn(
+                      "absolute text-white uppercase tracking-wider text-[9px] md:text-[10px] font-extrabold transition-all duration-500 text-center px-1 truncate max-w-[85px] md:max-w-[110px]",
+                      isProfileOpen ? "scale-100" : "scale-0 group-hover:scale-100 delay-150"
+                    )}>
+                      {alias || username}
+                    </span>
+                  </li>
+                </ul>
+              </div>
 
-                      {/* Title */}
-                      <span className={cn(
-                        "absolute text-white uppercase tracking-wider text-[9px] md:text-[10px] font-extrabold transition-all duration-500 text-center px-1 truncate max-w-[80px] md:max-w-[100px]",
-                        isActive ? "scale-100" : "scale-0 group-hover:scale-100 delay-150"
-                      )}>
-                        {link.label}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </nav>
-          );
-        })()}
+              {/* ÚNICO Botón en la Extrema Derecha: Botón Hamburguesa */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMenuOpen((prev) => !prev);
+                  if (isProfileOpen) setIsProfileOpen(false);
+                }}
+                style={{
+                  '--gradient-from': '#36D1DC',
+                  '--gradient-to': '#5B86E5',
+                } as React.CSSProperties}
+                className={cn(
+                  "relative h-[36px] md:h-[40px] bg-white rounded-full flex items-center justify-center transition-all duration-500 group cursor-pointer shadow-sm select-none border border-black/5 w-[36px] md:w-[40px]",
+                  isMenuOpen ? "shadow-none" : "hover:scale-105"
+                )}
+                title="Menú de Navegación"
+              >
+                <span className={cn(
+                  "absolute inset-0 rounded-full bg-[linear-gradient(45deg,var(--gradient-from),var(--gradient-to))] transition-all duration-500",
+                  isMenuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                )}></span>
+                
+                <span className={cn(
+                  "absolute top-[4px] inset-x-0 h-full rounded-full bg-[linear-gradient(45deg,var(--gradient-from),var(--gradient-to))] blur-[8px] -z-10 transition-all duration-500",
+                  isMenuOpen ? "opacity-40" : "opacity-0 group-hover:opacity-40"
+                )}></span>
 
+                <span className={cn(
+                  "relative z-10 transition-all duration-500 flex items-center justify-center text-lg md:text-xl",
+                  isMenuOpen ? "text-white rotate-90" : "text-gray-700 group-hover:text-white"
+                )}>
+                  {isMenuOpen ? <IoCloseOutline size={22} /> : <IoMenuOutline size={22} />}
+                </span>
+              </button>
 
-        {/* Zona usuario (solo desktop) */}
-        <div ref={dropdownRef} className="member-user-zone">
-          <div className="profile-dropdown-wrapper">
-            <button
-              type="button"
-              className={`user-profile-info-btn${avatarUrl ? ' has-avatar' : ''}`}
-              onClick={() => setIsProfileOpen((p) => !p)}
-              aria-haspopup="menu"
-              aria-expanded={isProfileOpen}
-            >
-              {avatarUrl ? (
-                <img src={avatarUrl} alt="Avatar" className="user-avatar-img-round" />
-              ) : (
-                <User size={14} className="user-icon" />
-              )}
-              <span className="user-email-text" title={alias || userEmail}>
-                {alias || userEmail}
-              </span>
-              <span className={`chevron-icon${isProfileOpen ? ' rotate' : ''}`}>▾</span>
-            </button>
+              {/* Popover del Perfil al hacer clic en la píldora de perfil dentro de la cinta */}
+              {isProfileOpen && (
+                <div ref={dropdownRef} className="profile-dropdown-menu">
+                  <div className="dropdown-user-header">
+                    <div className="dropdown-username">{username}</div>
+                    <div className="dropdown-email">{userEmail}</div>
+                  </div>
 
-            {isProfileOpen && (
-              <div className="profile-dropdown-menu">
-                <div className="dropdown-user-header">
-                  <div className="dropdown-username">{username}</div>
-                  <div className="dropdown-email">{userEmail}</div>
-                </div>
+                  <div className="dropdown-divider" />
 
-                <div className="dropdown-divider" />
-
-                <div className="dropdown-group">
-                  <button
-                    type="button"
-                    className="dropdown-item"
-                    onClick={() => {
-                      onViewChange('dashboard', 'panel');
-                      setIsProfileOpen(false);
-                    }}
-                  >
-                    <LayoutDashboard size={14} />
-                    <span>Mi Panel</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="dropdown-item"
-                    onClick={() => {
-                      onViewChange('catalogo');
-                      setIsProfileOpen(false);
-                    }}
-                  >
-                    <Gift size={14} />
-                    <span>Catálogo</span>
-                  </button>
-                  {isStaff && (
+                  <div className="dropdown-group">
                     <button
                       type="button"
                       className="dropdown-item"
                       onClick={() => {
-                        onViewChange('admin');
+                        onViewChange('dashboard', 'panel');
                         setIsProfileOpen(false);
                       }}
                     >
-                      <ShieldAlert size={14} />
-                      <span>Panel Admin</span>
+                      <LayoutDashboard size={14} />
+                      <span>Mi Panel</span>
                     </button>
-                  )}
+                    <button
+                      type="button"
+                      className="dropdown-item"
+                      onClick={() => {
+                        onViewChange('catalogo');
+                        setIsProfileOpen(false);
+                      }}
+                    >
+                      <Gift size={14} />
+                      <span>Catálogo</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="dropdown-item"
+                      onClick={() => {
+                        onViewChange('profile');
+                        setIsProfileOpen(false);
+                      }}
+                    >
+                      <User size={14} />
+                      <span>Editar Perfil</span>
+                    </button>
+                    {isStaff && (
+                      <button
+                        type="button"
+                        className="dropdown-item"
+                        onClick={() => {
+                          onViewChange('admin');
+                          setIsProfileOpen(false);
+                        }}
+                      >
+                        <ShieldAlert size={14} />
+                        <span>Panel Admin</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="dropdown-divider" />
+
+                  <div className="dropdown-group">
+                    <button
+                      type="button"
+                      className="dropdown-item logout-item"
+                      onClick={() => {
+                        handleLogout();
+                        setIsProfileOpen(false);
+                      }}
+                    >
+                      <LogOut size={14} />
+                      <span>Cerrar sesión</span>
+                    </button>
+                  </div>
                 </div>
-
-                <div className="dropdown-divider" />
-
-                <div className="dropdown-group">
-                  <button
-                    type="button"
-                    className="dropdown-item"
-                    onClick={() => {
-                      onViewChange('profile');
-                      setIsProfileOpen(false);
-                    }}
-                  >
-                    <User size={14} />
-                    <span>Perfil</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="dropdown-item"
-                    onClick={() => {
-                      onViewChange('dashboard', 'history');
-                      setIsProfileOpen(false);
-                    }}
-                  >
-                    <ShoppingBag size={14} />
-                    <span>Compras / Canjes</span>
-                  </button>
-                  <a
-                    href="/refer"
-                    onClick={(e) => e.preventDefault()}
-                    className="dropdown-item disabled-item"
-                  >
-                    <div className="flex-between w-full">
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <Gift size={14} />
-                        <span>Referido</span>
-                      </div>
-                      <span className="badge-soon">Próximamente</span>
-                    </div>
-                  </a>
-                </div>
-
-                <div className="dropdown-divider" />
-
-                <div className="dropdown-group">
-                  <button
-                    type="button"
-                    className="dropdown-item logout-item"
-                    onClick={() => {
-                      handleLogout();
-                      setIsProfileOpen(false);
-                    }}
-                  >
-                    <LogOut size={14} />
-                    <span>Cerrar sesión</span>
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+              )}
+            </div>
+          );
+        })()}
       </div>
-
-
     </header>
   );
 }
