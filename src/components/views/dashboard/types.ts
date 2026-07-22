@@ -4,7 +4,6 @@ export interface Profile {
   city?: string | null;
   points: number;
   subscription_tier?: string | null;
-  isInvited?: boolean;
 }
 
 export interface Task {

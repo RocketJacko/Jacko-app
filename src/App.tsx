@@ -76,7 +76,7 @@ export default function App() {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showUserProfileModal, setShowUserProfileModal] = useState(false);
   const [isVerifyingRedirect, setIsVerifyingRedirect] = useState(false);
-  const [dashboardTab, setDashboardTab] = useState<'panel' | 'history' | 'activities'>('panel');
+  const [dashboardTab, setDashboardTab] = useState<'panel' | 'history'>('panel');
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const [globalModal, setGlobalModal] = useState<{ title: string; message: string } | null>(null);
   const [globalToast, setGlobalToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -156,15 +156,18 @@ export default function App() {
     showToast
   );
 
-  // Control de visibilidad del modal de perfil según estado de sesión
+  // Control de visibilidad del modal de perfil y redirección automática al autenticarse
   useEffect(() => {
     if (isSessionLoading) return;
     if (session) {
       setShowProfileModal(true);
+      if (location.pathname === '/') {
+        navigate('/dashboard', { replace: true });
+      }
     } else {
       setShowProfileModal(false);
     }
-  }, [session, isSessionLoading]);
+  }, [session, isSessionLoading, location.pathname, navigate]);
 
 
   // Pantalla de carga de sesión inicial
@@ -251,8 +254,8 @@ export default function App() {
           minHeight: currentView === 'admin' ? '100vh' : 'auto',
           overflow: currentView === 'admin' ? 'hidden' : 'visible',
           paddingTop: (session && currentView !== 'admin' && currentView !== 'landing') ? '68px' : '0',
-          paddingLeft: '12px',
-          paddingRight: '12px',
+          paddingLeft: currentView === 'landing' ? '0' : '12px',
+          paddingRight: currentView === 'landing' ? '0' : '12px',
         }}
       >
         <Suspense fallback={<ViewFallback />}>

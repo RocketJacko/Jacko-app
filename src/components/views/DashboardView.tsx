@@ -3,14 +3,13 @@ import { m, AnimatePresence } from 'motion/react';
 import { supabase } from '../../lib/supabaseClient';
 import { invalidateCache, invalidateCacheByPrefix } from '../../lib/queryCache';
 import { useNetworkStatus } from '../../hooks/useNetworkStatus';
-import { RefreshCw, Ticket, Loader2 } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import './DashboardView.css';
 import { userService } from '../../services/userService';
 
 // Import subcomponents
 import { DashboardStats } from './dashboard/DashboardStats';
 import { DashboardHistory } from './dashboard/DashboardHistory';
-import { ActivitiesDashboard } from './dashboard/ActivitiesDashboard';
 
 // Import types
 import type { Profile, Order } from './dashboard/types';
@@ -19,8 +18,8 @@ interface Props {
   userId: string;
   userEmail: string;
   onNavigateToCatalog: () => void;
-  activeTab?: 'panel' | 'history' | 'activities';
-  setActiveTab?: (tab: 'panel' | 'history' | 'activities') => void;
+  activeTab?: 'panel' | 'history';
+  setActiveTab?: (tab: 'panel' | 'history') => void;
 }
 
 export function DashboardView({
@@ -35,8 +34,6 @@ export function DashboardView({
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
-  const [invitationCode, setInvitationCode] = useState('');
-  const [isRedeemingCode, setIsRedeemingCode] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(
     null
   );
@@ -74,68 +71,6 @@ export function DashboardView({
     },
     [userId, profile]
   );
-
-  const handleRedeemCode = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!invitationCode.trim() || isRedeemingCode) return;
-
-    setIsRedeemingCode(true);
-    try {
-      const result = await userService.redeemInvitationCode(invitationCode.trim());
-      if (result.success) {
-        setInvitationCode('');
-        invalidateCache('dashboard_data_' + userId);
-        invalidateCacheByPrefix('catalog_products');
-        await loadData(true);
-        
-        window.dispatchEvent(
-          new CustomEvent('show-toast', {
-            detail: { message: '¡Código canjeado!', type: 'success' },
-          })
-        );
-        window.dispatchEvent(
-          new CustomEvent('show-modal', {
-            detail: {
-              title: '¡Bienvenido VIP!',
-              message: result.message || 'El código de invitación ha sido procesado correctamente. Ahora eres un miembro invitado.',
-            },
-          })
-        );
-      } else {
-        window.dispatchEvent(
-          new CustomEvent('show-toast', {
-            detail: { message: 'Error al canjear', type: 'error' },
-          })
-        );
-        window.dispatchEvent(
-          new CustomEvent('show-modal', {
-            detail: {
-              title: 'Error de Canje',
-              message: result.message || 'No se pudo canjear el código de invitación.',
-            },
-          })
-        );
-      }
-    } catch (err: unknown) {
-      console.error('Error redeeming invitation code:', err);
-      const msg = err instanceof Error ? err.message : 'Error al procesar el código.';
-      window.dispatchEvent(
-        new CustomEvent('show-toast', {
-          detail: { message: 'Error de conexión', type: 'error' },
-        })
-      );
-      window.dispatchEvent(
-        new CustomEvent('show-modal', {
-          detail: {
-            title: 'Error de Canje',
-            message: msg,
-          },
-        })
-      );
-    } finally {
-      setIsRedeemingCode(false);
-    }
-  };
 
   // Auto-reload on network reconnection
   useEffect(() => {
@@ -252,103 +187,9 @@ export function DashboardView({
                     ordersCount={orders.length}
                     onNavigateToCatalog={onNavigateToCatalog}
                   />
-
-                  {/* Bloque de Canje de Invitación Premium */}
-                  <div className="invitation-redeem-container" style={{
-                    background: '#ffffff',
-                    border: '1px solid var(--modern-border, #E6E2DA)',
-                    borderRadius: '16px',
-                    padding: '24px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '16px',
-                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.02)',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    textAlign: 'left'
-                  }}>
-                    <div style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '4px',
-                      height: '100%',
-                      background: 'var(--orange-base, #d4621a)'
-                    }} />
-                    
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{
-                          background: 'rgba(212, 98, 26, 0.1)',
-                          padding: '10px',
-                          borderRadius: '12px',
-                          color: 'var(--orange-base, #d4621a)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}>
-                          <Ticket size={24} />
-                        </div>
-                        <div>
-                          <h4 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, color: 'var(--modern-text-primary, #1E1E1E)' }}>
-                            Código de Invitación VIP
-                          </h4>
-                          <p style={{ fontSize: '0.8rem', color: 'var(--modern-text-secondary, #6B7280)', margin: '4px 0 0 0' }}>
-                            Activa tu estatus de Invitado especial para desbloquear productos y canjear con puntos.
-                          </p>
-                        </div>
-                      </div>
-
-                      {profile?.isInvited && (
-                        <span className="dt-badge dt-badge-success" style={{ padding: '6px 12px', fontSize: '0.75rem', fontWeight: 700 }}>
-                          ✨ Cuenta Invitada Activa
-                        </span>
-                      )}
-                    </div>
-
-                    {!profile?.isInvited && (
-                      <form onSubmit={handleRedeemCode} style={{ display: 'flex', gap: '12px', marginTop: '8px', flexWrap: 'wrap' }}>
-                        <input
-                          type="text"
-                          placeholder="Ingresa tu código VIP aquí..."
-                          value={invitationCode}
-                          onChange={(e) => setInvitationCode(e.target.value.toUpperCase())}
-                          disabled={isRedeemingCode}
-                          className="vip-input-field"
-                        />
-                        <button
-                          type="submit"
-                          disabled={isRedeemingCode || !invitationCode.trim()}
-                          className="btn-modal-action primary"
-                          style={{
-                            height: '46px',
-                            padding: '0 24px',
-                            borderRadius: '10px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            fontWeight: 700,
-                            boxShadow: '0 4px 12px rgba(212, 98, 26, 0.15)',
-                            cursor: isRedeemingCode || !invitationCode.trim() ? 'not-allowed' : 'pointer'
-                          }}
-                        >
-                          {isRedeemingCode ? (
-                            <>
-                              <Loader2 size={16} className="spin" />
-                              Verificando...
-                            </>
-                          ) : (
-                            <>Activar Acceso</>
-                          )}
-                        </button>
-                      </form>
-                    )}
-                  </div>
                 </div>
               )}
-              {activeTab === 'activities' && (
-                <ActivitiesDashboard userId={userId} />
-              )}
+
               {activeTab === 'history' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   <DashboardHistory

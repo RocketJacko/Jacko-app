@@ -27,7 +27,6 @@ export function CatalogView({ userId, onRedeemSuccess, onNavigateToDashboard }: 
   const [userProfile, setUserProfile] = useState<{
     points: number;
     subscription_tier: 'free' | 'mensual' | 'anual';
-    isInvited?: boolean;
   } | null>(null);
   const [checkoutProduct, setCheckoutProduct] = useState<Product | null>(null);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
@@ -87,7 +86,6 @@ export function CatalogView({ userId, onRedeemSuccess, onNavigateToDashboard }: 
   }, []);
 
   const subTier = userProfile?.subscription_tier || 'free';
-  const isInvitedUser = userProfile?.isInvited || false;
 
   /* Cargar catálogo (datos públicos/privados según rol e invitación) */
   const loadCatalog = useCallback(
@@ -101,7 +99,6 @@ export function CatalogView({ userId, onRedeemSuccess, onNavigateToDashboard }: 
           userId,
           isSuperAdmin,
           subscriptionTier: subTier,
-          isInvited: isInvitedUser,
         };
         const filteredProducts = (data.products || []).filter((prod) => {
           /* Ocultar productos inactivos */
@@ -119,7 +116,7 @@ export function CatalogView({ userId, onRedeemSuccess, onNavigateToDashboard }: 
         setIsLoading(false);
       }
     },
-    [isSuperAdmin, subTier, isInvitedUser]
+    [isSuperAdmin, subTier]
   );
 
   /* Carga inicial unificada de perfil y catálogo en paralelo (desacoplada de paymentMethods) */

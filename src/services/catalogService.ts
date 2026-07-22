@@ -69,19 +69,16 @@ export const catalogService = {
     return data?.points || 0;
   },
 
-  async getUserProfile(userId: string): Promise<{ points: number; subscription_tier: 'free' | 'mensual' | 'anual'; isInvited: boolean }> {
+  async getUserProfile(userId: string): Promise<{ points: number; subscription_tier: 'free' | 'mensual' | 'anual' }> {
     const { data } = await supabase
       .from('profiles')
       .select('points, subscription_tier')
       .eq('id', userId)
       .maybeSingle();
 
-    const { data: isInvited } = await supabase.rpc('is_current_user_invited');
-
     return {
       points: data?.points || 0,
-      subscription_tier: (data?.subscription_tier as 'free' | 'mensual' | 'anual') || 'free',
-      isInvited: !!isInvited
+      subscription_tier: (data?.subscription_tier as 'free' | 'mensual' | 'anual') || 'free'
     };
   },
 
@@ -92,10 +89,6 @@ export const catalogService = {
       .eq('is_active', true)
       .order('sort_order', { ascending: true });
     return (data as PaymentMethod[]) || [];
-  },
-
-  async checkInvitation(): Promise<boolean> {
-    return false; // Deprecated
   },
 
   async getCatalogData(forceRefresh = false, isSuperAdmin = false): Promise<{ categories: Category[]; products: Product[] }> {

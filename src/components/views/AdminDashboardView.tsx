@@ -34,8 +34,6 @@ import { PaymentMethodsManager } from '../admin/PaymentMethodsManager';
 import { StorageManager } from '../admin/StorageManager';
 import { PoolCorreosManager } from '../admin/PoolCorreosManager';
 import { SupportTicketsManager } from '../admin/SupportTicketsManager';
-import { ActivitiesAdminManager } from '../admin/ActivitiesAdminManager';
-import { InvitationCodesManager } from '../admin/InvitationCodesManager';
 import { ListTodo, Ticket } from 'lucide-react';
 import './AdminDashboardView.css';
 import '../../styles/data-table.css';
@@ -86,7 +84,7 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
   const { signOut } = useAuth();
   const { tab } = useParams<{ tab: string }>();
   const navigate = useNavigate();
-  const activeTab = (tab || 'orders') as 'orders' | 'users' | 'catalog' | 'payment-methods' | 'storage' | 'pool-correos' | 'tickets' | 'activities' | 'webhooks' | 'secrets' | 'invitation-codes';
+  const activeTab = (tab || 'orders') as 'orders' | 'users' | 'catalog' | 'payment-methods' | 'storage' | 'pool-correos' | 'tickets' | 'webhooks' | 'secrets';
 
   const setActiveTab = (newTab: string) => {
     navigate(`/admin/${newTab}`);
@@ -316,7 +314,7 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
     const hasData = 
       (activeTab === 'orders' && hasLoadedOrdersRef.current) ||
       (activeTab === 'users' && hasLoadedUsersRef.current) ||
-      ['storage', 'pool-correos', 'tickets', 'webhooks', 'secrets', 'invitation-codes'].includes(activeTab);
+      ['storage', 'pool-correos', 'tickets', 'webhooks', 'secrets'].includes(activeTab);
 
     if (!hasData) {
       setIsLoading(true);
@@ -671,13 +669,10 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
         return 'Gestor de Archivos';
       case 'pool-correos':
         return 'Pool de Correos';
-      case 'invitation-codes':
-        return 'Códigos de Invitación';
+
 
       case 'tickets':
         return 'Tickets de Soporte';
-      case 'activities':
-        return 'Gestión de Actividades';
       case 'webhooks':
         return 'Webhooks del Sistema';
       case 'secrets':
@@ -786,18 +781,6 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
             </button>
             <button
               type="button"
-              className={`sidebar-nav-item${activeTab === 'activities' ? ' active' : ''}`}
-              onClick={() => {
-                setActiveTab('activities');
-                setSearchQuery('');
-                setIsSidebarOpen(false);
-              }}
-            >
-              <ListTodo size={18} />
-              <span>Actividades / Tareas</span>
-            </button>
-            <button
-              type="button"
               className={`sidebar-nav-item${activeTab === 'pool-correos' ? ' active' : ''}`}
               onClick={() => {
                 setActiveTab('pool-correos');
@@ -808,18 +791,7 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
               <Key size={18} />
               <span>Pool de Correos</span>
             </button>
-            <button
-              type="button"
-              className={`sidebar-nav-item${activeTab === 'invitation-codes' ? ' active' : ''}`}
-              onClick={() => {
-                setActiveTab('invitation-codes');
-                setSearchQuery('');
-                setIsSidebarOpen(false);
-              }}
-            >
-              <Ticket size={18} />
-              <span>Códigos de Invitación</span>
-            </button>
+
           </div>
 
           {/* GROUP 2: CONFIGURACIÓN */}
@@ -1400,11 +1372,7 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
                 </div>
               )}
 
-              {activeTab === 'invitation-codes' && (
-                <div>
-                  <InvitationCodesManager />
-                </div>
-              )}
+
 
               {activeTab === 'payment-methods' && (
                 <div>
@@ -1424,11 +1392,7 @@ export function AdminDashboardView({ userId, userEmail, isSuperAdmin, onNavigate
                 </div>
               )}
 
-              {activeTab === 'activities' && (
-                <div>
-                  <ActivitiesAdminManager />
-                </div>
-              )}
+
 
               {activeTab === 'webhooks' && (
                 <div className="admin-editor-card" style={{ background: '#ffffff', border: '1.5px solid var(--beige-dark)', padding: '24px', borderRadius: '20px' }}>

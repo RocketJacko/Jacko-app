@@ -15,21 +15,14 @@ export const userService = {
       async () => {
         const [
           { data: profileData },
-          { data: ordersData },
-          { data: isInvited }
+          { data: ordersData }
         ] = await Promise.all([
           supabase.from('profiles').select('*').eq('id', userId).maybeSingle(),
-          supabase.from('orders').select('*, products(title, slug), payment_methods(type, name)').eq('user_id', userId).order('created_at', { ascending: false }).limit(30),
-          supabase.rpc('is_current_user_invited')
+          supabase.from('orders').select('*, products(title, slug), payment_methods(type, name)').eq('user_id', userId).order('created_at', { ascending: false }).limit(30)
         ]);
         
-        const finalProfile = profileData ? {
-          ...(profileData as Profile),
-          isInvited: !!isInvited
-        } : null;
-
         return {
-          profile: finalProfile,
+          profile: (profileData as Profile) || null,
           orders: (ordersData as Order[]) || []
         };
       },
@@ -133,15 +126,5 @@ export const userService = {
       throw new Error('No se recibió respuesta del servidor de asignación.');
     }
     return data;
-  },
-
-  async redeemInvitationCode(
-    code: string
-  ): Promise<{ success: boolean; message: string }> {
-    const { data, error } = await supabase.rpc('redeem_invitation_code', { p_code: code });
-    if (error) {
-      throw new Error(error.message || 'Error al procesar el canje de invitación.');
-    }
-    return data as { success: boolean; message: string };
   }
 };

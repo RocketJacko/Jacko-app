@@ -22,10 +22,10 @@ import './MemberHeader.css';
 
 interface Props {
   currentView: 'landing' | 'dashboard' | 'catalogo' | 'admin' | 'profile';
-  activeDashboardTab?: 'panel' | 'history' | 'activities';
+  activeDashboardTab?: 'panel' | 'history';
   onViewChange: (
     view: 'landing' | 'dashboard' | 'catalogo' | 'admin' | 'profile',
-    tab?: 'panel' | 'history' | 'activities'
+    tab?: 'panel' | 'history'
   ) => void;
   isStaff?: boolean;
   userEmail: string;
@@ -150,19 +150,7 @@ export function MemberHeader({
               },
               isActive: currentView === 'dashboard' && activeDashboardTab === 'panel',
             },
-            {
-              id: 'activities',
-              label: 'Desafíos',
-              icon: <IoTrophyOutline size={18} />,
-              gradientFrom: '#56CCF2',
-              gradientTo: '#2F80ED',
-              action: () => {
-                onViewChange('dashboard', 'activities');
-                setIsMenuOpen(false);
-                setIsProfileOpen(false);
-              },
-              isActive: currentView === 'dashboard' && activeDashboardTab === 'activities',
-            },
+
             {
               id: 'history',
               label: 'Historial',
@@ -209,19 +197,20 @@ export function MemberHeader({
           ];
 
           return (
-            <div ref={navRef} className="relative flex items-center gap-2 ml-auto min-w-0 flex-shrink-0">
-              {/* Cinta horizontal desplegándose hacia la izquierda dentro del marco */}
+            <div ref={navRef} className="relative flex items-center gap-2 ml-auto md:mx-auto min-w-0 flex-shrink-0">
+              {/* Cinta horizontal: visible e integrada en escritorio, desplegable con hamburguesa solo en móvil */}
               <div className={cn(
                 "flex items-center gap-1 md:gap-2 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden",
+                "md:max-w-none md:opacity-100 md:translate-x-0 md:pointer-events-auto",
                 isMenuOpen 
-                  ? "max-w-[calc(100vw-160px)] md:max-w-[550px] opacity-100 translate-x-0" 
-                  : "max-w-0 opacity-0 translate-x-4 pointer-events-none"
+                  ? "max-w-[calc(100vw-160px)] opacity-100 translate-x-0" 
+                  : "max-w-0 opacity-0 translate-x-4 pointer-events-none md:max-w-none md:opacity-100 md:translate-x-0 md:pointer-events-auto"
               )}>
                 <ul className="flex gap-1 md:gap-2 items-center p-1 rounded-full bg-white/40 backdrop-blur-md border border-white/40 shadow-sm max-w-full overflow-x-auto no-scrollbar">
                   {headerLinks.map((link) => {
                     const isActive = link.isActive;
                     const isHovered = hoveredId === link.id;
-                    const isExpanded = isHovered || isActive;
+                    const isExpanded = isHovered;
 
                     return (
                       <li
@@ -235,9 +224,10 @@ export function MemberHeader({
                         } as React.CSSProperties}
                         className={cn(
                           "relative h-[36px] md:h-[40px] bg-white rounded-full flex items-center justify-center transition-all duration-500 group cursor-pointer shadow-sm select-none border border-black/5",
+                          isActive ? "ring-2 ring-amber-500/60" : "",
                           isExpanded
                             ? "w-[95px] md:w-[125px] shadow-none"
-                            : "w-[36px] md:w-[40px] hover:w-[95px] md:hover:w-[125px]"
+                            : "w-[36px] md:w-[40px]"
                         )}
                         title={link.label}
                       >
@@ -326,7 +316,7 @@ export function MemberHeader({
                   '--gradient-to': '#5B86E5',
                 } as React.CSSProperties}
                 className={cn(
-                  "relative h-[36px] md:h-[40px] bg-white rounded-full flex items-center justify-center transition-all duration-500 group cursor-pointer shadow-sm select-none border border-black/5 w-[36px] md:w-[40px]",
+                  "relative h-[36px] md:h-[40px] bg-white rounded-full flex md:hidden items-center justify-center transition-all duration-500 group cursor-pointer shadow-sm select-none border border-black/5 w-[36px] md:w-[40px]",
                   isMenuOpen ? "shadow-none" : "hover:scale-105"
                 )}
                 title="Menú de Navegación"

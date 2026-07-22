@@ -4,14 +4,14 @@ import { useAuth } from "../context/AuthContext";
 import { DashboardView } from "../components/views/DashboardView";
 
 interface DashboardPageProps {
-  activeTab?: 'panel' | 'history' | 'activities';
-  setActiveTab?: (tab: 'panel' | 'history' | 'activities') => void;
+  activeTab?: 'panel' | 'history';
+  setActiveTab?: (tab: 'panel' | 'history') => void;
 }
 
 export function DashboardPage({ activeTab, setActiveTab }: DashboardPageProps) {
   const { session } = useAuth();
   const navigate = useNavigate();
-  const [localTab, setLocalTab] = useState<'panel' | 'history' | 'activities'>('panel');
+  const [localTab, setLocalTab] = useState<'panel' | 'history'>('panel');
 
   const currentTab = activeTab || localTab;
   const changeTab = setActiveTab || setLocalTab;

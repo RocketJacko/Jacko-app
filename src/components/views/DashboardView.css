@@ -60,40 +60,7 @@
   }
 }
 
-/* VIP input field responsive */
-.vip-input-field {
-  flex: 1;
-  min-width: 0;
-  height: 46px;
-  padding: 0 14px;
-  border: 1.5px solid rgba(42, 26, 10, 0.12);
-  border-radius: 10px;
-  background-color: #faf8f5;
-  font-size: 0.88rem;
-  color: var(--brown-dark);
-  font-family: var(--font-body);
-  transition: border-color 0.2s;
-  touch-action: manipulation;
-}
-.vip-input-field:focus {
-  outline: none;
-  border-color: var(--orange-base);
-  box-shadow: 0 0 0 3px rgba(212, 98, 26, 0.1);
-}
 
-@media (max-width: 520px) {
-  .vip-input-field {
-    font-size: 16px; /* prevent iOS zoom */
-  }
-  /* Stack VIP form vertically on small screens */
-  .invitation-redeem-container form {
-    flex-direction: column !important;
-  }
-  .invitation-redeem-container form .btn-modal-action {
-    width: 100%;
-    justify-content: center;
-  }
-}
 
 /* Header */
 .dashboard-header {
@@ -1905,32 +1872,7 @@
   line-height: 1.4;
 }
 
-.vip-input-field {
-  flex: 1;
-  min-width: 220px;
-  height: 46px;
-  border-radius: 10px;
-  border: 1px solid var(--modern-border, #E6E2DA);
-  padding: 0 16px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  background: #ffffff;
-  color: var(--modern-text-primary, #1E1E1E);
-  box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
-  transition: all 0.2s ease;
-}
 
-.vip-input-field:focus {
-  outline: none;
-  border-color: var(--orange-base);
-  box-shadow: 0 0 0 3px rgba(212, 98, 26, 0.15);
-}
-
-@media (max-width: 768px) {
-  .vip-input-field {
-    font-size: 16px;
-  }
-}
 
 
 
