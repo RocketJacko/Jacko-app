@@ -5,7 +5,6 @@ import "./ActivateOverlay.css";
 export function ActivateOverlay({ onStart }: { onStart?: () => void }) {
   const [show, setShow] = useState(true);
   const [ready, setReady] = useState(false);
-  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     if (show) {
@@ -20,8 +19,7 @@ export function ActivateOverlay({ onStart }: { onStart?: () => void }) {
 
   useEffect(() => {
     const handleProgress = (e: Event) => {
-      const { progress: p, ready: r } = (e as CustomEvent).detail;
-      setProgress(p);
+      const { ready: r } = (e as CustomEvent).detail;
       setReady(r);
     };
     window.addEventListener('jacko-loading-progress', handleProgress);
@@ -29,14 +27,6 @@ export function ActivateOverlay({ onStart }: { onStart?: () => void }) {
       window.removeEventListener('jacko-loading-progress', handleProgress);
     };
   }, []);
-
-  const getButtonText = () => {
-    if (ready) return 'Comenzar';
-    const pct = Math.round(progress * 100);
-    if (pct < 35) return `Cargando gráficos... ${pct}%`;
-    if (pct < 75) return `Optimizando... ${pct}%`;
-    return `Iniciando 3D... ${pct}%`;
-  };
 
   return (
     <AnimatePresence>
@@ -74,7 +64,7 @@ export function ActivateOverlay({ onStart }: { onStart?: () => void }) {
                   onStart?.();
                 }}
               >
-                {getButtonText()}
+                Comenzar
               </m.button>
             </div>
           </m.div>
