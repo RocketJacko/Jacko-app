@@ -18,7 +18,7 @@
 /* Encabezado */
 .pricing-header-text {
   text-align: center;
-  margin-bottom: 0.75rem; /* Compacto en móvil */
+  margin-bottom: 6px; /* Mitad del espacio anterior para móviles (6px) */
   max-width: 650px;
   display: flex;
   flex-direction: column;

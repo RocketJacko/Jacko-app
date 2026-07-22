@@ -10,7 +10,7 @@
   -webkit-backdrop-filter: blur(16px);
   border: 1.5px solid rgba(212, 163, 88, 0.22) !important;
   padding: 0.5rem !important;
-  margin-top: 0.25rem;
+  margin-top: 2px;
   /* Altura estrictamente fija para evitar cualquier variación visual en el tamaño de la tarjeta */
   height: 620px !important;
   min-height: 620px !important;
