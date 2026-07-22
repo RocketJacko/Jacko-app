@@ -200,11 +200,11 @@ export function MemberHeader({
             <div ref={navRef} className="relative flex items-center gap-2 ml-auto md:mx-auto min-w-0 flex-shrink-0">
               {/* Cinta horizontal: visible e integrada en escritorio, desplegable con hamburguesa solo en móvil */}
               <div className={cn(
-                "flex items-center gap-1 md:gap-2 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden",
-                "md:max-w-none md:opacity-100 md:translate-x-0 md:pointer-events-auto",
+                "flex items-center gap-1 md:gap-2 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden pointer-events-auto",
+                "md:max-w-none md:opacity-100 md:translate-x-0",
                 isMenuOpen 
                   ? "max-w-[calc(100vw-160px)] opacity-100 translate-x-0" 
-                  : "max-w-0 opacity-0 translate-x-4 pointer-events-none md:max-w-none md:opacity-100 md:translate-x-0 md:pointer-events-auto"
+                  : "max-w-0 opacity-0 translate-x-4 pointer-events-none md:pointer-events-auto"
               )}>
                 <ul className="flex gap-1 md:gap-2 items-center p-1 rounded-full bg-white/40 backdrop-blur-md border border-white/40 shadow-sm max-w-full overflow-x-auto no-scrollbar">
                   {headerLinks.map((link) => {
