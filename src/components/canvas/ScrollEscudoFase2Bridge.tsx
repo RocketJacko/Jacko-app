@@ -86,9 +86,13 @@ export function ScrollEscudoFase2Bridge({
   // Dibujar el primer frame en el canvas de inmediato al cargarse
   useEffect(() => {
     if (firstFrameImg && canvasRef.current && !ready) {
-      drawCover(canvasRef.current, firstFrameImg, { ...escudoDraw, opaque: false });
+      drawCover(canvasRef.current, firstFrameImg, {
+        ...escudoDraw,
+        mode: isMobile ? 'contain' : 'cover',
+        opaque: false,
+      });
     }
-  }, [firstFrameImg, ready, escudoDraw]);
+  }, [firstFrameImg, ready, escudoDraw, isMobile]);
 
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -136,6 +140,9 @@ export function ScrollEscudoFase2Bridge({
     /* Desactivar el flag de transición hacia arriba si el progress baja de 0.69 */
     if (latest < 0.69) {
       isTransitioningToSkater.current = false;
+      if (activeOverlay !== 'skater') {
+        setActiveOverlay('skater');
+      }
     }
 
     /* Si pasamos del skater y seguimos en vista skater, saltar automáticamente a registro */
@@ -151,8 +158,11 @@ export function ScrollEscudoFase2Bridge({
     const frameIndex = Math.min(n - 1, Math.max(0, Math.floor(skaterProgress * n)));
     const img = images[frameIndex];
     if (img && img.complete) {
+      const isEscudo = frameIndex < 80;
+      const drawMode = (isEscudo && isMobile) ? 'contain' : 'cover';
       drawCover(canvasRef.current, img, {
         ...escudoDraw,
+        mode: drawMode,
         opaque: false,
       });
     }
@@ -192,16 +202,20 @@ export function ScrollEscudoFase2Bridge({
         const skaterProgress = Math.min(1, Math.max(0, latest / 0.7));
         const frameIndex = Math.min(n - 1, Math.max(0, Math.floor(skaterProgress * n)));
         const img = images[frameIndex];
-        if (img) drawCover(canvas, img, { ...escudoDraw, opaque: false });
+        if (img) {
+          const isEscudo = frameIndex < 80;
+          const drawMode = (isEscudo && isMobile) ? 'contain' : 'cover';
+          drawCover(canvas, img, { ...escudoDraw, mode: drawMode, opaque: false });
+        }
       } else if (firstFrameImg) {
-        drawCover(canvas, firstFrameImg, { ...escudoDraw, opaque: false });
+        drawCover(canvas, firstFrameImg, { ...escudoDraw, mode: isMobile ? 'contain' : 'cover', opaque: false });
       }
     };
 
     window.addEventListener('resize', handleResize);
     handleResize();
     return () => window.removeEventListener('resize', handleResize);
-  }, [ready, images, n, escudoDraw, smoothProgress, firstFrameImg]);
+  }, [ready, images, n, escudoDraw, smoothProgress, firstFrameImg, isMobile]);
 
   const getLoaderText = () => {
     if (status === 'error') return 'Error al cargar';
