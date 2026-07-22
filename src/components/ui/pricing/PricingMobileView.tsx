@@ -87,7 +87,7 @@ export const PricingMobileView: React.FC<PricingSharedProps> = ({
           animationNum={2}
           timelineRef={pricingRef}
           customVariants={revealVariants}
-          className="mt-4 w-full flex justify-center"
+          className="w-full flex justify-center"
         >
           <PricingSwitch selected={planType} onSwitch={setPlanType} />
         </TimelineContent>
