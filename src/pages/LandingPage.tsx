@@ -25,13 +25,7 @@ export function LandingPage() {
     <div style={{ position: "relative", minHeight: "100vh" }}>
       <HomePage onComplete={(completed) => setIsIntroFinished(completed)} />
       {!session && (
-        <ActivateOverlay
-          onStart={() => {
-            // En mobile emitir evento para que ScrollEscudoFase2Bridge
-            // inicie la animación con tap (sin scroll-drive de 500vh)
-            window.dispatchEvent(new CustomEvent('jacko-mobile-start'));
-          }}
-        />
+        <ActivateOverlay />
       )}
     </div>
   );

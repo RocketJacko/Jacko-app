@@ -4,6 +4,8 @@ import "./ActivateOverlay.css";
 
 export function ActivateOverlay({ onStart }: { onStart?: () => void }) {
   const [show, setShow] = useState(true);
+  const [ready, setReady] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     if (show) {
@@ -15,6 +17,26 @@ export function ActivateOverlay({ onStart }: { onStart?: () => void }) {
       document.body.classList.remove("no-scroll");
     };
   }, [show]);
+
+  useEffect(() => {
+    const handleProgress = (e: Event) => {
+      const { progress: p, ready: r } = (e as CustomEvent).detail;
+      setProgress(p);
+      setReady(r);
+    };
+    window.addEventListener('jacko-loading-progress', handleProgress);
+    return () => {
+      window.removeEventListener('jacko-loading-progress', handleProgress);
+    };
+  }, []);
+
+  const getButtonText = () => {
+    if (ready) return 'Comenzar';
+    const pct = Math.round(progress * 100);
+    if (pct < 35) return `Cargando gráficos... ${pct}%`;
+    if (pct < 75) return `Optimizando... ${pct}%`;
+    return `Iniciando 3D... ${pct}%`;
+  };
 
   return (
     <AnimatePresence>
@@ -43,14 +65,16 @@ export function ActivateOverlay({ onStart }: { onStart?: () => void }) {
               <p>Sigue los pasos.</p>
               <m.button
                 className="activate-btn"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                disabled={!ready}
+                whileHover={ready ? { scale: 1.05 } : undefined}
+                whileTap={ready ? { scale: 0.95 } : undefined}
+                style={!ready ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
                 onClick={() => {
                   setShow(false);
                   onStart?.();
                 }}
               >
-                Comenzar
+                {getButtonText()}
               </m.button>
             </div>
           </m.div>
