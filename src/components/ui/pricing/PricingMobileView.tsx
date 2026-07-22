@@ -104,14 +104,14 @@ export const PricingMobileView: React.FC<PricingSharedProps> = ({
         <Card
           className={cn("pricing-mobile-card", !isFree && "premium-active")}
           style={{
-            height: "615px",
-            minHeight: "615px",
-            maxHeight: "615px",
+            height: "620px",
+            minHeight: "620px",
+            maxHeight: "620px",
             flexShrink: 0,
             overflow: "hidden"
           }}
         >
-          <CardHeader className="text-left pb-2">
+          <CardHeader className="text-left p-4 pb-1">
             <span className="mobile-plan-eyebrow">
               {isFree ? "Membresía Inicial" : "Suscripción Premium"}
             </span>
@@ -124,7 +124,7 @@ export const PricingMobileView: React.FC<PricingSharedProps> = ({
             </h3>
           </CardHeader>
 
-          <CardContent className="pricing-mobile-body">
+          <CardContent className="pricing-mobile-body p-4 pt-0">
             {/* Flujo Premium */}
             {!isFree ? (
               <div className="mobile-premium-flow">

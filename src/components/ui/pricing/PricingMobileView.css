@@ -9,12 +9,12 @@
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1.5px solid rgba(212, 163, 88, 0.22) !important;
-  padding: 1rem 0.5rem;
+  padding: 0.5rem !important;
   margin-top: 0.25rem;
   /* Altura estrictamente fija para evitar cualquier variación visual en el tamaño de la tarjeta */
-  height: 615px !important;
-  min-height: 615px !important;
-  max-height: 615px !important;
+  height: 620px !important;
+  min-height: 620px !important;
+  max-height: 620px !important;
   flex-shrink: 0 !important;
   display: flex;
   flex-direction: column;
@@ -62,7 +62,7 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 0.75rem 1rem 0.5rem 1rem !important;
+  padding: 0.5rem 0.75rem 0.5rem 0.75rem !important;
   overflow: hidden;
   /* Ocultar barra de desplazamiento visualmente para que se vea nativa y premium */
   scrollbar-width: none; /* Firefox */
@@ -85,7 +85,7 @@
 
 /* Sección de Cantidad (Premium) */
 .mobile-qty-section {
-  margin-bottom: 1.25rem;
+  margin-bottom: 0.5rem;
 }
 
 .mobile-qty-display-row {
@@ -142,7 +142,7 @@
   border: 1px solid rgba(212, 163, 88, 0.15);
   padding: 1rem;
   border-radius: 14px;
-  margin-bottom: 1.25rem;
+  margin-bottom: 0.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -199,7 +199,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.75rem;
 }
 
 /* Ajustes de color para checkmarks de beneficios */
@@ -218,7 +218,7 @@
   color: var(--brown-dark);
   opacity: 0.85;
   line-height: 1.5;
-  margin-bottom: 1.25rem;
+  margin-bottom: 0.75rem;
 }
 
 /* Botones de Acción Táctiles */
@@ -259,7 +259,7 @@
   display: flex;
   justify-content: space-around;
   border-top: 1.5px solid rgba(212, 163, 88, 0.12);
-  padding: 1rem 1rem 0.25rem 1rem;
+  padding: 0.5rem 1rem 0.25rem 1rem;
   font-size: 0.72rem;
   font-weight: 700;
   color: var(--brown-dark);
