@@ -1,9 +1,8 @@
 /* ── Mobile-first catalog container ── */
 .catalog-container {
   min-height: 100dvh;
-  /* mobile base: minimal padding; grows at larger breakpoints */
-  padding: clamp(5rem, 12vw, 8rem) clamp(0.75rem, 4vw, 2rem) clamp(5rem, 8vw, 4rem);
-  background-color: var(--beige-light);
+  padding: 10px clamp(0.75rem, 4vw, 2rem) clamp(2rem, 5vw, 4rem);
+  background-color: var(--modern-bg, #F8F7F4);
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -32,7 +31,7 @@
 
 @media (max-width: 768px) {
   .catalog-container {
-    padding: 5.5rem 0.875rem 5.5rem 0.875rem; /* bottom for dock space */
+    padding: 10px 0.875rem 4rem 0.875rem;
   }
 }
 
@@ -91,15 +90,15 @@
 /* Toolbar: Buscador y Filtros */
 .catalog-toolbar {
   background-color: white;
-  border: 1.5px solid var(--beige-dark);
-  border-radius: 20px;
-  padding: 1.25rem;
-  margin-bottom: 2.5rem;
-  box-shadow: 0 10px 30px rgba(42, 26, 10, 0.02);
+  border: 1px solid var(--modern-border, #E6E2DA);
+  border-radius: 16px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 4px 12px rgba(42, 26, 10, 0.02);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1rem;
   flex-wrap: wrap;
 }
 

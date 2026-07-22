@@ -3,13 +3,12 @@ import {
   ShoppingBag,
   Search,
   ChevronDown,
-  SlidersHorizontal,
-  Download,
   Check,
   X,
   Upload,
   Loader2,
 } from 'lucide-react';
+import { cn } from '../../../lib/utils';
 import { supabase } from '../../../lib/supabaseClient';
 import { invalidateCache } from '../../../lib/queryCache';
 import type { Order } from './types';
@@ -39,23 +38,6 @@ export interface HistoryItem {
   points_awarded: null;
   isOrder: boolean;
   order: Order;
-}
-
-function getUIStatus(item: HistoryItem): 'Completado' | 'Pendiente' | 'Rechazado' {
-  const s = item.status.toLowerCase();
-  if (s === 'procesado') return 'Completado';
-  if (s === 'approved') {
-    if (!item.isOrder) return 'Completado';
-    const o = item.order;
-    const activations = o && Array.isArray(o.activation_details) ? o.activation_details : [];
-    const quantity = o?.quantity || 1;
-    if (activations.length < quantity) return 'Pendiente';
-    return 'Completado';
-  }
-  if (s === 'procesando' || s === 'pending' || s === 'pending_nequi') {
-    return 'Pendiente';
-  }
-  return 'Rechazado';
 }
 
 function StatusBadge({ item }: { item: HistoryItem }) {
@@ -101,10 +83,8 @@ export function DashboardHistory({
 }: DashboardHistoryProps) {
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('Todos');
-  const [statusFilter, setStatusFilter] = useState('Todos');
   const [activatingOrder, setActivatingOrder] = useState<Order | null>(null);
   const [assigningOrderId, setAssigningOrderId] = useState<string | null>(null);
-  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
   /* Modal upload state */
@@ -148,14 +128,7 @@ export function DashboardHistory({
     if (typeFilter !== 'Todos' && item.type !== typeFilter) {
       return false;
     }
-    /* B. Status Filter */
-    if (statusFilter !== 'Todos') {
-      const uiStatus = getUIStatus(item);
-      if (statusFilter !== uiStatus) {
-        return false;
-      }
-    }
-    /* C. Search Input */
+    /* B. Search Input */
     const q = search.toLowerCase();
     return (
       item.id.toLowerCase().includes(q) ||
@@ -163,25 +136,6 @@ export function DashboardHistory({
       (item.reference_note || '').toLowerCase().includes(q)
     );
   });
-
-  /* Checkbox functions */
-  const toggleSelectItem = (id: string) => {
-    const next = new Set(selectedItems);
-    if (next.has(id)) {
-      next.delete(id);
-    } else {
-      next.add(id);
-    }
-    setSelectedItems(next);
-  };
-
-  const toggleSelectAll = () => {
-    if (selectedItems.size === filtered.length) {
-      setSelectedItems(new Set());
-    } else {
-      setSelectedItems(new Set(filtered.map((i) => i.id)));
-    }
-  };
 
   const toggleExpandItem = (id: string) => {
     const next = new Set(expandedItems);
@@ -191,24 +145,6 @@ export function DashboardHistory({
       next.add(id);
     }
     setExpandedItems(next);
-  };
-
-  /* Export JSON */
-  const handleExport = () => {
-    const targets =
-      selectedItems.size > 0 ? sortedItems.filter((i) => selectedItems.has(i.id)) : filtered;
-    if (targets.length === 0) {
-      alert('No hay transacciones para exportar.');
-      return;
-    }
-    const dataStr =
-      'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(targets, null, 2));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute('href', dataStr);
-    downloadAnchor.setAttribute('download', `historial_jacko_${new Date().toISOString().slice(0, 10)}.json`);
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
   };
 
   /* Handle image drag & drop selection */
@@ -415,72 +351,44 @@ export function DashboardHistory({
 
   return (
     <div className="paypal-table-card">
-      {/* Filter Bar Capsule */}
-      <div className="dt-filter-bar">
-        {/* Dropdown Type Filter */}
-        <div className="paypal-filter-select-wrapper">
-          <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
-            <option value="Todos">Tipo: Todos</option>
-            <option value="Compra Directa">Compra Directa</option>
-            <option value="Canje Puntos">Canje Puntos</option>
-          </select>
-          <span className="paypal-filter-select-arrow">
-            <ChevronDown size={14} />
-          </span>
+      {/* Barra de Filtros Simplificada y Responsiva */}
+      <div className="dt-filter-bar flex flex-wrap md:flex-nowrap gap-3 items-center justify-between p-3 bg-white/60 backdrop-blur-md rounded-2xl border border-black/5 shadow-sm mb-4">
+        {/* Pills de Filtro Rápido */}
+        <div className="flex gap-1.5 items-center">
+          {[
+            { id: 'Todos', label: 'Todos' },
+            { id: 'Compra Directa', label: 'Compras' },
+            { id: 'Canje Puntos', label: 'Canjes' },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setTypeFilter(tab.id)}
+              className={cn(
+                "px-3.5 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider transition-all duration-300 select-none",
+                typeFilter === tab.id
+                  ? "bg-[linear-gradient(45deg,#36D1DC,#5B86E5)] text-white shadow-sm"
+                  : "bg-black/5 text-gray-600 hover:bg-black/10"
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
-        {/* Dropdown Status Filter */}
-        <div className="paypal-filter-select-wrapper">
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-            <option value="Todos">Estado: Todos</option>
-            <option value="Completado">Completado</option>
-            <option value="Pendiente">Pendiente</option>
-            <option value="Rechazado">Rechazado</option>
-          </select>
-          <span className="paypal-filter-select-arrow">
-            <ChevronDown size={14} />
-          </span>
-        </div>
-
-        {/* Search Field */}
-        <div className="paypal-search-wrapper" style={{ flex: 1 }}>
-          <span className="paypal-search-icon">
-            <Search size={16} />
+        {/* Campo de Búsqueda Limpio */}
+        <div className="paypal-search-wrapper relative flex-1 min-w-[200px]">
+          <span className="paypal-search-icon absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+            <Search size={15} />
           </span>
           <input
             aria-label="Buscar historial"
             type="text"
-            className="paypal-search-input"
-            placeholder="Buscar por producto, ID o referencia..."
+            className="paypal-search-input w-full pl-9 pr-3 py-1.5 text-xs bg-white rounded-full border border-black/10 focus:outline-none focus:border-blue-400 transition-all"
+            placeholder="Buscar producto, ID o referencia..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-        </div>
-
-        {/* Filter Actions */}
-        <div className="dt-filter-actions">
-          <button
-            type="button"
-            className="dt-btn-icon"
-            onClick={() => {
-              setSearch('');
-              setTypeFilter('Todos');
-              setStatusFilter('Todos');
-              setSelectedItems(new Set());
-            }}
-            style={{ fontWeight: 700 }}
-          >
-            <SlidersHorizontal size={14} />
-            <span>Restablecer filtros</span>
-          </button>
-          <button
-            type="button"
-            className="dt-btn-icon"
-            title="Exportar en JSON"
-            onClick={handleExport}
-          >
-            <Download size={15} />
-          </button>
         </div>
       </div>
 
@@ -496,28 +404,7 @@ export function DashboardHistory({
           <table className="paypal-table">
             <thead>
               <tr style={{ borderBottom: '1.5px solid var(--modern-border, #E6E2DA)' }}>
-                <th style={{ width: '40px', paddingLeft: '8px' }}>
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        e.currentTarget.click();
-                      }
-                    }}
-                    className={`paypal-checkbox-container${
-                      selectedItems.size === filtered.length && filtered.length > 0 ? ' checked' : ''
-                    }`}
-                    onClick={toggleSelectAll}
-                    aria-label="Seleccionar todo"
-                  >
-                    {selectedItems.size === filtered.length && filtered.length > 0 && (
-                      <Check size={12} strokeWidth={3} />
-                    )}
-                  </div>
-                </th>
-                <th style={{ fontWeight: 600 }}>Estado</th>
+                <th style={{ fontWeight: 600, paddingLeft: '16px' }}>Estado</th>
                 <th style={{ fontWeight: 600 }}>Producto / Descripción</th>
                 <th style={{ textAlign: 'right', fontWeight: 600 }}>Monto / Puntos</th>
                 <th style={{ fontWeight: 600 }}>Fecha</th>
@@ -526,7 +413,6 @@ export function DashboardHistory({
             </thead>
             <tbody>
               {filtered.map((item) => {
-                const isSelected = selectedItems.has(item.id);
                 const isExpanded = expandedItems.has(item.id);
                 const isPointSpend = item.type === 'Canje Puntos';
                 return (
@@ -534,28 +420,9 @@ export function DashboardHistory({
                     <tr
                       onClick={() => toggleExpandItem(item.id)}
                       style={{ cursor: 'pointer', borderBottom: '1px solid var(--modern-border, #E6E2DA)' }}
-                      className={isSelected ? 'row-selected' : ''}
                     >
-                      {/* Checkbox column */}
-                      <td onClick={(e) => e.stopPropagation()} style={{ paddingLeft: '8px' }}>
-                        <div
-                          role="button"
-                          tabIndex={0}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              e.currentTarget.click();
-                            }
-                          }}
-                          className={`paypal-checkbox-container${isSelected ? ' checked' : ''}`}
-                          onClick={() => toggleSelectItem(item.id)}
-                          aria-label="Seleccionar fila"
-                        >
-                          {isSelected && <Check size={12} strokeWidth={3} />}
-                        </div>
-                      </td>
                       {/* 1. Status Column */}
-                      <td>
+                      <td style={{ paddingLeft: '16px' }}>
                         <StatusBadge item={item} />
                       </td>
                       {/* 2. Description Column */}
@@ -685,7 +552,6 @@ export function DashboardHistory({
           </div>
         ) : (
           filtered.map((item) => {
-            const isSelected = selectedItems.has(item.id);
             const isExpanded = expandedItems.has(item.id);
             const isPointSpend = item.type === 'Canje Puntos';
             return (
@@ -699,41 +565,21 @@ export function DashboardHistory({
                   }
                 }}
                 key={item.id}
-                className={`dt-mobile-card${isSelected ? ' row-selected' : ''}`}
+                className="dt-mobile-card"
                 onClick={() => toggleExpandItem(item.id)}
                 style={{ cursor: 'pointer' }}
               >
-                {/* Header row (Status + Checkbox/Chevron) */}
+                {/* Header row (Status + Chevron) */}
                 <div className="dt-mobile-card-header">
                   <StatusBadge item={item} />
-                  <div
-                    style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          e.currentTarget.click();
-                        }
-                      }}
-                      className={`paypal-checkbox-container${isSelected ? ' checked' : ''}`}
-                      onClick={() => toggleSelectItem(item.id)}
-                      aria-label="Seleccionar fila"
-                    >
-                      {isSelected && <Check size={12} strokeWidth={3} />}
-                    </div>
-                    <ChevronDown
-                      size={16}
-                      style={{
-                        transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-                        transition: 'transform 0.2s',
-                        color: 'var(--modern-text-secondary, #6B7280)',
-                      }}
-                    />
-                  </div>
+                  <ChevronDown
+                    size={16}
+                    style={{
+                      transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.2s',
+                      color: 'var(--modern-text-secondary, #6B7280)',
+                    }}
+                  />
                 </div>
 
                 {/* Content row (Title + Value) */}
@@ -854,8 +700,7 @@ export function DashboardHistory({
       {/* Footer Total Items Count */}
       <div className="dt-table-footer">
         <span style={{ fontWeight: 600 }}>
-          {filtered.length} de {sortedItems.length} transacciones{' '}
-          {selectedItems.size > 0 && `(${selectedItems.size} seleccionadas)`}
+          {filtered.length} de {sortedItems.length} transacciones
         </span>
       </div>
 

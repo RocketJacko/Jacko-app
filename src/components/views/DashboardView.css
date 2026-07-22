@@ -1,8 +1,8 @@
 /* ── Mobile-first: base styles designed for 360-414px ── */
 .dashboard-container {
   min-height: 100dvh;
-  /* mobile: tight padding; scales up for desktop */
-  padding: clamp(5rem, 12vw, 8rem) clamp(0.75rem, 4vw, 2rem) clamp(5rem, 8vw, 4rem);
+  /* Espaciado superior exacto de 10px con respecto a la barra de menú flotante */
+  padding: 10px clamp(0.75rem, 4vw, 2rem) clamp(2rem, 5vw, 4rem);
   background-color: var(--modern-bg, #F8F7F4);
   display: flex;
   justify-content: center;
@@ -25,7 +25,7 @@
 /* Phones: full-width card, reduced radius, bottom nav padding */
 @media (max-width: 600px) {
   .dashboard-container {
-    padding: 5rem 0.75rem 6rem 0.75rem; /* bottom accounts for bottom dock if added */
+    padding: 10px 0.75rem 4rem 0.75rem;
     align-items: flex-start;
   }
   .dashboard-content {

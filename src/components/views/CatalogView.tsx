@@ -6,7 +6,7 @@ import './CatalogView.css';
 import { CheckoutView } from './CheckoutView';
 import { ProductCardSkeleton } from '../ui/skeleton';
 import { catalogService } from '../../services/catalogService';
-import type { Product, Category, PaymentMethod } from '../../services/catalogService';
+import type { Product, PaymentMethod } from '../../services/catalogService';
 import { VisibilityStrategyFactory } from '../../domain/visibility/VisibilityStrategyFactory';
 import { useGeoLocation } from '../../hooks/useGeoLocation';
 
@@ -21,8 +21,7 @@ export function CatalogView({ userId, onRedeemSuccess, onNavigateToDashboard }: 
   const { isSuperAdmin } = useAuth();
   const { userCurrency, exchangeRate } = useGeoLocation();
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [activeCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<{
@@ -112,7 +111,6 @@ export function CatalogView({ userId, onRedeemSuccess, onNavigateToDashboard }: 
           const strategy = VisibilityStrategyFactory.getStrategy(prod.visibility);
           return strategy.isVisible(userCtx);
         });
-        setCategories(data.categories);
         setProducts(filteredProducts);
         hasProductsRef.current = true;
       } catch (err: unknown) {
@@ -238,61 +236,35 @@ export function CatalogView({ userId, onRedeemSuccess, onNavigateToDashboard }: 
   return (
     <div className="catalog-container">
       <div className="catalog-content">
-        <header className="catalog-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-            {userId === 'guest' && (
-              <button
-                type="button"
-                className="btn-catalog-back"
-                onClick={() => {
-                  navigate('/');
-                  setTimeout(() => {
-                    window.dispatchEvent(new CustomEvent('scroll-to-section', { detail: 'register' }));
-                  }, 50);
-                }}
-              >
-                <ArrowLeft size={16} /> Volver a los Planes / Registro
-              </button>
-            )}
-            <h2>{userId === 'guest' ? 'Nuestros Servicios' : 'Catálogo de Recompensas'}</h2>
-          </div>
-        </header>
+        {userId === 'guest' && (
+          <header className="catalog-header" style={{ border: 'none', padding: 0, marginBottom: '1rem' }}>
+            <button
+              type="button"
+              className="btn-catalog-back"
+              onClick={() => {
+                navigate('/');
+                setTimeout(() => {
+                  window.dispatchEvent(new CustomEvent('scroll-to-section', { detail: 'register' }));
+                }, 50);
+              }}
+            >
+              <ArrowLeft size={16} /> Volver a los Planes / Registro
+            </button>
+          </header>
+        )}
 
-        {/* Buscador y Filtros */}
+        {/* Buscador Único PWA */}
         <div className="catalog-toolbar">
-          <div className="catalog-search-wrapper">
+          <div className="catalog-search-wrapper" style={{ maxWidth: '100%' }}>
             <Search size={18} className="catalog-search-icon" />
             <input
               type="text"
               className="catalog-search-input"
-              placeholder="Buscar productos en la tienda..."
+              placeholder="Buscar productos o servicios..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <nav className="categories-filter" aria-label="Filtro de categorías">
-            <button
-              type="button"
-              className={`category-pill${activeCategory === null ? ' active' : ''}`}
-              onClick={() => setActiveCategory(null)}
-            >
-              Todas ({products.length})
-            </button>
-            {categories.map((c) => {
-              const count = products.filter((p) => p.categories?.slug === c.slug).length;
-              if (count === 0) return null;
-              return (
-                <button
-                  type="button"
-                  key={c.id}
-                  className={`category-pill${activeCategory === c.slug ? ' active' : ''}`}
-                  onClick={() => setActiveCategory(c.slug)}
-                >
-                  {c.name} ({count})
-                </button>
-              );
-            })}
-          </nav>
         </div>
 
         {isLoading ? (
