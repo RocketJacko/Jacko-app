@@ -11,18 +11,15 @@ import {
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { 
+  IoHomeOutline,
   IoBarChartOutline, 
-  IoTrophyOutline, 
   IoGiftOutline, 
-  IoPersonOutline, 
   IoShieldOutline, 
-  IoLogOutOutline 
 } from 'react-icons/io5';
 import './MemberHeader.css';
 
 interface Props {
   currentView: 'landing' | 'dashboard' | 'catalogo' | 'admin' | 'profile';
-  dashboardTab?: 'panel' | 'history' | 'activities';
   onViewChange: (
     view: 'landing' | 'dashboard' | 'catalogo' | 'admin' | 'profile',
     tab?: 'panel' | 'history' | 'activities'
@@ -33,7 +30,6 @@ interface Props {
 
 export function MemberHeader({
   currentView,
-  dashboardTab,
   onViewChange,
   isStaff = false,
   userEmail
@@ -119,35 +115,104 @@ export function MemberHeader({
           <span className="logo-text">JACKO™</span>
         </button>
 
-        {/* Desktop nav links */}
-        <nav className="member-nav-desktop">
-          <button
-            type="button"
-            className={`member-nav-link${currentView === 'dashboard' ? ' active' : ''}`}
-            onClick={() => onViewChange('dashboard', 'panel')}
-          >
-            <LayoutDashboard size={16} />
-            <span>Mi Panel</span>
-          </button>
-          <button
-            type="button"
-            className={`member-nav-link${currentView === 'catalogo' ? ' active' : ''}`}
-            onClick={() => onViewChange('catalogo')}
-          >
-            <Gift size={16} />
-            <span>Catálogo</span>
-          </button>
-          {isStaff && (
-            <button
-              type="button"
-              className={`btn-admin-access${currentView === 'admin' ? ' active' : ''}`}
-              onClick={() => onViewChange('admin')}
-            >
-              <ShieldAlert size={16} />
-              <span>Panel Admin</span>
-            </button>
-          )}
-        </nav>
+        {/* Unified Header Navigation (Desktop & Mobile) */}
+        {(() => {
+          const headerLinks = [
+            {
+              id: 'landing',
+              label: 'Inicio',
+              icon: <IoHomeOutline size={20} />,
+              gradientFrom: '#a955ff',
+              gradientTo: '#ea51ff',
+              action: () => onViewChange('landing'),
+              isActive: currentView === 'landing',
+            },
+            {
+              id: 'dashboard',
+              label: 'Panel',
+              icon: <IoBarChartOutline size={20} />,
+              gradientFrom: '#56CCF2',
+              gradientTo: '#2F80ED',
+              action: () => onViewChange('dashboard', 'panel'),
+              isActive: currentView === 'dashboard',
+            },
+            {
+              id: 'catalogo',
+              label: 'Premios',
+              icon: <IoGiftOutline size={20} />,
+              gradientFrom: '#FF9966',
+              gradientTo: '#FF5E62',
+              action: () => onViewChange('catalogo'),
+              isActive: currentView === 'catalogo',
+            },
+            ...(isStaff
+              ? [
+                  {
+                    id: 'admin',
+                    label: 'Admin',
+                    icon: <IoShieldOutline size={20} />,
+                    gradientFrom: '#80FF72',
+                    gradientTo: '#7EE8FA',
+                    action: () => onViewChange('admin'),
+                    isActive: currentView === 'admin',
+                  },
+                ]
+              : []),
+          ];
+
+          return (
+            <nav className="member-header-nav">
+              <ul className="flex gap-2 md:gap-3 items-center">
+                {headerLinks.map((link) => {
+                  const isActive = link.isActive;
+                  return (
+                    <li
+                      key={link.id}
+                      onClick={link.action}
+                      style={{
+                        '--gradient-from': link.gradientFrom,
+                        '--gradient-to': link.gradientTo,
+                      } as React.CSSProperties}
+                      className={cn(
+                        "relative w-[40px] h-[40px] md:w-[44px] md:h-[44px] bg-white rounded-full flex items-center justify-center transition-all duration-500 group cursor-pointer shadow-sm select-none border border-black/5",
+                        isActive ? "w-[110px] md:w-[130px] shadow-none" : "hover:w-[110px] md:hover:w-[130px]"
+                      )}
+                      title={link.label}
+                    >
+                      {/* Gradient background on hover/active */}
+                      <span className={cn(
+                        "absolute inset-0 rounded-full bg-[linear-gradient(45deg,var(--gradient-from),var(--gradient-to))] transition-all duration-500",
+                        isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                      )}></span>
+                      
+                      {/* Blur glow */}
+                      <span className={cn(
+                        "absolute top-[6px] inset-x-0 h-full rounded-full bg-[linear-gradient(45deg,var(--gradient-from),var(--gradient-to))] blur-[8px] -z-10 transition-all duration-500",
+                        isActive ? "opacity-40" : "opacity-0 group-hover:opacity-40"
+                      )}></span>
+
+                      {/* Icon */}
+                      <span className={cn(
+                        "relative z-10 transition-all duration-500 delay-0 text-gray-600 flex items-center justify-center text-lg md:text-xl",
+                        isActive ? "scale-0" : "group-hover:scale-0"
+                      )}>
+                        {link.icon}
+                      </span>
+
+                      {/* Title */}
+                      <span className={cn(
+                        "absolute text-white uppercase tracking-wider text-[9px] md:text-[10px] font-extrabold transition-all duration-500 text-center px-1 truncate max-w-[80px] md:max-w-[100px]",
+                        isActive ? "scale-100" : "scale-0 group-hover:scale-100 delay-150"
+                      )}>
+                        {link.label}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
+          );
+        })()}
 
 
         {/* Zona usuario (solo desktop) */}
@@ -279,125 +344,7 @@ export function MemberHeader({
         </div>
       </div>
 
-      {/* ── Bottom Navigation Bar (mobile only) ── */}
-      {(() => {
-        const bottomLinks = [
-          {
-            id: 'dashboard-panel',
-            label: 'Panel',
-            icon: <IoBarChartOutline size={20} />,
-            gradientFrom: '#a955ff',
-            gradientTo: '#ea51ff',
-            action: () => onViewChange('dashboard', 'panel'),
-            isActive: currentView === 'dashboard' && (dashboardTab === 'panel' || !dashboardTab),
-          },
-          {
-            id: 'dashboard-activities',
-            label: 'Desafíos',
-            icon: <IoTrophyOutline size={20} />,
-            gradientFrom: '#56CCF2',
-            gradientTo: '#2F80ED',
-            action: () => onViewChange('dashboard', 'activities'),
-            isActive: currentView === 'dashboard' && dashboardTab === 'activities',
-          },
-          {
-            id: 'catalogo',
-            label: 'Premios',
-            icon: <IoGiftOutline size={20} />,
-            gradientFrom: '#FF9966',
-            gradientTo: '#FF5E62',
-            action: () => onViewChange('catalogo'),
-            isActive: currentView === 'catalogo',
-          },
-          {
-            id: 'profile',
-            label: 'Perfil',
-            icon: avatarUrl ? (
-              <img src={avatarUrl} alt="" className="w-5 h-5 rounded-full object-cover" />
-            ) : (
-              <IoPersonOutline size={20} />
-            ),
-            gradientFrom: '#ffa9c6',
-            gradientTo: '#f434e2',
-            action: () => onViewChange('profile'),
-            isActive: currentView === 'profile',
-          },
-          ...(isStaff
-            ? [
-                {
-                  id: 'admin',
-                  label: 'Admin',
-                  icon: <IoShieldOutline size={20} />,
-                  gradientFrom: '#80FF72',
-                  gradientTo: '#7EE8FA',
-                  action: () => onViewChange('admin'),
-                  isActive: currentView === 'admin',
-                },
-              ]
-            : []),
-          {
-            id: 'logout',
-            label: 'Salir',
-            icon: <IoLogOutOutline size={20} />,
-            gradientFrom: '#e0e0e0',
-            gradientTo: '#909090',
-            action: handleLogout,
-            isActive: false,
-          },
-        ];
 
-        return (
-          <nav className="member-bottom-nav" aria-label="Navegación principal">
-            <ul className="flex gap-2 items-center w-full justify-center">
-              {bottomLinks.map((link) => {
-                return (
-                  <li
-                    key={link.id}
-                    onClick={link.action}
-                    style={{
-                      '--gradient-from': link.gradientFrom,
-                      '--gradient-to': link.gradientTo,
-                    } as React.CSSProperties}
-                    className={cn(
-                      "relative w-[44px] h-[44px] bg-white rounded-full flex items-center justify-center transition-all duration-500 group cursor-pointer shadow-md select-none",
-                      link.isActive ? "w-[110px] shadow-none" : "active:scale-95"
-                    )}
-                    title={link.label}
-                  >
-                    {/* Gradient background on active/hover */}
-                    <span className={cn(
-                      "absolute inset-0 rounded-full bg-[linear-gradient(45deg,var(--gradient-from),var(--gradient-to))] transition-all duration-500",
-                      link.isActive ? "opacity-100" : "opacity-0"
-                    )}></span>
-                    
-                    {/* Blur glow */}
-                    <span className={cn(
-                      "absolute top-[6px] inset-x-0 h-full rounded-full bg-[linear-gradient(45deg,var(--gradient-from),var(--gradient-to))] blur-[8px] -z-10 transition-all duration-500",
-                      link.isActive ? "opacity-40" : "opacity-0"
-                    )}></span>
-
-                    {/* Icon */}
-                    <span className={cn(
-                      "relative z-10 transition-all duration-500 delay-0 text-gray-600 flex items-center justify-center",
-                      link.isActive ? "scale-0" : "scale-100"
-                    )}>
-                      {link.icon}
-                    </span>
-
-                    {/* Title */}
-                    <span className={cn(
-                      "absolute text-white uppercase tracking-wider text-[9px] font-extrabold transition-all duration-500 text-center px-1 truncate max-w-[80px]",
-                      link.isActive ? "scale-100" : "scale-0"
-                    )}>
-                      {link.label}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
-        );
-      })()}
     </header>
   );
 }
