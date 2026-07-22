@@ -4,7 +4,7 @@ import { useImageSequence } from '../../hooks/useImageSequence';
 import { getCanvasBackingDpr } from '../../lib/canvasDpr';
 import { drawCover, type DrawCoverOptions } from '../../lib/drawCover';
 import { RegisterPage } from '../../pages/RegisterPage';
-import VaporizeTextCycle, { Tag } from '../ui/vapour-text-effect';
+import { GooeyText } from '../ui/gooey-text-morphing';
 import './ScrollEscudoFase2Bridge.css';
 
 type Props = {
@@ -41,7 +41,7 @@ export function ScrollEscudoFase2Bridge({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const vaporizeFontSize = isMobile ? "40px" : "80px";
+
 
   /* ── Mobile detection ── */
   const [isMobileMode, setIsMobileMode] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 768);
@@ -113,8 +113,7 @@ export function ScrollEscudoFase2Bridge({
     [0.1, 0.15, 0.65, 0.7],
     [0, 1, 1, 0]
   );
-  const step1Opacity = useTransform(smoothProgress, [0.15, 0.3, 0.45], [0, 1, 0]);
-  const step2Opacity = useTransform(smoothProgress, [0.48, 0.6, 0.7], [0, 1, 0]);
+
 
   /* 3. Canvas del Skater (se desvanece de 0.70 a 0.75) */
   const canvasOpacity = useTransform(smoothProgress, [0.7, 0.75], [1, 0]);
@@ -398,49 +397,15 @@ export function ScrollEscudoFase2Bridge({
         </m.div>
 
         <m.div className="skater-steps-overlay grid-base" style={{ opacity: stepsContainerOpacity }}>
-          <m.div className="step-item-large is-bottom col-span-12" style={{ opacity: step1Opacity }}>
-            <div style={{ height: isMobile ? "45px" : "90px", width: "100%" }}>
-              <VaporizeTextCycle
-                texts={["Registrate"]}
-                font={{
-                  fontFamily: "'Fredoka One', cursive",
-                  fontSize: vaporizeFontSize,
-                  fontWeight: 400
-                }}
-                color="rgb(184, 74, 10)"
-                spread={9}
-                density={9}
-                animation={{
-                  vaporizeDuration: 1.6,
-                  fadeInDuration: 1.0,
-                  waitDuration: 0.8
-                }}
-                direction="left-to-right"
-                alignment="left"
-                tag={Tag.H1}
-              />
-            </div>
-          </m.div>
-          <m.div className="step-item-large is-bottom col-span-12" style={{ opacity: step2Opacity }}>
-            <div style={{ height: isMobile ? "45px" : "90px", width: "100%" }}>
-              <VaporizeTextCycle
-                texts={["Disfruta"]}
-                font={{
-                  fontFamily: "'Fredoka One', cursive",
-                  fontSize: vaporizeFontSize,
-                  fontWeight: 400
-                }}
-                color="rgb(184, 74, 10)"
-                spread={9}
-                density={9}
-                animation={{
-                  vaporizeDuration: 1.6,
-                  fadeInDuration: 1.0,
-                  waitDuration: 0.8
-                }}
-                direction="left-to-right"
-                alignment="left"
-                tag={Tag.H1}
+          <m.div className="step-item-large is-bottom col-span-12" style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
+            <div style={{ height: isMobile ? "70px" : "120px", width: "100%", position: 'relative' }}>
+              <GooeyText
+                texts={["Regístrate", "Disfruta"]}
+                morphTime={1.2}
+                cooldownTime={1.5}
+                className="w-full"
+                containerClassName="justify-start"
+                textClassName="font-display font-bold text-[#b84a0a] text-6xl md:text-[60pt] left-0"
               />
             </div>
           </m.div>
