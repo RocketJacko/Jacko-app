@@ -43,6 +43,21 @@ export default defineConfig({
             handler: 'NetworkOnly',
           },
           {
+            // Frames de animación de Supabase: CacheFirst (Inmutables)
+            urlPattern: /^https:\/\/.*\.supabase\.co\/storage\/v1\/object\/public\/frames\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'supabase-frames-cache',
+              expiration: {
+                maxEntries: 250, // Permite guardar todos los 240 frames
+                maxAgeSeconds: 60 * 60 * 24 * 90, // 90 días
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
+          {
             // Fuentes externas de Google Fonts: CacheFirst
             urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,
             handler: 'CacheFirst',
