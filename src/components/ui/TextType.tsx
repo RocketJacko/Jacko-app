@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, createElement, useMemo, useCallback, ElementType, ComponentPropsWithoutRef } from 'react';
+import { useEffect, useRef, useState, createElement, useMemo, useCallback } from 'react';
+import type { ElementType, ComponentPropsWithoutRef } from 'react';
 import { gsap } from 'gsap';
 import './TextType.css';
 

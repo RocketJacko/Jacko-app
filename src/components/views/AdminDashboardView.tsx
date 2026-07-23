@@ -34,7 +34,6 @@ import { PaymentMethodsManager } from '../admin/PaymentMethodsManager';
 import { StorageManager } from '../admin/StorageManager';
 import { PoolCorreosManager } from '../admin/PoolCorreosManager';
 import { SupportTicketsManager } from '../admin/SupportTicketsManager';
-import { ListTodo, Ticket } from 'lucide-react';
 import './AdminDashboardView.css';
 import '../../styles/data-table.css';
 

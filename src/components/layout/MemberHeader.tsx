@@ -13,7 +13,6 @@ import {
   IoHomeOutline,
   IoGiftOutline, 
   IoShieldOutline, 
-  IoTrophyOutline,
   IoReceiptOutline,
   IoMenuOutline,
   IoCloseOutline,
