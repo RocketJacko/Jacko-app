@@ -54,13 +54,22 @@ export function RedirectPanel({
         throw new Error(response.error || `Error al iniciar la orden con ${selectedMethod.name}.`);
       }
 
-      /* Open redirection URL in a new window */
-      window.open(response.approveUrl, '_blank', 'noopener,noreferrer');
+      // Redirección directa sin popup bloqueado para que el navegador y SO invoquen la App nativa de PayPal si está instalada
+      if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        // Redireccionar en la misma ventana para activar Deep Links a la app de PayPal
+        window.location.href = response.approveUrl;
+      } else {
+        // En desktop abrir ventana emergente o redireccionar directamente
+        const win = window.open(response.approveUrl, '_blank');
+        if (!win || win.closed || typeof win.closed === 'undefined') {
+          window.location.href = response.approveUrl;
+        }
+      }
 
-      /* Create pending receipt structure */
+      /* Estructura de recibo pendiente */
       const receipt: ReceiptData = {
         title: `Redirección a ${selectedMethod.name}`,
-        subtitle: `Hemos abierto la pasarela de ${selectedMethod.name} en una nueva pestaña para que completes tu pago de forma segura. Tu cuenta se activará automáticamente al detectarse la transferencia.`,
+        subtitle: `Te hemos redireccionado al portal seguro de ${selectedMethod.name}. Si tienes la App instalada, se abrirá automáticamente. Al completar el pago, tu cuenta se activará de inmediato.`,
         amount: formatMoney(totalPrice),
         statusLabel: 'PENDIENTE',
         statusType: 'pending',
