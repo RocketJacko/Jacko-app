@@ -52,6 +52,7 @@ binance-spot-api-docs/
 spec-kit/
 CONTEXTO.md
 DESIGN.md
+contruccion pwa/
 
 # Supabase backend infra (separate repo)
 supabase/
