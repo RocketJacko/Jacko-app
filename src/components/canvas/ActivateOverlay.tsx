@@ -66,13 +66,25 @@ export function ActivateOverlay({ onStart }: { onStart?: () => void }) {
     };
   }, []);
 
+  const triggerHaptic = () => {
+    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate(15);
+      } catch {
+        // Haptic feedback not supported
+      }
+    }
+  };
+
   const handleNext = () => {
+    triggerHaptic();
     if (currentStep < totalSteps - 1) {
       setCurrentStep((prev) => prev + 1);
     }
   };
 
   const handlePrev = () => {
+    triggerHaptic();
     if (currentStep > 0) {
       setCurrentStep((prev) => prev - 1);
     }

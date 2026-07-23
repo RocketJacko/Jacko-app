@@ -50,17 +50,32 @@ export function ScrollEscudoFase2Bridge({
   const ready = status === 'ready';
   const n = allUrls.length;
 
-  // Cargar el primer frame inmediatamente como placeholder
+  // Cargar el primer frame e iniciar la precarga prioritaria de los primeros 15 frames para fluidez PWA
   const [firstFrameImg, setFirstFrameImg] = useState<HTMLImageElement | null>(null);
   useEffect(() => {
+    if (allUrls.length === 0) return;
+
+    // 1. Cargar el primer frame con máxima prioridad
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.decoding = 'async';
+    if ('fetchPriority' in img) {
+      (img as unknown as { fetchPriority: string }).fetchPriority = 'high';
+    }
     img.onload = () => {
       setFirstFrameImg(img);
     };
-    img.src = escudoFrameUrls[0];
-  }, [escudoFrameUrls]);
+    img.src = allUrls[0];
+
+    // 2. Precarga silenciosa de los primeros 15 frames para acelerar la PWA
+    const preloadBatch = allUrls.slice(1, 15);
+    preloadBatch.forEach((url) => {
+      const pImg = new Image();
+      pImg.crossOrigin = 'anonymous';
+      pImg.decoding = 'async';
+      pImg.src = url;
+    });
+  }, [allUrls]);
 
   // Despachar evento con el progreso y estado de carga para otros componentes (ej. ActivateOverlay)
   useEffect(() => {

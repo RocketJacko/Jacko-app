@@ -1,0 +1,115 @@
+.pwa-install-banner {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  width: calc(100% - 32px);
+  max-width: 440px;
+  background: rgba(255, 248, 245, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1.5px solid rgba(212, 98, 26, 0.3);
+  border-radius: 20px;
+  padding: 12px 16px;
+  box-shadow: 0 20px 40px rgba(40, 24, 8, 0.25), 0 0 20px rgba(212, 98, 26, 0.15);
+}
+
+.pwa-install-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pwa-app-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--orange-base, #d4621a), #b84a0a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(212, 98, 26, 0.35);
+}
+
+.pwa-text-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.pwa-title {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  color: var(--text-dark, #3f2d1b);
+  margin: 0 0 2px 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pwa-title.success-text {
+  color: #10b981;
+}
+
+.pwa-desc {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: rgba(63, 45, 27, 0.75);
+  margin: 0;
+  line-height: 1.25;
+}
+
+.pwa-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.pwa-install-btn {
+  background: var(--orange-base, #d4621a);
+  color: #ffffff;
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  padding: 8px 14px;
+  border-radius: 50px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(212, 98, 26, 0.3);
+}
+
+.pwa-install-btn:hover {
+  background: var(--orange-light, #ea742b);
+  transform: translateY(-1px);
+}
+
+.pwa-close-btn {
+  background: transparent;
+  border: none;
+  color: rgba(63, 45, 27, 0.5);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pwa-close-btn:hover {
+  background: rgba(212, 98, 26, 0.1);
+  color: var(--text-dark, #3f2d1b);
+}
+
+@media (max-width: 480px) {
+  .pwa-install-banner {
+    bottom: 80px; /* Evita solapar la barra de navegación móvil */
+  }
+}
