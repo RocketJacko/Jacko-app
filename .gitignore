@@ -38,6 +38,7 @@ Thumbs.db
 .specify/
 .qodo/
 .mcp/
+mcp.json
 paypal-mcp-config.json
 scratch/
 
