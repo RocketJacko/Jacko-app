@@ -31,7 +31,6 @@ export function RegisterForm({ defaultIsRegister = true }: RegisterFormProps) {
 
   const [fullName, setFullName] = useState<string>(savedState?.fullName || '');
   const [email, setEmail] = useState<string>(savedState?.email || '');
-  const [city, setCity] = useState<string>(savedState?.city || '');
   const [otpCode, setOtpCode] = useState('');
 
   // Por defecto Registro o lo especificado por prop
@@ -85,7 +84,6 @@ export function RegisterForm({ defaultIsRegister = true }: RegisterFormProps) {
         setEmail('');
         setStep(1);
         setFullName('');
-        setCity('');
         setOtpCode('');
         setStatusMsg('');
         setStatusType('');
@@ -171,7 +169,6 @@ export function RegisterForm({ defaultIsRegister = true }: RegisterFormProps) {
             ? {
                 full_name: fullName.trim(),
                 alias: fullName.trim(),
-                city: city.trim(),
               }
             : undefined,
         },
@@ -188,7 +185,6 @@ export function RegisterForm({ defaultIsRegister = true }: RegisterFormProps) {
           JSON.stringify({
             fullName: fullName.trim(),
             email: email.trim(),
-            city: city.trim(),
             isRegister,
             step: 2,
           })
@@ -362,20 +358,6 @@ export function RegisterForm({ defaultIsRegister = true }: RegisterFormProps) {
                       disabled={isLoading}
                     />
                   </div>
-                  {isRegister && (
-                    <div className="form-group">
-                      <label htmlFor="input-gen-xcatyj">Ciudad</label>
-                      <input
-                        id="input-gen-xcatyj"
-                        aria-label="Ciudad"
-                        type="text"
-                        placeholder="Tu ciudad"
-                        value={city}
-                        onChange={(e) => setCity(e.target.value)}
-                        disabled={isLoading}
-                      />
-                    </div>
-                  )}
                   {statusMsg && (
                     <div className={`form-status ${statusType}`}>
                       {statusMsg}

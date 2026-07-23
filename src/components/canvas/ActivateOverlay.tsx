@@ -2,9 +2,46 @@ import { useEffect, useState } from "react";
 import { m, AnimatePresence } from "motion/react";
 import "./ActivateOverlay.css";
 
+const STEPS = [
+  {
+    id: 0,
+    title: undefined,
+    desc: "Descubre los beneficios exclusivos de ser parte de nuestra élite.",
+  },
+  {
+    id: 1,
+    title: "1 AÑO DE PLATZI",
+    desc: "Beneficios premium diseñados para la élite del desarrollo en Latinoamérica.",
+  },
+  {
+    id: 2,
+    title: "REFERIDOS",
+    desc: "Tu influencia tiene valor. Gana comisiones reales hoy mismo.",
+  },
+  {
+    id: 3,
+    title: "N8N POWER",
+    desc: "Puntos exclusivos para potenciar tus flujos de trabajo automatizados.",
+  },
+  {
+    id: 4,
+    title: "BIBLIO DEV",
+    desc: "Libros de software exclusivos para tu formación profesional.",
+  },
+  {
+    id: 5,
+    title: "COMUNIDAD",
+    desc: "Únete al ecosistema más exclusivo y comienza tu viaje hoy.",
+  },
+];
+
 export function ActivateOverlay({ onStart }: { onStart?: () => void }) {
   const [show, setShow] = useState(true);
   const [ready, setReady] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
+
+  const totalSteps = STEPS.length;
+  const isLastStep = currentStep === totalSteps - 1;
 
   useEffect(() => {
     if (show) {
@@ -27,6 +64,20 @@ export function ActivateOverlay({ onStart }: { onStart?: () => void }) {
       window.removeEventListener('jacko-loading-progress', handleProgress);
     };
   }, []);
+
+  const handleNext = () => {
+    if (currentStep < totalSteps - 1) {
+      setCurrentStep((prev) => prev + 1);
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentStep > 0) {
+      setCurrentStep((prev) => prev - 1);
+    }
+  };
+
+  const activeStepData = STEPS[currentStep];
 
   return (
     <AnimatePresence>
@@ -52,20 +103,78 @@ export function ActivateOverlay({ onStart }: { onStart?: () => void }) {
             <div className="activate-content">
               <div className="jacko-tag small">JACKO™</div>
               <h2>¡Actívate Ya!</h2>
-              <p>Sigue los pasos.</p>
-              <m.button
-                className="activate-btn"
-                disabled={!ready}
-                whileHover={ready ? { scale: 1.05 } : undefined}
-                whileTap={ready ? { scale: 0.95 } : undefined}
-                style={!ready ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
-                onClick={() => {
-                  setShow(false);
-                  onStart?.();
-                }}
-              >
-                Comenzar
-              </m.button>
+
+              {/* Dynamic Content Area */}
+              <div className="activate-step-container">
+                <AnimatePresence mode="wait">
+                  <m.div
+                    key={currentStep}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -12 }}
+                    transition={{ duration: 0.25, ease: "easeOut" }}
+                    className="activate-step-content"
+                  >
+                    {activeStepData.title && (
+                      <h3 className="activate-step-title">{activeStepData.title}</h3>
+                    )}
+                    <p className="activate-step-desc">{activeStepData.desc}</p>
+                  </m.div>
+                </AnimatePresence>
+              </div>
+
+              {/* Footer Controls */}
+              <div className="activate-controls">
+                <div className="activate-nav">
+                  <button
+                    type="button"
+                    className={`activate-nav-arrow ${currentStep === 0 ? "hidden-arrow" : ""}`}
+                    onClick={handlePrev}
+                    aria-label="Paso anterior"
+                  >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                  </button>
+                  
+                  <span className="activate-counter">
+                    {currentStep + 1} / {totalSteps}
+                  </span>
+
+                  {!isLastStep ? (
+                    <button
+                      type="button"
+                      className="activate-nav-arrow"
+                      onClick={handleNext}
+                      aria-label="Paso siguiente"
+                    >
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </button>
+                  ) : (
+                    <div className="activate-nav-arrow-placeholder" />
+                  )}
+                </div>
+
+                {/* Final Action Button */}
+                <div className="activate-action-wrapper">
+                  {isLastStep && (
+                    <m.button
+                      className="activate-btn"
+                      disabled={!ready}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      whileHover={ready ? { scale: 1.05 } : undefined}
+                      whileTap={ready ? { scale: 0.95 } : undefined}
+                      style={!ready ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
+                      onClick={() => {
+                        setShow(false);
+                        onStart?.();
+                      }}
+                    >
+                      {ready ? "Comenzar" : "Cargando..."}
+                    </m.button>
+                  )}
+                </div>
+              </div>
+
             </div>
           </m.div>
         </m.div>
@@ -73,3 +182,4 @@ export function ActivateOverlay({ onStart }: { onStart?: () => void }) {
     </AnimatePresence>
   );
 }
+

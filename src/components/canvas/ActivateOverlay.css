@@ -47,7 +47,104 @@
   font-size: clamp(0.9rem, 4vw, 1.1rem);
   font-weight: 600;
   opacity: 0.7;
+  margin-bottom: 0.5rem;
+}
+
+.activate-step-container {
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-bottom: 1.5rem;
+  width: 100%;
+}
+
+.activate-step-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.activate-step-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.2rem, 5vw, 1.6rem);
+  color: var(--orange-base);
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.activate-step-desc {
+  font-size: clamp(0.9rem, 3.8vw, 1.05rem);
+  font-weight: 600;
+  color: var(--text-dark);
+  opacity: 0.85;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.activate-controls {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  align-items: center;
+}
+
+.activate-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 0.5rem;
+}
+
+.activate-nav-arrow {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: var(--surface-container, rgba(212, 98, 26, 0.1));
+  color: var(--text-dark, #3f2d1b);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.activate-nav-arrow:hover {
+  background-color: rgba(212, 98, 26, 0.2);
+  transform: scale(1.05);
+}
+
+.activate-nav-arrow.hidden-arrow {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.activate-nav-arrow-placeholder {
+  width: 44px;
+  height: 44px;
+}
+
+.activate-counter {
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  opacity: 0.6;
+  color: var(--text-dark);
+}
+
+.activate-action-wrapper {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
 }
 
 .activate-btn {
@@ -55,11 +152,14 @@
   color: #fff;
   font-family: var(--font-display);
   font-size: 1.1rem;
-  padding: 12px 32px;
+  padding: 12px 36px;
   border-radius: 50px;
   border: none;
   cursor: pointer;
   transition: all 0.2s;
+  width: 100%;
+  max-width: 240px;
+  box-shadow: 0 10px 25px rgba(212, 98, 26, 0.3);
 }
 
 .activate-btn:hover {
