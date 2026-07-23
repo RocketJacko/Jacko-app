@@ -55,3 +55,4 @@ DESIGN.md
 
 # Supabase backend infra (separate repo)
 supabase/
+.vercel
