@@ -1,0 +1,143 @@
+/* Estilos limpios y modernos para las tarjetas de selección de método de pago */
+
+.payment-method-selector-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.payment-option-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: var(--white-warm, #fffcf7);
+  border: 2px solid rgba(63, 45, 27, 0.12);
+  border-radius: 18px;
+  padding: 16px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 12px rgba(42, 26, 10, 0.04);
+  outline: none;
+  min-height: 110px;
+}
+
+.payment-option-card:hover:not(:disabled) {
+  border-color: var(--orange, #ea742b);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(212, 98, 26, 0.12);
+}
+
+.payment-option-card.selected {
+  background: #ffffff;
+  border-color: var(--orange-deep, #d4621a);
+  box-shadow: 0 8px 25px rgba(212, 98, 26, 0.2), 0 0 0 3px rgba(212, 98, 26, 0.15);
+}
+
+.payment-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.payment-card-logo-container {
+  display: flex;
+  align-items: center;
+  height: 28px;
+}
+
+.payment-card-logo-img {
+  height: 24px;
+  width: auto;
+  object-fit: contain;
+}
+
+.payment-card-icon-fallback {
+  font-size: 1.3rem;
+}
+
+.payment-card-tag {
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
+  border-radius: 50px;
+  background: rgba(63, 45, 27, 0.08);
+  color: var(--text-dark, #3f2d1b);
+}
+
+.payment-card-tag.paypal {
+  background: rgba(0, 48, 135, 0.1);
+  color: #003087;
+}
+
+.payment-card-tag.binance {
+  background: rgba(243, 186, 47, 0.15);
+  color: #b78103;
+}
+
+.payment-card-tag.bre_b,
+.payment-card-tag.nequi {
+  background: rgba(218, 41, 124, 0.1);
+  color: #da297c;
+}
+
+.payment-card-name {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-dark, #3f2d1b);
+  margin: 0 0 4px 0;
+}
+
+.payment-card-desc {
+  font-size: 0.78rem;
+  color: rgba(63, 45, 27, 0.75);
+  margin: 0;
+  line-height: 1.25;
+}
+
+.payment-card-radio-indicator {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(63, 45, 27, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.payment-option-card.selected .payment-card-radio-indicator {
+  border-color: var(--orange-deep, #d4621a);
+  background: var(--orange-deep, #d4621a);
+}
+
+.radio-circle {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffffff;
+  opacity: 0;
+  transform: scale(0);
+  transition: all 0.2s ease;
+}
+
+.payment-option-card.selected .radio-circle {
+  opacity: 1;
+  transform: scale(1);
+}
+
+@media (max-width: 480px) {
+  .payment-method-selector-grid {
+    grid-template-columns: 1fr;
+  }
+}

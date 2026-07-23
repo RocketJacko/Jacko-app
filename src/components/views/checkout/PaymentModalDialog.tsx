@@ -5,6 +5,7 @@ import { NequiPaymentForm } from './NequiPaymentForm';
 import { BinancePaymentForm } from './BinancePaymentForm';
 import { RedirectPanel } from './RedirectPanel';
 import { PayLaterPaymentForm } from './PayLaterPaymentForm';
+import { PaymentMethodSelectorCard } from './PaymentMethodSelectorCard';
 import { BaseModal } from '../../ui/BaseModal';
 
 interface PaymentModalDialogProps {
@@ -36,7 +37,7 @@ export function PaymentModalDialog({
   selectedPlan,
   totalPrice,
   totalPriceFormatted,
-  hasMoneyPrice,
+  hasMoneyPrice: _,
   filteredPaymentMethods,
   exchangeRate,
   formatMoney,
@@ -51,13 +52,26 @@ export function PaymentModalDialog({
   const [errorMsg, setErrorMsg] = useState('');
   const formContainerRef = useRef<HTMLDivElement>(null);
 
+  // Lista de métodos disponibles incluyendo 'Otras Opciones / Pagas Después' si aplica
+  const availableMethods = [...filteredPaymentMethods];
+  if (selectedPlan?.require_new_account) {
+    availableMethods.push({
+      name: 'Pagas Después (Cuenta Nueva)',
+      type: 'other',
+      account_value: null,
+      instructions: null,
+      qr_image_url: null,
+      is_active: true,
+    });
+  }
+
   return (
     <BaseModal
       isOpen={isOpen}
       onClose={onClose}
-      title="Pago Seguro"
+      title="Opciones de Pago Seguro"
       isProcessing={isProcessing}
-      maxWidth="500px"
+      maxWidth="560px"
     >
 
         <div className="order-summary-mini">
@@ -79,54 +93,27 @@ export function PaymentModalDialog({
             <>
               <div className="form-group">
                 <label
-                  htmlFor="payment-select"
-                  style={{ display: 'block', marginBottom: '0.75rem', fontWeight: 600 }}
+                  style={{ display: 'block', marginBottom: '0.75rem', fontWeight: 700, fontSize: '0.95rem' }}
                 >
-                  Selecciona tu método de pago:
+                  Selecciona la pasarela de tu preferencia:
                 </label>
-                <select
-                  id="payment-select"
-                  value={selectedMethod?.type || ''}
-                  onChange={(e) => {
-                    if (e.target.value === 'other') {
-                      setSelectedMethod({
-                        name: 'Pagas Después (Cuenta Nueva)',
-                        type: 'other',
-                        account_value: null,
-                        instructions: null,
-                        qr_image_url: null,
-                        is_active: true,
-                      });
-                    } else {
-                      const found = filteredPaymentMethods.find((m) => m.type === e.target.value);
-                      setSelectedMethod(found || null);
-                    }
+
+                <PaymentMethodSelectorCard
+                  methods={availableMethods}
+                  selectedMethod={selectedMethod}
+                  onSelectMethod={(method) => {
+                    setSelectedMethod(method);
                     setErrorMsg('');
                   }}
                   disabled={isProcessing}
-                  className="custom-modal-input"
-                  style={{ width: '100%' }}
-                >
-                  <option value="" disabled>
-                    -- Selecciona una opción --
-                  </option>
-                  {hasMoneyPrice
-                    ? filteredPaymentMethods.map((method) => (
-                        <option key={method.type} value={method.type}>
-                          {method.name}
-                        </option>
-                      ))
-                    : null}
-                  {selectedPlan?.require_new_account && (
-                    <option value="other">Pagas Después (Cuenta Nueva Pre-inscrita)</option>
-                  )}
-                </select>
+                />
               </div>
-              <div style={{ marginTop: '2rem' }}>
+
+              <div style={{ marginTop: '1.75rem' }}>
                 <button
                   type="button"
                   className="btn-modal-action primary"
-                  style={{ width: '100%', margin: 0 }}
+                  style={{ width: '100%', margin: 0, padding: '14px' }}
                   disabled={selectedMethod === null || isProcessing}
                   onClick={() => {
                     setErrorMsg('');

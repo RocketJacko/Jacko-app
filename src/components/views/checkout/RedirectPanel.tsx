@@ -69,8 +69,9 @@ export function RedirectPanel({
         window.location.href = appDeepLink;
 
         // Fallback de contingencia: Si la app no responde tras 1.2s, navegar a la versión web
+        const approveUrl = response.approveUrl || '';
         setTimeout(() => {
-          window.location.href = response.approveUrl;
+          window.location.href = approveUrl;
         }, 1200);
       } else if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
         window.location.href = response.approveUrl;
@@ -94,7 +95,7 @@ export function RedirectPanel({
           day: 'numeric',
         }),
         method: selectedMethod.name,
-        referenceId: response.orderId || `${selectedMethod.name} Checkout`,
+        referenceId: response.orderId || `${selectedMethod.name}-checkout`,
         productTitle,
       };
 
