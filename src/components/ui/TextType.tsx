@@ -8,7 +8,8 @@ interface VariableSpeed {
 }
 
 export interface TextTypeProps<T extends ElementType = 'div'> {
-  text: string | string[];
+  text?: string | string[];
+  texts?: string[];
   as?: T;
   typingSpeed?: number;
   initialDelay?: number;
@@ -23,6 +24,9 @@ export interface TextTypeProps<T extends ElementType = 'div'> {
   cursorBlinkDuration?: number;
   textColors?: string[];
   variableSpeed?: VariableSpeed;
+  variableSpeedEnabled?: boolean;
+  variableSpeedMin?: number;
+  variableSpeedMax?: number;
   onSentenceComplete?: (sentence: string, index: number) => void;
   startOnVisible?: boolean;
   reverseMode?: boolean;
@@ -30,6 +34,7 @@ export interface TextTypeProps<T extends ElementType = 'div'> {
 
 export function TextType<T extends ElementType = 'div'>({
   text,
+  texts,
   as,
   typingSpeed = 50,
   initialDelay = 0,
@@ -44,6 +49,9 @@ export function TextType<T extends ElementType = 'div'>({
   cursorBlinkDuration = 0.5,
   textColors = [],
   variableSpeed,
+  variableSpeedEnabled = false,
+  variableSpeedMin = 30,
+  variableSpeedMax = 90,
   onSentenceComplete,
   startOnVisible = false,
   reverseMode = false,
@@ -58,13 +66,25 @@ export function TextType<T extends ElementType = 'div'>({
   const cursorRef = useRef<HTMLSpanElement>(null);
   const containerRef = useRef<HTMLElement | null>(null);
 
-  const textArray = useMemo(() => (Array.isArray(text) ? text : [text]), [text]);
+  // Aceptar tanto 'text' como 'texts' para evitar errores
+  const textArray = useMemo(() => {
+    const raw = texts || text || ['¡Actívate Ya!'];
+    return Array.isArray(raw) ? raw : [raw];
+  }, [text, texts]);
+
+  const effectiveVariableSpeed = useMemo(() => {
+    if (variableSpeed) return variableSpeed;
+    if (variableSpeedEnabled) {
+      return { min: variableSpeedMin, max: variableSpeedMax };
+    }
+    return undefined;
+  }, [variableSpeed, variableSpeedEnabled, variableSpeedMin, variableSpeedMax]);
 
   const getRandomSpeed = useCallback(() => {
-    if (!variableSpeed) return typingSpeed;
-    const { min, max } = variableSpeed;
+    if (!effectiveVariableSpeed) return typingSpeed;
+    const { min, max } = effectiveVariableSpeed;
     return Math.random() * (max - min) + min;
-  }, [variableSpeed, typingSpeed]);
+  }, [effectiveVariableSpeed, typingSpeed]);
 
   const getCurrentTextColor = () => {
     if (textColors.length === 0) return 'inherit';
@@ -136,7 +156,7 @@ export function TextType<T extends ElementType = 'div'>({
               setDisplayedText(prev => prev + processedText[currentCharIndex]);
               setCurrentCharIndex(prev => prev + 1);
             },
-            variableSpeed ? getRandomSpeed() : typingSpeed
+            effectiveVariableSpeed ? getRandomSpeed() : typingSpeed
           );
         } else if (textArray.length >= 1) {
           if (!loop && currentTextIndex === textArray.length - 1) return;
@@ -167,7 +187,7 @@ export function TextType<T extends ElementType = 'div'>({
     initialDelay,
     isVisible,
     reverseMode,
-    variableSpeed,
+    effectiveVariableSpeed,
     onSentenceComplete,
     getRandomSpeed
   ]);
