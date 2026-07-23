@@ -75,10 +75,26 @@ export function RegisterForm({ defaultIsRegister = true }: RegisterFormProps) {
         }
       }
     } else {
-      // No limpiar campos si el AuthProvider sigue cargando la sesión inicial (evita borrar savedState)
+      // No limpiar campos si el AuthProvider sigue cargando o si hay un estado de OTP pendiente en localStorage
       if (isSessionLoading) return;
 
-      // Sesión nula: esperar 600ms antes de resetear
+      const hasPendingOtp = (() => {
+        try {
+          const saved = localStorage.getItem('jacko_register_pending');
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            return parsed && parsed.email && parsed.step === 2;
+          }
+        } catch {
+          // ignore
+        }
+        return false;
+      })();
+
+      // Si el usuario está en el paso 2 ingresando su código OTP, NO resetear el formulario al minimizar la PWA
+      if (hasPendingOtp) return;
+
+      // Sesión nula verdadera y sin OTP pendiente: esperar 600ms antes de resetear
       resetTimer = setTimeout(() => {
         if (!active) return;
         setEmail('');
