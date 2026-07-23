@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { m, AnimatePresence } from "motion/react";
+import { TextType } from "../ui/TextType";
 import "./ActivateOverlay.css";
 
 const STEPS = [
@@ -102,7 +103,18 @@ export function ActivateOverlay({ onStart }: { onStart?: () => void }) {
             <div className="rotating-border"></div>
             <div className="activate-content">
               <div className="jacko-tag small">JACKO™</div>
-              <h2>¡Actívate Ya!</h2>
+              <h2>
+                <TextType
+                  text="¡Actívate Ya!"
+                  as="span"
+                  typingSpeed={80}
+                  pauseDuration={3000}
+                  deletingSpeed={40}
+                  loop={true}
+                  showCursor={true}
+                  cursorCharacter="|"
+                />
+              </h2>
 
               {/* Dynamic Content Area */}
               <div className="activate-step-container">
