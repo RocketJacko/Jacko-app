@@ -6,12 +6,14 @@ export interface UseOrderSubscriptionProps {
   orderId: string | undefined;
   userId: string;
   onApproved: () => void;
+  onCancelled?: () => void;
 }
 
 export function useOrderSubscription({
   orderId,
   userId,
   onApproved,
+  onCancelled,
 }: UseOrderSubscriptionProps) {
   useEffect(() => {
     if (!orderId) return;
@@ -35,6 +37,11 @@ export function useOrderSubscription({
             invalidateCacheByPrefix('catalog_products');
             invalidateCache('dashboard_data_' + userId);
             onApproved();
+          } else if (status === 'cancelled' || status === 'expired') {
+            invalidateCache('dashboard_data_' + userId);
+            if (onCancelled) {
+              onCancelled();
+            }
           }
         }
       )
@@ -43,5 +50,5 @@ export function useOrderSubscription({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [orderId, userId, onApproved]);
+  }, [orderId, userId, onApproved, onCancelled]);
 }

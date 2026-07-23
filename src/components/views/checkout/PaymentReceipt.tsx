@@ -64,6 +64,8 @@ export function PaymentReceipt({
 
         if (data.status === 'approved') {
           setLocalStatus('success');
+        } else if (data.status === 'cancelled' || data.status === 'expired') {
+          setLocalStatus('error');
         }
 
         /* delivered_credentials: set by pool assignment */
@@ -104,6 +106,8 @@ export function PaymentReceipt({
 
           if (payload.new?.status === 'approved') {
             setLocalStatus('success');
+          } else if (payload.new?.status === 'cancelled' || payload.new?.status === 'expired') {
+            setLocalStatus('error');
           }
 
           const creds = payload.new?.delivered_credentials;
