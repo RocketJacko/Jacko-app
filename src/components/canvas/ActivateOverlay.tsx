@@ -107,10 +107,8 @@ export function ActivateOverlay({ onStart }: { onStart?: () => void }) {
                 <TextType
                   text="¡Actívate Ya!"
                   as="span"
-                  typingSpeed={80}
-                  pauseDuration={3000}
-                  deletingSpeed={40}
-                  loop={true}
+                  typingSpeed={120}
+                  loop={false}
                   showCursor={true}
                   cursorCharacter="|"
                 />
