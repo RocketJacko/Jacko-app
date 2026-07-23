@@ -54,12 +54,27 @@ export function RedirectPanel({
         throw new Error(response.error || `Error al iniciar la orden con ${selectedMethod.name}.`);
       }
 
-      // Redirección directa sin popup bloqueado para que el navegador y SO invoquen la App nativa de PayPal si está instalada
-      if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-        // Redireccionar en la misma ventana para activar Deep Links a la app de PayPal
+      // Invocación directa mediante esquema Deep Link nativo (paypal:// / paypal.me)
+      if (isPaypal && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        // Extraer el token de aprobación de PayPal (ej. EC-1234567890)
+        const tokenMatch = response.approveUrl.match(/token=([A-Z0-9-]+)/i);
+        const token = tokenMatch ? tokenMatch[1] : '';
+
+        // Scheme nativo registrado por la App de PayPal en iOS / Android
+        const appDeepLink = token 
+          ? `paypal://checkout?token=${token}`
+          : response.approveUrl.replace(/^https:\/\/www\.paypal\.com/, 'paypal://');
+
+        // Intentar abrir la App nativa de PayPal
+        window.location.href = appDeepLink;
+
+        // Fallback de contingencia: Si la app no responde tras 1.2s, navegar a la versión web
+        setTimeout(() => {
+          window.location.href = response.approveUrl;
+        }, 1200);
+      } else if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
         window.location.href = response.approveUrl;
       } else {
-        // En desktop abrir ventana emergente o redireccionar directamente
         const win = window.open(response.approveUrl, '_blank');
         if (!win || win.closed || typeof win.closed === 'undefined') {
           window.location.href = response.approveUrl;
