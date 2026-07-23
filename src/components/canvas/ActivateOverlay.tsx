@@ -121,8 +121,7 @@ export function ActivateOverlay({ onStart }: { onStart?: () => void }) {
                   as="span"
                   typingSpeed={120}
                   loop={false}
-                  showCursor={true}
-                  cursorCharacter="|"
+                  showCursor={false}
                 />
               </h2>
 
