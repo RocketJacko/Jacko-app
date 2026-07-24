@@ -52,38 +52,12 @@ export function RegisterPage() {
             <RegisterForm defaultIsRegister={isFormRegisterMode} />
           </div>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "20px" }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%" }}>
             <LoopsPricingSlider
               onSelectFree={() => {
-                setIsFormRegisterMode(true);
-                setShowRegisterForm(true);
+                window.location.href = "/checkout";
               }}
             />
-            <button
-              type="button"
-              className="btn-link-login-direct"
-              onClick={() => {
-                setIsFormRegisterMode(false);
-                setShowRegisterForm(true);
-              }}
-              style={{
-                background: "none",
-                border: "none",
-                color: "var(--brown-dark)",
-                textDecoration: "underline",
-                cursor: "pointer",
-                fontFamily: "var(--font-body)",
-                fontSize: "0.95rem",
-                fontWeight: 700,
-                opacity: 0.8,
-                transition: "opacity 0.2s",
-                marginTop: "24px"
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
-              onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.8")}
-            >
-              ¿Ya tienes una cuenta activa? Inicia sesión aquí
-            </button>
           </div>
         )}
       </div>

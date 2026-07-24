@@ -161,8 +161,9 @@ export function ChatBot({ currentView, onViewChange: _onViewChange }: ChatBotPro
     sender: 'bot',
     text: '¡Hola! 🛹 Bienvenido a **JACKO™**. Soy tu asistente virtual de servicio. ¿En qué te puedo colaborar hoy?',
     buttons: [
+      { label: '📲 Instalar JACKO™ App', action: 'install_pwa' },
       { label: '❓ Preguntas Frecuentes', action: 'show_faq' },
-      { label: '📞 Soporte', action: 'show_support' },
+      { label: '📞 Soporte por WhatsApp', action: 'show_support' },
     ],
   };
 
@@ -214,6 +215,14 @@ export function ChatBot({ currentView, onViewChange: _onViewChange }: ChatBotPro
           label,
           'Entendido. ¿Hay algo más en lo que te pueda ayudar del menú principal?',
           welcomeMessage.buttons
+        );
+        break;
+
+      case 'install_pwa':
+        simulateBotResponse(
+          label,
+          '📲 **¡Instala la App de JACKO™ en tu pantalla de inicio!**<br/><br/>• **En Android / Chrome:** Haz clic en el menú (⋮) y selecciona **"Agregar a pantalla principal"** o **"Instalar aplicación"**.<br/>• **En iPhone / Safari:** Toca el botón **Compartir (⎋)** en la parte inferior y selecciona **"Agregar a inicio"**.<br/><br/>¡Accede instantáneamente con mejor velocidad y sin perder tu sesión!',
+          [{ label: '⬅️ Volver al Menú', action: 'main_menu' }]
         );
         break;
 

@@ -3,10 +3,8 @@ import NumberFlow from "@number-flow/react";
 import { ShieldCheck, CheckCircle2, Sparkles, ArrowRight } from "lucide-react";
 import { Card, CardHeader, CardContent } from "../card";
 import { TimelineContent } from "../timeline-animation";
-import { VerticalCutReveal } from "../vertical-cut-reveal";
 import { cn } from "@/lib/utils";
 import type { PricingSharedProps } from "./PricingSharedProps";
-import { PricingSwitch } from "../pricing-slider-loops";
 import "./PricingDesktopView.css";
 
 const revealVariants = {
@@ -26,16 +24,9 @@ const revealVariants = {
   },
 };
 
-const titleTransition = {
-  type: "spring",
-  stiffness: 250,
-  damping: 40,
-  delay: 0,
-} as const;
-
 export const PricingDesktopView: React.FC<PricingSharedProps> = ({
   planType,
-  setPlanType,
+  setPlanType: _setPlanType,
   quantity,
   handleSliderChange,
   discountPct,
@@ -58,51 +49,6 @@ export const PricingDesktopView: React.FC<PricingSharedProps> = ({
 
   return (
     <>
-      {/* Encabezado con Animaciones */}
-      <article className="pricing-header-text">
-        <TimelineContent
-          as="div"
-          animationNum={0}
-          timelineRef={pricingRef}
-          customVariants={revealVariants}
-          style={{ width: "100%" }}
-        >
-          <h2 className="pricing-title">
-            <VerticalCutReveal
-              splitBy="words"
-              staggerDuration={0.12}
-              staggerFrom="first"
-              reverse={true}
-              containerClassName="justify-center"
-              transition={titleTransition}
-            >
-              Tenemos un plan a tu medida
-            </VerticalCutReveal>
-          </h2>
-        </TimelineContent>
-
-        <TimelineContent
-          as="p"
-          animationNum={1}
-          timelineRef={pricingRef}
-          customVariants={revealVariants}
-          className="pricing-subtitle"
-        >
-          {activeProduct?.short_description ||
-            "Elige entre acceso gratuito o expande tu experiencia con nuestras membresías premium."}
-        </TimelineContent>
-
-        <TimelineContent
-          as="div"
-          animationNum={2}
-          timelineRef={pricingRef}
-          customVariants={revealVariants}
-          className="mt-6"
-        >
-          <PricingSwitch selected={planType} onSwitch={setPlanType} />
-        </TimelineContent>
-      </article>
-
       {/* Grid de Contenedor de Tarjetas */}
       <div className="pricing-slider-card-grid">
         {/* Card Izquierda: Configuración del Plan */}

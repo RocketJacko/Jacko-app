@@ -49,7 +49,7 @@ export const PricingSwitch = ({
               transition={{ type: "spring", stiffness: 500, damping: 30 }}
             />
           )}
-          <span className="relative">Gratis</span>
+          <span className="relative">Gratis (Próximamente)</span>
         </button>
 
         <button
@@ -94,8 +94,7 @@ export const PricingSwitch = ({
             />
           )}
           <span className="relative flex items-center gap-1">
-            Anual
-            <span className="save-tag">-58%</span>
+            Membresía Anual
           </span>
         </button>
       </div>
@@ -103,12 +102,12 @@ export const PricingSwitch = ({
   );
 };
 
-export const LoopsPricingSlider: React.FC<LoopsPricingSliderProps> = ({ onSelectFree }) => {
+export const LoopsPricingSlider: React.FC<LoopsPricingSliderProps> = ({ onSelectFree: _onSelectFree }) => {
   const pricingRef = useRef<HTMLDivElement>(null);
   const { userCurrency, exchangeRate } = useGeoLocation();
-  const [planType, setPlanType] = useState<"free" | "mensual" | "anual">("mensual");
+  const [planType, setPlanType] = useState<"free" | "mensual" | "anual">("anual");
   const [quantity, setQuantity] = useState(1);
-  const [basePrices, setBasePrices] = useState({ mensual: 8, anual: 40 });
+  const [basePrices, setBasePrices] = useState({ mensual: 8, anual: 30 });
   const [isMobileMode, setIsMobileMode] = useState(false);
 
   useEffect(() => {
@@ -171,14 +170,13 @@ export const LoopsPricingSlider: React.FC<LoopsPricingSliderProps> = ({ onSelect
       console.error(err);
     }
     if (planType === "free") {
-      localStorage.removeItem("jacko_trigger_checkout_slug");
-      localStorage.removeItem("jacko_trigger_checkout_qty");
+      return;
     } else {
       const targetSlug = activeProduct?.slug || activeSlug || "plan-anual";
       localStorage.setItem("jacko_trigger_checkout_slug", targetSlug);
       localStorage.setItem("jacko_trigger_checkout_qty", quantity.toString());
+      window.location.href = "/checkout";
     }
-    onSelectFree();
   };
 
   // Objeto de Props Unificado para evitar inconsistencias
