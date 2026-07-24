@@ -24,6 +24,9 @@ export default defineConfig({
       ],
       manifest: false, // Usar el public/manifest.json existente
       workbox: {
+        cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
         // Incluir explicitamente html para que offline.html quede en el precache.
         // Sin esto, Workbox genera el manifest sin offline.html y el SW no puede
         // servirlo cuando no hay red, mostrando "sin conexion" en el primer cargue.
