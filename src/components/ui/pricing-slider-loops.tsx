@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { cn } from "../../lib/utils";
 import { useGeoLocation } from "../../hooks/useGeoLocation";
 import { catalogService } from "../../services/catalogService";
@@ -106,6 +107,7 @@ export const PricingSwitch = ({
 };
 
 export const LoopsPricingSlider: React.FC<LoopsPricingSliderProps> = ({ onSelectFree: _onSelectFree }) => {
+  const navigate = useNavigate();
   const pricingRef = useRef<HTMLDivElement>(null);
   const { userCurrency, exchangeRate } = useGeoLocation();
   const remainingInfo = getRemainingProjectMonths();
@@ -146,7 +148,7 @@ export const LoopsPricingSlider: React.FC<LoopsPricingSliderProps> = ({ onSelect
         });
       })
       .catch((err) => {
-        console.error("[LoopsPricingSlider] Error loading product prices from DB:", err);
+        console.error("Error al cargar productos del catálogo:", err);
       });
 
     return () => {
@@ -179,7 +181,11 @@ export const LoopsPricingSlider: React.FC<LoopsPricingSliderProps> = ({ onSelect
       const targetSlug = activeProduct?.slug || activeSlug || "plan-anual";
       localStorage.setItem("jacko_trigger_checkout_slug", targetSlug);
       localStorage.setItem("jacko_trigger_checkout_qty", quantity.toString());
-      window.location.href = "/checkout";
+      try {
+        navigate("/checkout");
+      } catch {
+        window.location.href = "/checkout";
+      }
     }
   };
 
