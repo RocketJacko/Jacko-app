@@ -44,7 +44,18 @@ export const PricingDesktopView: React.FC<PricingSharedProps> = ({
   userCurrency,
   handleProceed,
   pricingRef,
+  activeProduct,
 }) => {
+  const dynamicBenefits = React.useMemo(() => {
+    if (!activeProduct) return null;
+    const rawText = activeProduct.description || activeProduct.short_description || "";
+    const items = rawText
+      .split(/<br\s*\/?>|\n|•/gi)
+      .map((s: string) => s.replace(/<[^>]*>?/gm, "").trim())
+      .filter((s: string) => s.length > 3);
+    return items.length > 0 ? items : null;
+  }, [activeProduct]);
+
   return (
     <>
       {/* Encabezado con Animaciones */}
@@ -77,7 +88,8 @@ export const PricingDesktopView: React.FC<PricingSharedProps> = ({
           customVariants={revealVariants}
           className="pricing-subtitle"
         >
-          Elige entre acceso gratuito o expande tu experiencia con nuestras membresías de volumen premium.
+          {activeProduct?.short_description ||
+            "Elige entre acceso gratuito o expande tu experiencia con nuestras membresías premium."}
         </TimelineContent>
 
         <TimelineContent
@@ -103,12 +115,14 @@ export const PricingDesktopView: React.FC<PricingSharedProps> = ({
           <Card className="pricing-calc-card">
             <CardHeader className="text-left">
               <h3 className="calc-card-title">
-                {planType === "free" ? "Membresía Básica" : "Configura tus Cuentas"}
+                {planType === "free"
+                  ? "Membresía Básica"
+                  : activeProduct?.title || "Configura tus Cuentas"}
               </h3>
               <p className="calc-card-desc">
                 {planType === "free"
                   ? "Prueba nuestros servicios e interfaz sin costo."
-                  : "Desliza para elegir la cantidad de licencias activas."}
+                  : activeProduct?.short_description || "Desliza para elegir la cantidad de licencias activas."}
               </p>
             </CardHeader>
 
@@ -186,9 +200,7 @@ export const PricingDesktopView: React.FC<PricingSharedProps> = ({
               <h4 className="plan-name-display">
                 {planType === "free"
                   ? "Plan Gratis"
-                  : planType === "mensual"
-                    ? "Membresía Mensual"
-                    : "Membresía Anual"}
+                  : activeProduct?.title || (planType === "mensual" ? "Membresía Mensual" : "Membresía Premium")}
               </h4>
             </CardHeader>
 
@@ -252,6 +264,17 @@ export const PricingDesktopView: React.FC<PricingSharedProps> = ({
                       <span>Canjear productos</span>
                     </div>
                   </>
+                ) : dynamicBenefits ? (
+                  dynamicBenefits.slice(0, 5).map((benefit: string, idx: number) => (
+                    <div key={idx} className="benefit-item">
+                      {idx === 0 ? (
+                        <Sparkles size={16} className="sparkle-icon" />
+                      ) : (
+                        <CheckCircle2 size={16} className="check-icon" />
+                      )}
+                      <span>{benefit}</span>
+                    </div>
+                  ))
                 ) : (
                   <>
                     <div className="benefit-item">
@@ -281,7 +304,7 @@ export const PricingDesktopView: React.FC<PricingSharedProps> = ({
                 className="summary-action-btn"
                 onClick={handleProceed}
               >
-                {planType === "free" ? "Registrarse Gratis" : "Comenzar / Pagar"}{" "}
+                {planType === "free" ? "Registrarse Gratis" : "Comprar Ahora / Pagar"}{" "}
                 <ArrowRight size={16} />
               </button>
             </CardContent>

@@ -1,4 +1,5 @@
 import React from 'react';
+import type { Product } from '../../../services/catalogService';
 
 export interface PricingSharedProps {
   planType: "free" | "mensual" | "anual";
@@ -12,4 +13,5 @@ export interface PricingSharedProps {
   exchangeRate: number;
   handleProceed: (e: React.MouseEvent) => void;
   pricingRef: React.RefObject<HTMLDivElement | null>;
+  activeProduct?: Product | null;
 }

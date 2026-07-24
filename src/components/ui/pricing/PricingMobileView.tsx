@@ -44,8 +44,19 @@ export const PricingMobileView: React.FC<PricingSharedProps> = ({
   userCurrency,
   handleProceed,
   pricingRef,
+  activeProduct,
 }) => {
   const isFree = planType === "free";
+
+  const dynamicBenefits = React.useMemo(() => {
+    if (!activeProduct) return null;
+    const rawText = activeProduct.description || activeProduct.short_description || "";
+    const items = rawText
+      .split(/<br\s*\/?>|\n|•/gi)
+      .map((s: string) => s.replace(/<[^>]*>?/gm, "").trim())
+      .filter((s: string) => s.length > 3);
+    return items.length > 0 ? items : null;
+  }, [activeProduct]);
 
   return (
     <>
@@ -79,7 +90,7 @@ export const PricingMobileView: React.FC<PricingSharedProps> = ({
           customVariants={revealVariants}
           className="pricing-subtitle"
         >
-          Elige entre el acceso gratuito inicial o activa una membresía premium.
+          {activeProduct?.short_description || "Elige entre el acceso gratuito inicial o activa una membresía premium."}
         </TimelineContent>
 
         <TimelineContent
@@ -118,9 +129,7 @@ export const PricingMobileView: React.FC<PricingSharedProps> = ({
             <h3 className="mobile-plan-title">
               {isFree
                 ? "Plan Gratis"
-                : planType === "mensual"
-                ? "Membresía Mensual"
-                : "Membresía Anual"}
+                : activeProduct?.title || (planType === "mensual" ? "Membresía Mensual" : "Membresía Premium")}
             </h3>
           </CardHeader>
 
@@ -215,20 +224,35 @@ export const PricingMobileView: React.FC<PricingSharedProps> = ({
 
                 {/* Beneficios */}
                 <div className="mobile-benefits-list">
-                  <div className="benefit-item">
-                    <Sparkles size={16} className="sparkle-icon" />
-                    <span>Acceso premium ilimitado</span>
-                  </div>
-                  <div className="benefit-item">
-                    <CheckCircle2 size={16} className="check-icon" />
-                    <span>
-                      {quantity} {quantity === 1 ? "Cuenta premium activa" : "Cuentas premium activas"}
-                    </span>
-                  </div>
-                  <div className="benefit-item">
-                    <CheckCircle2 size={16} className="check-icon" />
-                    <span>Descargas y actualizaciones de recursos</span>
-                  </div>
+                  {dynamicBenefits ? (
+                    dynamicBenefits.slice(0, 3).map((benefit: string, idx: number) => (
+                      <div key={idx} className="benefit-item">
+                        {idx === 0 ? (
+                          <Sparkles size={16} className="sparkle-icon" />
+                        ) : (
+                          <CheckCircle2 size={16} className="check-icon" />
+                        )}
+                        <span>{benefit}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <>
+                      <div className="benefit-item">
+                        <Sparkles size={16} className="sparkle-icon" />
+                        <span>Acceso premium ilimitado</span>
+                      </div>
+                      <div className="benefit-item">
+                        <CheckCircle2 size={16} className="check-icon" />
+                        <span>
+                          {quantity} {quantity === 1 ? "Cuenta premium activa" : "Cuentas premium activas"}
+                        </span>
+                      </div>
+                      <div className="benefit-item">
+                        <CheckCircle2 size={16} className="check-icon" />
+                        <span>Descargas y actualizaciones de recursos</span>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {/* Botón Comenzar a Pagar */}
@@ -237,7 +261,7 @@ export const PricingMobileView: React.FC<PricingSharedProps> = ({
                   className="mobile-action-btn premium"
                   onClick={handleProceed}
                 >
-                  Comenzar a pagar <ArrowRight size={16} />
+                  Comprar Ahora / Pagar <ArrowRight size={16} />
                 </button>
               </div>
             ) : (

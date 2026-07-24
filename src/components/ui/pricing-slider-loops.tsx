@@ -119,6 +119,7 @@ export const LoopsPricingSlider: React.FC<LoopsPricingSliderProps> = ({ onSelect
   }, []);
 
   const [activeSlug, setActiveSlug] = useState<string>("plan-anual");
+  const [activeProduct, setActiveProduct] = useState<import("../../services/catalogService").Product | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -126,7 +127,9 @@ export const LoopsPricingSlider: React.FC<LoopsPricingSliderProps> = ({ onSelect
       .then((data) => {
         if (!active) return;
         const activeProducts = data.products.filter(p => p.is_active !== false);
-        const activeProd = activeProducts[0];
+        const activeProd = activeProducts[0] || null;
+        setActiveProduct(activeProd);
+
         const mensualProduct = activeProducts.find((p) => p.slug === "plan-mensual");
         const anualProduct = activeProducts.find((p) => p.slug === "plan-anual");
 
@@ -171,8 +174,7 @@ export const LoopsPricingSlider: React.FC<LoopsPricingSliderProps> = ({ onSelect
       localStorage.removeItem("jacko_trigger_checkout_slug");
       localStorage.removeItem("jacko_trigger_checkout_qty");
     } else {
-      const slug = (planType === "anual" ? "plan-anual" : "plan-mensual");
-      const targetSlug = activeSlug || slug;
+      const targetSlug = activeProduct?.slug || activeSlug || "plan-anual";
       localStorage.setItem("jacko_trigger_checkout_slug", targetSlug);
       localStorage.setItem("jacko_trigger_checkout_qty", quantity.toString());
     }
@@ -192,6 +194,7 @@ export const LoopsPricingSlider: React.FC<LoopsPricingSliderProps> = ({ onSelect
     exchangeRate,
     handleProceed,
     pricingRef,
+    activeProduct,
   };
 
   return (
