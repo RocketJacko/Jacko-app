@@ -9,6 +9,8 @@ interface BinancePaymentFormProps {
   productTitle: string;
   quantity: number;
   userId: string;
+  guestEmail?: string;
+  guestName?: string;
   selectedPlan: PricingPlan | null;
   totalPrice: number;
   formatMoney: (amount: number) => string;
@@ -23,6 +25,8 @@ export function BinancePaymentForm({
   productTitle,
   quantity,
   userId,
+  guestEmail,
+  guestName,
   selectedPlan,
   totalPrice,
   formatMoney,
@@ -32,6 +36,7 @@ export function BinancePaymentForm({
   onPaymentError,
 }: BinancePaymentFormProps) {
   const [binanceOrderId, setBinanceOrderId] = useState("");
+  const [binanceAmount, setBinanceAmount] = useState("");
   const [copied, setCopied] = useState(false);
   /*  Use metadata or default value for Destination Pay ID  */ const payId =
     selectedMethod.account_value || "0092019956";
@@ -42,23 +47,26 @@ export function BinancePaymentForm({
   };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (binanceOrderId.trim().length < 10) {
-      onPaymentError(
-        "Por favor, ingresa un ID de orden de Binance de 18 dígitos válido.",
-      );
+    if (!binanceOrderId.trim()) {
+      onPaymentError("Por favor ingresa el ID de Orden o Transacción de Binance.");
       return;
     }
     onProcessingChange(true);
     onPaymentError("");
     try {
       const handler = PaymentHandlerFactory.getHandler("binance");
+      const parsedAmount = binanceAmount.trim() ? parseFloat(binanceAmount) : undefined;
       const response = await handler.initiate({
         productId,
+        paymentMethodId: selectedMethod.id,
         paymentMethodType: selectedMethod.type,
         quantity,
         userId,
         planId: selectedPlan?.id,
         binanceOrderId: binanceOrderId.trim(),
+        binanceAmount: parsedAmount,
+        guestEmail,
+        guestName,
       });
       if (!response.success) {
         throw new Error(

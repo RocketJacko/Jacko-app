@@ -284,14 +284,8 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/checkout"
-              element={
-                <ProtectedRoute>
-                  <CheckoutPage />
-                </ProtectedRoute>
-              }
-            />
+            {/* Ruta de Checkout (Acceso Público para Usuarios e Invitados) */}
+            <Route path="/checkout" element={<CheckoutPage />} />
 
             {/* Rutas del Panel de Administración (Protegidas + Staff) */}
             <Route

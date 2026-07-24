@@ -12,6 +12,8 @@ interface NequiPaymentFormProps {
   productTitle: string;
   quantity: number;
   userId: string;
+  guestEmail?: string;
+  guestName?: string;
   selectedPlan: PricingPlan | null;
   totalPrice: number;
   formatMoney: (amount: number) => string;
@@ -45,6 +47,8 @@ export function NequiPaymentForm({
   productTitle,
   quantity,
   userId,
+  guestEmail,
+  guestName,
   selectedPlan,
   totalPrice,
   formatMoney,
@@ -166,6 +170,8 @@ export function NequiPaymentForm({
         paymentDate,
         planId: selectedPlan?.id,
         exchangeRate,
+        guestEmail,
+        guestName,
       });
 
       if (!response.success || !response.orderId) {

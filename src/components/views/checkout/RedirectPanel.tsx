@@ -8,6 +8,8 @@ interface RedirectPanelProps {
   productTitle: string;
   quantity: number;
   userId: string;
+  guestEmail?: string;
+  guestName?: string;
   selectedPlan: PricingPlan | null;
   totalPrice: number;
   formatMoney: (amount: number) => string;
@@ -23,6 +25,8 @@ export function RedirectPanel({
   productTitle,
   quantity,
   userId,
+  guestEmail,
+  guestName,
   selectedPlan,
   totalPrice,
   formatMoney,
@@ -48,6 +52,8 @@ export function RedirectPanel({
         quantity,
         userId,
         planId: selectedPlan?.id,
+        guestEmail,
+        guestName,
       });
 
       if (!response.success || !response.approveUrl) {

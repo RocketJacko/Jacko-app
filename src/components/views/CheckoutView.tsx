@@ -9,6 +9,8 @@ import {
   Minus,
   ChevronDown,
   ChevronUp,
+  Mail,
+  User,
 } from "lucide-react";
 import DOMPurify from "dompurify";
 import "./CheckoutView.css";
@@ -51,6 +53,11 @@ export function CheckoutView({
   const [selectedPlan, setSelectedPlan] = useState<PricingPlan | null>(
     product.plans && product.plans.length > 0 ? product.plans[0] : null
   );
+
+  // Guest checkout state
+  const [guestEmail, setGuestEmail] = useState('');
+  const [guestName, setGuestName] = useState('');
+  const [guestError, setGuestError] = useState('');
 
   const {
     userCurrency,
@@ -397,9 +404,78 @@ export function CheckoutView({
               <div className="payment-security-card-wrapper" style={{ marginTop: '2rem' }}>
                 <h3 className="checkout-payment-title">Completar Pedido</h3>
                 <p className="checkout-payment-subtitle">
-                  Revisa los detalles a la izquierda y presiona continuar para elegir el método de pago.
+                  {!userId
+                    ? 'Ingresa el correo electrónico donde recibirás los datos de acceso y confirmación.'
+                    : 'Revisa los detalles a la izquierda y presiona continuar para elegir el método de pago.'}
                 </p>
-                <div style={{ borderTop: 'none', paddingTop: 0, marginTop: '1rem' }}>
+
+                {/* Formulario de Datos de Activación para Invitados (Sin Login) */}
+                {!userId && (
+                  <div className="guest-info-form" style={{ marginTop: '1rem', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div className="guest-input-group">
+                      <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-dark, #3f2d1b)', marginBottom: '6px' }}>
+                        Correo Electrónico de Activación *
+                      </label>
+                      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                        <Mail size={18} style={{ position: 'absolute', left: '12px', color: 'var(--orange-base, #d4621a)' }} />
+                        <input
+                          type="email"
+                          placeholder="tu-correo@ejemplo.com"
+                          value={guestEmail}
+                          onChange={(e) => {
+                            setGuestEmail(e.target.value);
+                            if (guestError) setGuestError('');
+                          }}
+                          style={{
+                            width: '100%',
+                            padding: '10px 12px 10px 38px',
+                            borderRadius: '12px',
+                            border: guestError ? '1.5px solid #ef4444' : '1.5px solid rgba(212, 98, 26, 0.3)',
+                            background: '#ffffff',
+                            fontFamily: 'var(--font-body)',
+                            fontSize: '0.9rem',
+                            outline: 'none',
+                            color: '#3f2d1b',
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="guest-input-group">
+                      <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-dark, #3f2d1b)', marginBottom: '6px' }}>
+                        Nombre Completo (Opcional)
+                      </label>
+                      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                        <User size={18} style={{ position: 'absolute', left: '12px', color: 'var(--orange-base, #d4621a)' }} />
+                        <input
+                          type="text"
+                          placeholder="Tu nombre"
+                          value={guestName}
+                          onChange={(e) => setGuestName(e.target.value)}
+                          style={{
+                            width: '100%',
+                            padding: '10px 12px 10px 38px',
+                            borderRadius: '12px',
+                            border: '1.5px solid rgba(212, 98, 26, 0.3)',
+                            background: '#ffffff',
+                            fontFamily: 'var(--font-body)',
+                            fontSize: '0.9rem',
+                            outline: 'none',
+                            color: '#3f2d1b',
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {guestError && (
+                      <span style={{ fontSize: '0.78rem', color: '#ef4444', fontWeight: 600 }}>
+                        ⚠️ {guestError}
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                <div style={{ borderTop: 'none', paddingTop: 0, marginTop: '0.5rem' }}>
                   <div className="payment-logos-preview" style={{ display: 'flex', gap: '8px' }}>
                     {hasMoneyPrice &&
                       filteredPaymentMethods.some((m) => m.type === 'bre_b' || m.type === 'nequi') && (
@@ -421,7 +497,7 @@ export function CheckoutView({
                       )}
                   </div>
                 </div>
-                <div className="security-badges" style={{ marginTop: '2rem' }}>
+                <div className="security-badges" style={{ marginTop: '1.5rem' }}>
                   <div className="badge-item">
                     <span>🛡️</span>
                     <span>Transacción 100% segura y encriptada SSL</span>
@@ -436,14 +512,21 @@ export function CheckoutView({
                   </div>
                 </div>
 
-                    <button
-                      type="button"
-                      className="checkout-action-button"
-                      disabled={isProcessing}
-                      onClick={() => setShowPaymentModal(true)}
-                    >
-                      <ShoppingBag size={18} /> Continuar con el Pago
-                    </button>
+                <button
+                  type="button"
+                  className="checkout-action-button"
+                  disabled={isProcessing}
+                  onClick={() => {
+                    if (!userId && (!guestEmail || !guestEmail.includes('@'))) {
+                      setGuestError('Ingresa un correo electrónico válido para enviarte el acceso a tu cuenta.');
+                      return;
+                    }
+                    setGuestError('');
+                    setShowPaymentModal(true);
+                  }}
+                >
+                  <ShoppingBag size={18} /> Continuar con el Pago
+                </button>
               </div>
 
               {/* Modal de Opciones de Pago Desacoplado */}
@@ -453,6 +536,8 @@ export function CheckoutView({
                 product={product}
                 quantity={quantity}
                 userId={userId}
+                guestEmail={guestEmail}
+                guestName={guestName}
                 selectedPlan={selectedPlan}
                 totalPrice={totalPrice}
                 totalPriceFormatted={totalPriceFormatted}

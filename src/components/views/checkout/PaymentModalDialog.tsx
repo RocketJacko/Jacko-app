@@ -14,6 +14,8 @@ interface PaymentModalDialogProps {
   product: Product;
   quantity: number;
   userId: string;
+  guestEmail?: string;
+  guestName?: string;
   selectedPlan: PricingPlan | null;
   totalPrice: number;
   totalPriceFormatted: string;
@@ -34,6 +36,8 @@ export function PaymentModalDialog({
   product,
   quantity,
   userId,
+  guestEmail = '',
+  guestName = '',
   selectedPlan,
   totalPrice,
   totalPriceFormatted,

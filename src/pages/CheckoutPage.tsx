@@ -14,45 +14,45 @@ export function CheckoutPage() {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
 
   useEffect(() => {
-    if (!session) return;
+    let active = true;
 
     const loadData = async () => {
       try {
-        const slug = localStorage.getItem('jacko_trigger_checkout_slug');
-        if (!slug) {
-          navigate('/dashboard', { replace: true });
-          return;
-        }
+        const slug = localStorage.getItem('jacko_trigger_checkout_slug') || 'plan-anual';
 
-        // Cargar catálogo para buscar el producto activo
+        // Cargar catálogo para buscar el producto activo (disponible públicamente)
         const catalog = await catalogService.getCatalogData(false, false);
         let prod = catalog.products.find((p) => p.slug === slug);
         if (!prod && catalog.products.length > 0) {
-          // Si el slug específico no está activo, usar el producto activo disponible
           prod = catalog.products[0];
         }
         if (!prod) {
-          navigate('/dashboard', { replace: true });
+          if (active) navigate('/', { replace: true });
           return;
         }
 
-        // Cargar métodos de pago
+        // Cargar métodos de pago activos
         const methods = await catalogService.getPaymentMethods();
 
-        setProduct(prod);
-        setPaymentMethods(methods);
+        if (active) {
+          setProduct(prod);
+          setPaymentMethods(methods);
+        }
       } catch (err) {
-        console.error("Error loading checkout data:", err);
-        navigate('/dashboard', { replace: true });
+        console.error("Error cargando datos de checkout:", err);
+        if (active) navigate('/', { replace: true });
       } finally {
-        setIsLoading(false);
+        if (active) setIsLoading(false);
       }
     };
 
     loadData();
-  }, [session, navigate]);
 
-  if (!session) return null;
+    return () => {
+      active = false;
+    };
+  }, [navigate]);
+
   if (isLoading) return <LoadingScreen />;
   if (!product) return null;
 
@@ -62,12 +62,16 @@ export function CheckoutPage() {
   const handleCleanStorageAndNavigate = () => {
     localStorage.removeItem('jacko_trigger_checkout_slug');
     localStorage.removeItem('jacko_trigger_checkout_qty');
-    navigate('/dashboard');
+    if (session) {
+      navigate('/dashboard');
+    } else {
+      navigate('/');
+    }
   };
 
   return (
     <CheckoutView
-      userId={session.user.id}
+      userId={session?.user?.id || ""}
       product={product}
       paymentMethods={paymentMethods}
       initialQuantity={initialQty > 0 ? initialQty : 1}
