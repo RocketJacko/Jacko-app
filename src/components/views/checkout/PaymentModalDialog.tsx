@@ -93,9 +93,9 @@ export function PaymentModalDialog({
             <>
               <div className="form-group">
                 <label
-                  style={{ display: 'block', marginBottom: '0.75rem', fontWeight: 700, fontSize: '0.95rem' }}
+                  style={{ display: 'block', marginBottom: '0.75rem', fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-dark, #3f2d1b)' }}
                 >
-                  Selecciona la pasarela de tu preferencia:
+                  Opciones de pago:
                 </label>
 
                 <PaymentMethodSelectorCard

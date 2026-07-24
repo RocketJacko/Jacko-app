@@ -3471,30 +3471,33 @@ body:has(.checkout-container) .member-header {
 }
 
 .order-summary-mini {
-  padding: 16px 24px;
-  background: rgba(232, 221, 200, 0.25);
-  border-bottom: 1.5px solid var(--beige-light, #E8DDC8);
+  padding: 18px 24px;
+  background: var(--white-warm, #fffcf7);
+  border-bottom: 2px solid rgba(63, 45, 27, 0.12);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .summary-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.9rem;
-  color: var(--brown-dark, #2A1A0A);
+  font-size: 0.95rem;
+  color: var(--text-dark, #3f2d1b);
 }
 
 .summary-row span {
-  opacity: 0.7;
+  opacity: 0.8;
   font-weight: 600;
+  flex-shrink: 0;
 }
 
 .summary-row strong {
-  color: var(--brown-dark, #2A1A0A);
+  color: var(--orange-deep, #d4621a);
   font-weight: 800;
+  text-align: right;
+  word-break: break-word;
 }
 
 .modal-body {
