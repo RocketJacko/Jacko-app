@@ -103,8 +103,7 @@ export default defineConfig({
         ],
       },
       devOptions: {
-        enabled: true, // Habilitar Service Worker en desarrollo para pruebas de instalación nativa 1-clic
-        type: 'module',
+        enabled: false, // Desactivar Service Worker en desarrollo local para evitar bloqueos de caché u offline.html
       },
     }),
   ],

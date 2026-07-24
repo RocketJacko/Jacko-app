@@ -161,9 +161,8 @@ export function ChatBot({ currentView, onViewChange: _onViewChange }: ChatBotPro
     sender: 'bot',
     text: '¡Hola! 🛹 Bienvenido a **JACKO™**. Soy tu asistente virtual de servicio. ¿En qué te puedo colaborar hoy?',
     buttons: [
-      { label: '📲 Instalar JACKO™ App', action: 'install_pwa' },
       { label: '❓ Preguntas Frecuentes', action: 'show_faq' },
-      { label: '📞 Soporte por WhatsApp', action: 'show_support' },
+      { label: '📞 Soporte', action: 'show_support' },
     ],
   };
 
@@ -216,24 +215,6 @@ export function ChatBot({ currentView, onViewChange: _onViewChange }: ChatBotPro
           'Entendido. ¿Hay algo más en lo que te pueda ayudar del menú principal?',
           welcomeMessage.buttons
         );
-        break;
-
-      case 'install_pwa':
-        if (window.deferredPWAInstallPrompt) {
-          try {
-            window.deferredPWAInstallPrompt.prompt();
-          } catch (err) {
-            console.error('[ChatBot] PWA prompt error:', err);
-          }
-          setIsOpen(false);
-          return;
-        }
-        try {
-          window.dispatchEvent(new Event('trigger-pwa-install'));
-        } catch {
-          // Fallback
-        }
-        setIsOpen(false);
         break;
 
       case 'show_faq':
