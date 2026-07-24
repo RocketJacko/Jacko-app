@@ -33,9 +33,8 @@ export default defineConfig({
         additionalManifestEntries: [
           { url: '/offline.html', revision: '2' },
         ],
-        // Solo mostrar offline.html en navegacion que falle (no en assets).
-        // navigateFallbackAllowlist limita el fallback a rutas de la SPA.
-        navigateFallback: '/offline.html',
+        // Servir index.html para que React Router maneje las rutas SPA (/checkout, /dashboard, etc.)
+        navigateFallback: '/index.html',
         navigateFallbackAllowlist: [/^\/(?!_next|api|.*\.[^/]+$).*/],
         // No interceptar rutas de admin con el fallback offline.
         navigateFallbackDenylist: [/^\/admin/],
