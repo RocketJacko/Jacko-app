@@ -1,6 +1,19 @@
+import { useEffect, useState } from "react";
 import "./Footer.css";
 
 export function Footer() {
+  const [isStandalone, setIsStandalone] = useState(false);
+
+  useEffect(() => {
+    const standalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (navigator as unknown as { standalone?: boolean }).standalone === true;
+    setIsStandalone(standalone);
+  }, []);
+
+  // En modo PWA (standalone) no se muestra el footer de la web
+  if (isStandalone) return null;
+
   return (
     <footer className="jacko-footer">
       <div className="footer-content">

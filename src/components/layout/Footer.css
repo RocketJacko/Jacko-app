@@ -64,3 +64,11 @@
     font-size: 0.68rem;
   }
 }
+
+/* Ocultar Footer cuando la aplicación se ejecuta instalada como PWA (standalone) */
+@media (display-mode: standalone) {
+  .jacko-footer,
+  footer {
+    display: none !important;
+  }
+}
