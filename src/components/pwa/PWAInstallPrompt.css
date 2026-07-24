@@ -3,11 +3,12 @@
 .pwa-install-banner {
   position: fixed;
   bottom: clamp(16px, 4vh, 32px);
-  left: 50%;
-  transform: translateX(-50%);
+  left: 16px;
+  right: 16px;
+  margin: 0 auto;
   z-index: 10010;
-  width: calc(100% - 32px);
-  max-width: min(460px, calc(100vw - 32px));
+  width: auto;
+  max-width: 460px;
   background: rgba(255, 252, 248, 0.98);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
