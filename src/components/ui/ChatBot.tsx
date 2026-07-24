@@ -27,60 +27,77 @@ interface ChatBotProps {
 // ========== FAQ DATA ==========
 const faqData = [
   {
-    id: 'que-es-codificando-ando',
-    question: '¿Qué es Codificando Ando?',
-    answer: 'Codificando Ando es una comunidad para personas interesadas en tecnología, desarrollo de software y automatización. Al unirte a la comunidad obtienes acceso a una membresía con diferentes beneficios, entre ellos acceso a Platzi, recursos para desarrolladores, descuentos en herramientas y nuevos beneficios que se irán incorporando con el crecimiento de la plataforma.'
+    id: 'oferta-duracion-2026',
+    question: '¿Cuál es la duración de la oferta y su precio?',
+    answer: 'La oferta cubre todos los meses restantes hasta el **31/12/2026** (5 meses en total) por un valor único de **$40 USD** (promedio de solo $8 USD/mes). Si contratas únicamente por un solo mes individual, el costo es de **$56 USD**.'
   },
   {
-    id: 'beneficios-membresia',
-    question: '¿Qué beneficios incluye la membresía?',
-    answer: 'Dependiendo del plan elegido, podrás acceder a beneficios como: <br/>• Acceso oficial a Platzi.<br/>• Flujos para n8n.<br/>• Biblioteca de recursos para desarrollo de software.<br/>• Cupones de descuento en servicios como Hostinger, Contabo y otras herramientas.<br/>• Nuevos beneficios y funcionalidades que se irán agregando a la comunidad.'
+    id: 'duracion-beneficio',
+    question: '¿Cuál es la duración total del beneficio de acceso?',
+    answer: 'El acceso otorgado cubre la totalidad de lo que resta del año 2026 finalizando el **31/12/2026**. Las licencias están diseñadas para que los usuarios no tengan que realizar ningún pago adicional durante toda la vigencia mencionada.'
+  },
+  {
+    id: 'acceso-inmediato',
+    question: '¿El acceso es inmediato tras la compra?',
+    answer: 'Sí, una vez que solicitas tus credenciales, las recibes en menos de un minuto, lo que te permite aprovechar de inmediato todo el ciclo restante de 2026.'
+  },
+  {
+    id: 'costos-ocultos',
+    question: '¿Existe algún costo oculto después de cierto tiempo?',
+    answer: 'No, el acceso es totalmente transparente durante todo el periodo estipulado que finaliza al terminar el año 2026. No existen cargos sorpresa ni letras pequeñas.'
+  },
+  {
+    id: 'precio-economico',
+    question: '¿Por qué este precio es tan económico?',
+    answer: 'Ofrecemos una alternativa comunitaria para que más personas puedan acceder al contenido oficial de aprendizaje sin tener que pagar el costo completo de una suscripción tradicional.'
+  },
+  {
+    id: 'precio-final',
+    question: '¿El precio publicado es el valor final?',
+    answer: 'Sí. El precio que ves (**$40 USD** por los 5 meses restantes) es el valor final del plan, sin cargos ni impuestos ocultos.'
+  },
+  {
+    id: 'que-incluye-precio',
+    question: '¿Qué incluye el precio?',
+    answer: 'El precio incluye el acceso completo al plan seleccionado durante todo el período contratado sin interrupciones.'
+  },
+  {
+    id: 'costos-adicionales',
+    question: '¿Hay costos adicionales después de comprar?',
+    answer: 'No. Solo pagarás nuevamente si decides renovar tu acceso al finalizar el período contratado en diciembre de 2026.'
+  },
+  {
+    id: 'comparativa-mensual',
+    question: '¿Por qué pagar $56 USD al mes si puedes pagar solo $8 USD al mes?',
+    answer: 'Con nuestro plan pagas **$40 USD por 5 meses** (lo que equivale a solo **$8 USD al mes**). Comparado con el plan individual oficial mensual de **$56 USD**, ahorras **$48 USD cada mes**.'
+  },
+  {
+    id: 'comparativa-duo',
+    question: '¿Nuestro plan sigue siendo más económico que el Plan Duo?',
+    answer: 'Sí. En el Plan Expert Duo oficial, cada estudiante paga aproximadamente **$13 USD al mes**. Con nosotros pagas solo **$8 USD al mes** ($40 USD total por 5 meses), ahorrando **$5 USD mensuales** por persona.'
+  },
+  {
+    id: 'comparativa-groups',
+    question: '¿Nuestro plan sigue siendo más económico que el Plan Groups?',
+    answer: 'Sí. Incluso en el Plan Expert Groups, donde cada persona paga aprox. **$9 USD al mes**, con nuestro plan pagas solo **$8 USD al mes** ($40 USD total por 5 meses), ahorrando en cada mes por estudiante.'
+  },
+  {
+    id: 'que-es-codificando-ando',
+    question: '¿Qué es Codificando Ando?',
+    answer: 'Codificando Ando es una comunidad para personas interesadas en tecnología, desarrollo de software y automatización. Al unirte a la comunidad obtienes acceso a una membresía con diferentes beneficios, entre ellos acceso oficial a Platzi, recursos para desarrolladores y cupones.'
   },
   {
     id: 'platzi-oficial',
     question: '¿El acceso a Platzi es oficial?',
-    answer: 'Sí. Todos los accesos a Platzi incluidos en nuestras membresías son oficiales.'
-  },
-  {
-    id: 'diferencia-planes',
-    question: '¿Cuál es la diferencia entre el Plan Premium y el Plan Básico?',
-    answer: '<strong>Plan Premium:</strong> Incluye un año de Platzi Business oficial. La licencia se activa directamente en tu cuenta personal de Platzi. Conservas tu progreso, certificados e historial de aprendizaje.<br/><br/><strong>Plan Básico:</strong> Es una membresía de pago mensual. Se te asigna una cuenta nueva, oficial y exclusiva para ti. Esa cuenta es independiente de cualquier cuenta personal de Platzi que tengas.'
-  },
-  {
-    id: 'activacion-cuenta',
-    question: '¿Se activa en mi cuenta personal de Platzi?',
-    answer: 'Depende del plan. <br/><br/><strong>Plan Premium:</strong> Sí. La activación se realiza directamente en tu cuenta personal de Platzi.<br/><br/><strong>Plan Básico:</strong> No. Se te asigna una cuenta nueva, oficial y exclusiva para utilizar el servicio.'
-  },
-  {
-    id: 'ya-tengo-cuenta',
-    question: 'Ya tengo una cuenta de Platzi. ¿Qué sucede?',
-    answer: 'Si eliges el <strong>Plan Premium</strong>, activaremos el beneficio directamente sobre tu cuenta.<br/><br/>Si eliges el <strong>Plan Básico</strong>, recibirás una cuenta nueva exclusiva para utilizar el servicio.'
-  },
-  {
-    id: 'certificados-progreso',
-    question: '¿Perderé mis certificados o el avance de mis cursos?',
-    answer: '<strong>Plan Premium:</strong> No. Como la activación se realiza en tu propia cuenta, conservarás tus certificados, cursos y progreso.<br/><br/><strong>Plan Básico:</strong> Los certificados, cursos y el progreso estarán asociados a la cuenta que te fue asignada.'
-  },
-  {
-    id: 'pago-plan-basico',
-    question: '¿Qué pasa si dejo de pagar el Plan Básico?',
-    answer: 'El Plan Básico funciona mediante una membresía mensual. <br/><br/>• Debes realizar el pago en la fecha de renovación.<br/>• Dispones de un período de gracia de hasta 5 días.<br/>• Si después de esos 5 días no se registra el pago, el acceso a la cuenta será bloqueado.<br/>• Si la cuenta acumula 15 días sin pago, perderás el acceso a esa cuenta y, con ella, a los certificados, cursos y progreso asociados.'
-  },
-  {
-    id: 'cambiar-plan',
-    question: '¿Puedo cambiar del Plan Básico al Plan Premium?',
-    answer: 'Sí. En cualquier momento puedes adquirir el Plan Premium para obtener un año de Platzi Business activado directamente en tu cuenta personal.'
-  },
-  {
-    id: 'crecimiento-beneficios',
-    question: '¿Los beneficios de Codificando Ando seguirán creciendo?',
-    answer: 'Sí. Nuestro objetivo es que la membresía agregue cada vez más valor para la comunidad. Constantemente iremos incorporando nuevos recursos, herramientas, descuentos y funcionalidades para nuestros miembros.'
+    answer: 'Sí. Todos los accesos a Platzi incluidos en nuestras membresías son 100% oficiales.'
   }
 ];
 
-export function ChatBot({ currentView, onViewChange }: ChatBotProps) {
+export function ChatBot({ currentView, onViewChange: _onViewChange }: ChatBotProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLandingIntroFinished, setIsLandingIntroFinished] = useState(true);
+  const [showTeaser, setShowTeaser] = useState(false);
+  const hasPlayedChimeRef = useRef(false);
 
   // Escuchar el estado de la animación de la landing page
   useEffect(() => {
@@ -96,6 +113,57 @@ export function ChatBot({ currentView, onViewChange }: ChatBotProps) {
     };
   }, []);
 
+  // Función para reproducir un chime sutil y agradable con Web Audio API (100% nativo)
+  const playChime = () => {
+    try {
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const now = ctx.currentTime;
+
+      // Nota 1 (D5 - 587.33 Hz)
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(587.33, now);
+      gain1.gain.setValueAtTime(0.05, now);
+      gain1.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc1.start(now);
+      osc1.stop(now + 0.3);
+
+      // Nota 2 (A5 - 880 Hz)
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(880, now + 0.12);
+      gain2.gain.setValueAtTime(0.07, now + 0.12);
+      gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start(now + 0.12);
+      osc2.stop(now + 0.45);
+    } catch {
+      // Ignorar de forma segura en políticas estrictas de autoplay
+    }
+  };
+
+  // Timer proactivo para mostrar el teaser tras 3.5 segundos
+  useEffect(() => {
+    if (isOpen || hasPlayedChimeRef.current) return;
+
+    const timer = setTimeout(() => {
+      if (!isOpen && !hasPlayedChimeRef.current) {
+        setShowTeaser(true);
+        hasPlayedChimeRef.current = true;
+        playChime();
+      }
+    }, 3500);
+
+    return () => clearTimeout(timer);
+  }, [isOpen]);
+
   // Ref tracking total messages sent for ID purity
   const messageIdCounter = useRef(1);
   const getNextId = () => {
@@ -108,10 +176,8 @@ export function ChatBot({ currentView, onViewChange }: ChatBotProps) {
     sender: 'bot',
     text: '¡Hola! 🛹 Bienvenido a **JACKO™**. Soy tu asistente virtual de servicio. ¿En qué te puedo colaborar hoy?',
     buttons: [
-      { label: '🛒 Comprar Servicios', action: 'show_services' },
-      { label: '🔑 Registro / Ingreso', action: 'show_register' },
       { label: '❓ Preguntas Frecuentes', action: 'show_faq' },
-      { label: '📞 Soporte por WhatsApp', action: 'show_support' },
+      { label: '📞 Soporte', action: 'show_support' },
     ],
   };
 
@@ -164,72 +230,6 @@ export function ChatBot({ currentView, onViewChange }: ChatBotProps) {
           'Entendido. ¿Hay algo más en lo que te pueda ayudar del menú principal?',
           welcomeMessage.buttons
         );
-        break;
-
-      case 'show_services':
-        simulateBotResponse(
-          label,
-          '¡Excelente! Puedes adquirir nuestros servicios y membresías premium **sin registrarte**. Selecciona una opción:',
-          [
-            { label: '⭐️ Plan Premium ($140.000 COP/mes)', action: 'buy_now', value: 'plan-premium' },
-            { label: '⚡ Plan Básico ($30.000 COP/mes)', action: 'buy_now', value: 'plan-basico' },
-            { label: '🛍️ Ver Todo el Catálogo', action: 'open_catalog' },
-            { label: '⬅️ Volver al Menú', action: 'main_menu' },
-          ]
-        );
-        break;
-
-      case 'buy_now':
-        if (value) {
-          localStorage.setItem('jacko_trigger_checkout_slug', value);
-          simulateBotResponse(
-            label,
-            `¡Perfecto! Redirigiéndote a la zona de pago para el **${label.split(' ($')[0]}**... Puedes completar tu compra allí como Invitado ingresando tu correo.`,
-            [{ label: '⬅️ Volver al Menú', action: 'main_menu' }]
-          );
-          setTimeout(() => {
-            onViewChange('catalogo');
-            setIsOpen(false);
-          }, 1200);
-        }
-        break;
-
-      case 'open_catalog':
-        simulateBotResponse(
-          label,
-          'Abriendo catálogo público de servicios... Podrás elegir y comprar cualquier producto sin registrarte.',
-          [{ label: '⬅️ Volver al Menú', action: 'main_menu' }]
-        );
-        setTimeout(() => {
-          onViewChange('catalogo');
-          setIsOpen(false);
-        }, 1000);
-        break;
-
-      case 'show_register':
-        simulateBotResponse(
-          label,
-          '¡Genial! Al registrarte en **JACKO™** podrás realizar misiones divertidas, ganar puntos de fidelidad y canjearlos por premios físicos o digitales 100% gratuitos. ¿Qué deseas hacer?',
-          [
-            { label: '📝 Registrarme / Iniciar Sesión', action: 'go_register_section' },
-            { label: '⬅️ Volver al Menú', action: 'main_menu' },
-          ]
-        );
-        break;
-
-      case 'go_register_section':
-        simulateBotResponse(
-          label,
-          'Llevándote al formulario de acceso. Desliza hacia abajo o ingresa tu correo allí.',
-          [{ label: '⬅️ Volver al Menú', action: 'main_menu' }]
-        );
-        setTimeout(() => {
-          onViewChange('landing');
-          setIsOpen(false);
-          setTimeout(() => {
-            window.dispatchEvent(new CustomEvent('scroll-to-section', { detail: 'register' }));
-          }, 100);
-        }, 800);
         break;
 
       case 'show_faq':
@@ -365,10 +365,46 @@ export function ChatBot({ currentView, onViewChange }: ChatBotProps) {
 
   return (
     <div className="jacko-chatbot-wrapper">
+      {/* Globo Proactivo de Bienvenida / Teaser */}
+      <AnimatePresence>
+        {showTeaser && !isOpen && (
+          <m.div
+            className="chatbot-teaser-bubble"
+            initial={{ opacity: 0, y: 15, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.9 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+            onClick={() => {
+              setIsOpen(true);
+              setShowTeaser(false);
+            }}
+          >
+            <div className="chatbot-teaser-content">
+              <span className="chatbot-teaser-title">Soporte JACKO™ 👋</span>
+              <p className="chatbot-teaser-text">¿Tienes alguna duda o consulta? ¡Puedo ayudarte!</p>
+            </div>
+            <button
+              type="button"
+              className="chatbot-teaser-close"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowTeaser(false);
+              }}
+              aria-label="Cerrar mensaje"
+            >
+              <X size={12} />
+            </button>
+          </m.div>
+        )}
+      </AnimatePresence>
+
       {/* Floating Action Button con animación de entrada suave */}
       <m.button
         className="chatbot-fab"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          setIsOpen(!isOpen);
+          if (showTeaser) setShowTeaser(false);
+        }}
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.4, delay: 0.2 }}
