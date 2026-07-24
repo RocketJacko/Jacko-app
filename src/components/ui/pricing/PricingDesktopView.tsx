@@ -136,11 +136,9 @@ export const PricingDesktopView: React.FC<PricingSharedProps> = ({
                     onChange={handleSliderChange}
                     className="pricing-range-input"
                     style={{
-                      background: `linear-gradient(to right, var(--orange-base) 0%, var(--orange-base) ${
-                        ((quantity - 1) / 9) * 100
-                      }%, rgba(212, 163, 88, 0.15) ${
-                        ((quantity - 1) / 9) * 100
-                      }%, rgba(212, 163, 88, 0.15) 100%)`,
+                      background: `linear-gradient(to right, var(--orange-base) 0%, var(--orange-base) ${((quantity - 1) / 9) * 100
+                        }%, rgba(212, 163, 88, 0.15) ${((quantity - 1) / 9) * 100
+                        }%, rgba(212, 163, 88, 0.15) 100%)`,
                     }}
                   />
 
@@ -189,8 +187,8 @@ export const PricingDesktopView: React.FC<PricingSharedProps> = ({
                 {planType === "free"
                   ? "Plan Gratis"
                   : planType === "mensual"
-                  ? "Membresía Mensual"
-                  : "Membresía Anual"}
+                    ? "Membresía Mensual"
+                    : "Membresía Anual"}
               </h4>
             </CardHeader>
 
@@ -247,11 +245,11 @@ export const PricingDesktopView: React.FC<PricingSharedProps> = ({
                     </div>
                     <div className="benefit-item">
                       <CheckCircle2 size={16} className="check-icon" />
-                      <span>Soporte de la comunidad</span>
+                      <span>Acumular puntos</span>
                     </div>
                     <div className="benefit-item">
                       <CheckCircle2 size={16} className="check-icon" />
-                      <span>1 cuenta personal gratis</span>
+                      <span>Canjear productos</span>
                     </div>
                   </>
                 ) : (

@@ -103,7 +103,7 @@ export default defineConfig({
         ],
       },
       devOptions: {
-        enabled: true, // Permitir probar PWA en entorno de desarrollo local
+        enabled: false, // Desactivar Service Worker en desarrollo local para evitar bloqueos de caché u offline.html
       },
     }),
   ],

@@ -24,6 +24,60 @@ interface ChatBotProps {
   onViewChange: (view: AppView) => void;
 }
 
+// ========== FAQ DATA ==========
+const faqData = [
+  {
+    id: 'que-es-codificando-ando',
+    question: '¿Qué es Codificando Ando?',
+    answer: 'Codificando Ando es una comunidad para personas interesadas en tecnología, desarrollo de software y automatización. Al unirte a la comunidad obtienes acceso a una membresía con diferentes beneficios, entre ellos acceso a Platzi, recursos para desarrolladores, descuentos en herramientas y nuevos beneficios que se irán incorporando con el crecimiento de la plataforma.'
+  },
+  {
+    id: 'beneficios-membresia',
+    question: '¿Qué beneficios incluye la membresía?',
+    answer: 'Dependiendo del plan elegido, podrás acceder a beneficios como: <br/>• Acceso oficial a Platzi.<br/>• Flujos para n8n.<br/>• Biblioteca de recursos para desarrollo de software.<br/>• Cupones de descuento en servicios como Hostinger, Contabo y otras herramientas.<br/>• Nuevos beneficios y funcionalidades que se irán agregando a la comunidad.'
+  },
+  {
+    id: 'platzi-oficial',
+    question: '¿El acceso a Platzi es oficial?',
+    answer: 'Sí. Todos los accesos a Platzi incluidos en nuestras membresías son oficiales.'
+  },
+  {
+    id: 'diferencia-planes',
+    question: '¿Cuál es la diferencia entre el Plan Premium y el Plan Básico?',
+    answer: '<strong>Plan Premium:</strong> Incluye un año de Platzi Business oficial. La licencia se activa directamente en tu cuenta personal de Platzi. Conservas tu progreso, certificados e historial de aprendizaje.<br/><br/><strong>Plan Básico:</strong> Es una membresía de pago mensual. Se te asigna una cuenta nueva, oficial y exclusiva para ti. Esa cuenta es independiente de cualquier cuenta personal de Platzi que tengas.'
+  },
+  {
+    id: 'activacion-cuenta',
+    question: '¿Se activa en mi cuenta personal de Platzi?',
+    answer: 'Depende del plan. <br/><br/><strong>Plan Premium:</strong> Sí. La activación se realiza directamente en tu cuenta personal de Platzi.<br/><br/><strong>Plan Básico:</strong> No. Se te asigna una cuenta nueva, oficial y exclusiva para utilizar el servicio.'
+  },
+  {
+    id: 'ya-tengo-cuenta',
+    question: 'Ya tengo una cuenta de Platzi. ¿Qué sucede?',
+    answer: 'Si eliges el <strong>Plan Premium</strong>, activaremos el beneficio directamente sobre tu cuenta.<br/><br/>Si eliges el <strong>Plan Básico</strong>, recibirás una cuenta nueva exclusiva para utilizar el servicio.'
+  },
+  {
+    id: 'certificados-progreso',
+    question: '¿Perderé mis certificados o el avance de mis cursos?',
+    answer: '<strong>Plan Premium:</strong> No. Como la activación se realiza en tu propia cuenta, conservarás tus certificados, cursos y progreso.<br/><br/><strong>Plan Básico:</strong> Los certificados, cursos y el progreso estarán asociados a la cuenta que te fue asignada.'
+  },
+  {
+    id: 'pago-plan-basico',
+    question: '¿Qué pasa si dejo de pagar el Plan Básico?',
+    answer: 'El Plan Básico funciona mediante una membresía mensual. <br/><br/>• Debes realizar el pago en la fecha de renovación.<br/>• Dispones de un período de gracia de hasta 5 días.<br/>• Si después de esos 5 días no se registra el pago, el acceso a la cuenta será bloqueado.<br/>• Si la cuenta acumula 15 días sin pago, perderás el acceso a esa cuenta y, con ella, a los certificados, cursos y progreso asociados.'
+  },
+  {
+    id: 'cambiar-plan',
+    question: '¿Puedo cambiar del Plan Básico al Plan Premium?',
+    answer: 'Sí. En cualquier momento puedes adquirir el Plan Premium para obtener un año de Platzi Business activado directamente en tu cuenta personal.'
+  },
+  {
+    id: 'crecimiento-beneficios',
+    question: '¿Los beneficios de Codificando Ando seguirán creciendo?',
+    answer: 'Sí. Nuestro objetivo es que la membresía agregue cada vez más valor para la comunidad. Constantemente iremos incorporando nuevos recursos, herramientas, descuentos y funcionalidades para nuestros miembros.'
+  }
+];
+
 export function ChatBot({ currentView, onViewChange }: ChatBotProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLandingIntroFinished, setIsLandingIntroFinished] = useState(false);
@@ -214,15 +268,20 @@ export function ChatBot({ currentView, onViewChange }: ChatBotProps) {
         break;
 
       case 'show_faq':
+        // Mostrar lista de preguntas (hasta 5 para no saturar)
+        const faqButtons: QuickReply[] = faqData.slice(0, 5).map(faq => ({
+          label: faq.question.length > 40 ? faq.question.substring(0, 37) + '...' : faq.question,
+          action: 'faq_detail',
+          value: faq.id
+        }));
+
+        faqButtons.push({ label: '📚 Ver todas las FAQs', action: 'show_all_faqs' });
+        faqButtons.push({ label: '⬅️ Volver al Menú', action: 'main_menu' });
+
         simulateBotResponse(
           label,
-          '¿Qué duda tienes acerca de la plataforma? Elige un tema:',
-          [
-            { label: '💳 ¿Cómo compro sin registrarme?', action: 'faq_ans', value: 'guest_buy' },
-            { label: '💰 ¿Qué medios de pago aceptan?', action: 'faq_ans', value: 'payment_methods' },
-            { label: '🎯 ¿Cómo funcionan los Puntos?', action: 'faq_ans', value: 'points_how' },
-            { label: '⬅️ Volver al Menú', action: 'main_menu' },
-          ]
+          '📖 Aquí tienes algunas de las preguntas más frecuentes sobre la comunidad:',
+          faqButtons
         );
         break;
 
@@ -242,6 +301,53 @@ export function ChatBot({ currentView, onViewChange }: ChatBotProps) {
           { label: '❓ Ver otras FAQs', action: 'show_faq' },
           { label: '⬅️ Volver al Menú', action: 'main_menu' },
         ]);
+        break;
+      }
+
+      case 'faq_detail': {
+        // Buscar la FAQ por ID
+        const faqFound = faqData.find(f => f.id === value);
+        if (faqFound) {
+          const answerText = faqFound.answer;
+          simulateBotResponse(
+            label,
+            `<strong>${faqFound.question}</strong><br/><br/>${answerText}`,
+            [
+              { label: '❓ Otra pregunta', action: 'show_faq' },
+              { label: '📚 Ver todas las FAQs', action: 'show_all_faqs' },
+              { label: '⬅️ Volver al Menú', action: 'main_menu' },
+            ]
+          );
+        } else {
+          // Fallback si no se encuentra
+          simulateBotResponse(
+            label,
+            'Lo siento, no pude encontrar esa pregunta específica. ¿Te gustaría ver otras opciones?',
+            [
+              { label: '❓ Ver FAQs', action: 'show_faq' },
+              { label: '⬅️ Volver al Menú', action: 'main_menu' },
+            ]
+          );
+        }
+        break;
+      }
+
+      case 'show_all_faqs': {
+        // Generar botones para TODAS las FAQs
+        const allFaqButtons: QuickReply[] = faqData.map(faq => ({
+          label: faq.question.length > 35 ? faq.question.substring(0, 32) + '...' : faq.question,
+          action: 'faq_detail',
+          value: faq.id
+        }));
+
+        // Agregar opción para volver
+        allFaqButtons.push({ label: '⬅️ Volver al Menú', action: 'main_menu' });
+
+        simulateBotResponse(
+          label,
+          `📚 Aquí tienes todas las preguntas frecuentes disponibles (${faqData.length}):`,
+          allFaqButtons
+        );
         break;
       }
 
