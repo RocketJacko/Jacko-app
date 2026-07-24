@@ -80,7 +80,7 @@ const faqData = [
 
 export function ChatBot({ currentView, onViewChange }: ChatBotProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [isLandingIntroFinished, setIsLandingIntroFinished] = useState(false);
+  const [isLandingIntroFinished, setIsLandingIntroFinished] = useState(true);
   const [isFooterVisible, setIsFooterVisible] = useState(false);
 
   // Escuchar visibilidad del footer mediante IntersectionObserver
@@ -387,8 +387,8 @@ export function ChatBot({ currentView, onViewChange }: ChatBotProps) {
     }
   };
 
-  // Ocultar chat si el footer no está en pantalla, o si estamos en intro de Landing Page
-  const isHidden = !isFooterVisible || (
+  // Ocultar chat únicamente si la animación intro de la Landing Page aún se está ejecutando
+  const isHidden = (
     currentView === '/' || currentView === 'landing' || currentView === ''
       ? !isLandingIntroFinished
       : false
