@@ -59,7 +59,7 @@ export function PWAInstallPrompt() {
     window.addEventListener('open-pwa-install', handleForceShow);
 
     // En desarrollo, mostrar tras 1.5s para facilitar verificación
-    let devTimer: NodeJS.Timeout | null = null;
+    let devTimer: ReturnType<typeof setTimeout> | null = null;
     if (import.meta.env.DEV) {
       devTimer = setTimeout(() => {
         setShowPrompt(true);
