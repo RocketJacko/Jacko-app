@@ -1,54 +1,64 @@
-/* Estilos limpios y ultra-minimalistas: Botones planos de logos con la paleta oficial de la App */
+/* Estilos PWA Glassmorphism basados en la referencia ZIP manteniendo la paleta oficial de la App */
 
-.payment-buttons-clean-grid {
+.pwa-payment-gateways-list {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 12px;
   width: 100%;
-  justify-content: center;
-  align-items: center;
-  padding: 8px 0;
+  margin-top: 12px;
 }
 
-.payment-clean-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 1 1 calc(50% - 12px);
-  min-width: 140px;
-  height: 56px;
-  background: var(--white-warm, #fffcf7);
-  border: 2px solid rgba(63, 45, 27, 0.15);
-  border-radius: 14px;
-  padding: 10px 16px;
+.pwa-gateway-card-label {
+  position: relative;
+  display: block;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 2px 6px rgba(42, 26, 10, 0.04);
+  width: 100%;
   outline: none;
 }
 
-.payment-clean-btn:hover:not(:disabled) {
-  border-color: var(--orange-base, #d4621a);
-  background: #ffffff;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(212, 98, 26, 0.15);
+.pwa-gateway-radio-input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
 }
 
-.payment-clean-btn.selected {
-  background: #ffffff;
-  border-color: var(--orange-base, #d4621a);
-  box-shadow: 0 0 0 3px rgba(212, 98, 26, 0.25), 0 6px 16px rgba(212, 98, 26, 0.15);
-}
-
-.payment-btn-logo-wrapper {
+.pwa-gateway-card-content {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
+  gap: 16px;
+  padding: 14px 18px;
+  border-radius: 16px;
+  border: 1.5px solid rgba(63, 45, 27, 0.14);
+  background: rgba(255, 252, 247, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 12px rgba(42, 26, 10, 0.03);
 }
 
-.payment-btn-logo-wrapper svg {
+.pwa-gateway-card-label:hover .pwa-gateway-card-content {
+  border-color: var(--orange-base, #d4621a);
+  background: rgba(255, 255, 255, 0.95);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(212, 98, 26, 0.12);
+}
+
+.pwa-gateway-card-label.selected .pwa-gateway-card-content {
+  background: #ffffff;
+  border-color: var(--orange-base, #d4621a);
+  box-shadow: 0 8px 24px rgba(212, 98, 26, 0.18), 0 0 0 3px rgba(212, 98, 26, 0.15);
+}
+
+.pwa-gateway-logo-container {
+  width: 130px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-shrink: 0;
+}
+
+.pwa-gateway-logo-container svg {
   max-height: 28px;
   width: auto;
   max-width: 100%;
@@ -58,17 +68,52 @@
   max-height: 28px;
   width: auto;
   object-fit: contain;
+  object-position: left;
 }
 
 .payment-btn-text-fallback {
   font-family: var(--font-display);
-  font-size: 0.9rem;
-  font-weight: 700;
+  font-size: 0.95rem;
+  font-weight: 800;
   color: var(--text-dark, #3f2d1b);
 }
 
+.pwa-gateway-spacer {
+  flex: 1;
+}
+
+.pwa-gateway-radio-badge {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid rgba(63, 45, 27, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+  flex-shrink: 0;
+}
+
+.pwa-gateway-card-label.selected .pwa-gateway-radio-badge {
+  border-color: var(--orange-base, #d4621a);
+}
+
+.pwa-gateway-radio-inner {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--orange-base, #d4621a);
+  transform: scale(0);
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.pwa-gateway-card-label.selected .pwa-gateway-radio-inner {
+  transform: scale(1);
+}
+
 @media (max-width: 480px) {
-  .payment-clean-btn {
-    flex: 1 1 100%;
+  .pwa-gateway-logo-container {
+    width: 110px;
+    height: 30px;
   }
 }

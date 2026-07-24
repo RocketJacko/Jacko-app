@@ -36,21 +36,34 @@ export function PaymentMethodSelectorCard({
   };
 
   return (
-    <div className="payment-buttons-clean-grid">
+    <div className="pwa-payment-gateways-list">
       {methods.map((method) => {
         const isSelected = selectedMethod?.type === method.type;
 
         return (
-          <button
+          <label
             key={method.type}
-            type="button"
-            className={`payment-clean-btn ${isSelected ? 'selected' : ''}`}
-            onClick={() => onSelectMethod(method)}
-            disabled={disabled}
-            title={method.name}
+            className={`pwa-gateway-card-label ${isSelected ? 'selected' : ''}`}
           >
-            <div className="payment-btn-logo-wrapper">{renderLogo(method)}</div>
-          </button>
+            <input
+              type="radio"
+              name="gateway_option"
+              value={method.type}
+              checked={isSelected}
+              onChange={() => onSelectMethod(method)}
+              disabled={disabled}
+              className="pwa-gateway-radio-input"
+            />
+            <div className="pwa-gateway-card-content">
+              <div className="pwa-gateway-logo-container">
+                {renderLogo(method)}
+              </div>
+              <div className="pwa-gateway-spacer" />
+              <div className="pwa-gateway-radio-badge">
+                <div className="pwa-gateway-radio-inner" />
+              </div>
+            </div>
+          </label>
         );
       })}
     </div>
