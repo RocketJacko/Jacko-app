@@ -1,143 +1,74 @@
-/* Estilos limpios y modernos para las tarjetas de selección de método de pago */
+/* Estilos limpios y ultra-minimalistas: Botones planos de logos con la paleta oficial de la App */
 
-.payment-method-selector-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 14px;
+.payment-buttons-clean-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
   width: 100%;
-  margin-top: 10px;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 0;
 }
 
-.payment-option-card {
-  position: relative;
+.payment-clean-btn {
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 calc(50% - 12px);
+  min-width: 140px;
+  height: 56px;
   background: var(--white-warm, #fffcf7);
-  border: 2px solid rgba(63, 45, 27, 0.12);
-  border-radius: 18px;
-  padding: 16px;
-  text-align: left;
+  border: 2px solid rgba(63, 45, 27, 0.15);
+  border-radius: 14px;
+  padding: 10px 16px;
   cursor: pointer;
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 4px 12px rgba(42, 26, 10, 0.04);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 6px rgba(42, 26, 10, 0.04);
   outline: none;
-  min-height: 110px;
 }
 
-.payment-option-card:hover:not(:disabled) {
-  border-color: var(--orange, #ea742b);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(212, 98, 26, 0.12);
-}
-
-.payment-option-card.selected {
+.payment-clean-btn:hover:not(:disabled) {
+  border-color: var(--orange-base, #d4621a);
   background: #ffffff;
-  border-color: var(--orange-deep, #d4621a);
-  box-shadow: 0 8px 25px rgba(212, 98, 26, 0.2), 0 0 0 3px rgba(212, 98, 26, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(212, 98, 26, 0.15);
 }
 
-.payment-card-header {
+.payment-clean-btn.selected {
+  background: #ffffff;
+  border-color: var(--orange-base, #d4621a);
+  box-shadow: 0 0 0 3px rgba(212, 98, 26, 0.25), 0 6px 16px rgba(212, 98, 26, 0.15);
+}
+
+.payment-btn-logo-wrapper {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
 }
 
-.payment-card-logo-container {
-  display: flex;
-  align-items: center;
-  height: 28px;
+.payment-btn-logo-wrapper svg {
+  max-height: 28px;
+  width: auto;
+  max-width: 100%;
 }
 
-.payment-card-logo-img {
-  height: 24px;
+.payment-btn-logo-img {
+  max-height: 28px;
   width: auto;
   object-fit: contain;
 }
 
-.payment-card-icon-fallback {
-  font-size: 1.3rem;
-}
-
-.payment-card-tag {
+.payment-btn-text-fallback {
   font-family: var(--font-display);
-  font-size: 0.65rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  padding: 3px 8px;
-  border-radius: 50px;
-  background: rgba(63, 45, 27, 0.08);
-  color: var(--text-dark, #3f2d1b);
-}
-
-.payment-card-tag.paypal {
-  background: rgba(0, 48, 135, 0.1);
-  color: #003087;
-}
-
-.payment-card-tag.binance {
-  background: rgba(243, 186, 47, 0.15);
-  color: #b78103;
-}
-
-.payment-card-tag.bre_b,
-.payment-card-tag.nequi {
-  background: rgba(218, 41, 124, 0.1);
-  color: #da297c;
-}
-
-.payment-card-name {
-  font-family: var(--font-display);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 700;
   color: var(--text-dark, #3f2d1b);
-  margin: 0 0 4px 0;
-}
-
-.payment-card-desc {
-  font-size: 0.78rem;
-  color: rgba(63, 45, 27, 0.75);
-  margin: 0;
-  line-height: 1.25;
-}
-
-.payment-card-radio-indicator {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  border: 2px solid rgba(63, 45, 27, 0.25);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.payment-option-card.selected .payment-card-radio-indicator {
-  border-color: var(--orange-deep, #d4621a);
-  background: var(--orange-deep, #d4621a);
-}
-
-.radio-circle {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #ffffff;
-  opacity: 0;
-  transform: scale(0);
-  transition: all 0.2s ease;
-}
-
-.payment-option-card.selected .radio-circle {
-  opacity: 1;
-  transform: scale(1);
 }
 
 @media (max-width: 480px) {
-  .payment-method-selector-grid {
-    grid-template-columns: 1fr;
+  .payment-clean-btn {
+    flex: 1 1 100%;
   }
 }
