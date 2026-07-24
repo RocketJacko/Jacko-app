@@ -304,25 +304,12 @@ export function ChatBot({ currentView, onViewChange: _onViewChange }: ChatBotPro
       case 'show_support':
         simulateBotResponse(
           label,
-          '¿Cómo prefieres recibir soporte? Puedes abrir un chat directo de WhatsApp o generar un ticket de soporte interno en la plataforma.',
+          'Puedes ponerte en contacto con nuestro equipo de atención directamente a través de WhatsApp:',
           [
             { label: '🟢 Ir a WhatsApp de Soporte', action: 'whatsapp_redirect' },
-            { label: '📝 Generar Ticket de Soporte', action: 'trigger_ticket_modal' },
             { label: '⬅️ Volver al Menú', action: 'main_menu' },
           ]
         );
-        break;
-
-      case 'trigger_ticket_modal':
-        simulateBotResponse(
-          label,
-          'Abriendo el formulario de tickets de soporte... Por favor complétalo para registrar tu consulta.',
-          [{ label: '⬅️ Volver al Menú', action: 'main_menu' }]
-        );
-        setTimeout(() => {
-          setIsOpen(false);
-          window.dispatchEvent(new CustomEvent('open-support-modal'));
-        }, 800);
         break;
 
       case 'whatsapp_redirect':
