@@ -45,9 +45,21 @@ export function PWAInstallPrompt() {
     }
 
     // 4. Capturar evento nativo antes de la instalación en Android/Desktop Chrome
+    const checkGlobalPrompt = () => {
+      const globalPrompt = (window as unknown as { deferredPWAInstallPrompt?: BeforeInstallPromptEvent }).deferredPWAInstallPrompt;
+      if (globalPrompt) {
+        setDeferredPrompt(globalPrompt);
+        setShowPrompt(true);
+      }
+    };
+
+    checkGlobalPrompt();
+
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
+      const promptEvent = e as BeforeInstallPromptEvent;
+      setDeferredPrompt(promptEvent);
+      (window as unknown as { deferredPWAInstallPrompt?: BeforeInstallPromptEvent }).deferredPWAInstallPrompt = promptEvent;
       setShowPrompt(true);
     };
 
@@ -56,20 +68,19 @@ export function PWAInstallPrompt() {
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('pwa-install-ready', checkGlobalPrompt);
     window.addEventListener('open-pwa-install', handleForceShow);
 
-    // En desarrollo, mostrar tras 1.5s para facilitar verificación
-    let devTimer: NodeJS.Timeout | null = null;
-    if (import.meta.env.DEV) {
-      devTimer = setTimeout(() => {
-        setShowPrompt(true);
-      }, 1500);
-    }
+    // En desarrollo o producción sin prompt previo, mostrar tras 2.5s
+    const timer = setTimeout(() => {
+      setShowPrompt(true);
+    }, 2500);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('pwa-install-ready', checkGlobalPrompt);
       window.removeEventListener('open-pwa-install', handleForceShow);
-      if (devTimer) clearTimeout(devTimer);
+      clearTimeout(timer);
     };
   }, []);
 
@@ -85,10 +96,12 @@ export function PWAInstallPrompt() {
 
   const handleInstallClick = async () => {
     triggerHaptic();
-    if (deferredPrompt) {
+    const promptToUse = deferredPrompt || (window as unknown as { deferredPWAInstallPrompt?: BeforeInstallPromptEvent }).deferredPWAInstallPrompt;
+
+    if (promptToUse) {
       try {
-        await deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
+        await promptToUse.prompt();
+        const { outcome } = await promptToUse.userChoice;
 
         if (outcome === 'accepted') {
           setInstallSuccess(true);
@@ -101,13 +114,14 @@ export function PWAInstallPrompt() {
         console.error('Error durante la instalación PWA:', err);
       }
       setDeferredPrompt(null);
+      (window as unknown as { deferredPWAInstallPrompt?: null }).deferredPWAInstallPrompt = null;
     } else {
-      // Si la API nativa antes de la instalación aún no se ha disparado (o en escritorio)
+      // Si el navegador no permite disparo programático (o en navegadores de escritorio)
       if (typeof window !== 'undefined') {
         window.dispatchEvent(
           new CustomEvent('show-toast', {
             detail: {
-              message: 'Haz clic en el icono "Instalar" de la barra de direcciones o menú del navegador.',
+              message: 'Haz clic en "Instalar" en el menú o barra de direcciones de tu navegador.',
               type: 'success',
             },
           })
