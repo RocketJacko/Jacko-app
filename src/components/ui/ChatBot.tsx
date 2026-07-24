@@ -219,16 +219,21 @@ export function ChatBot({ currentView, onViewChange: _onViewChange }: ChatBotPro
         break;
 
       case 'install_pwa':
+        if (window.deferredPWAInstallPrompt) {
+          try {
+            window.deferredPWAInstallPrompt.prompt();
+          } catch (err) {
+            console.error('[ChatBot] PWA prompt error:', err);
+          }
+          setIsOpen(false);
+          return;
+        }
         try {
           window.dispatchEvent(new Event('trigger-pwa-install'));
         } catch {
           // Fallback
         }
-        simulateBotResponse(
-          label,
-          '📲 **¡Iniciando la instalación de JACKO™ App!**<br/><br/>Si ves el mensaje del navegador, presiona **"Instalar"** para agregar la aplicación en 1 solo clic a tu pantalla de inicio.<br/><br/>*(En iOS Safari: Toca Compartir ⎋ -> Agregar a inicio)*.',
-          [{ label: '⬅️ Volver al Menú', action: 'main_menu' }]
-        );
+        setIsOpen(false);
         break;
 
       case 'show_faq':

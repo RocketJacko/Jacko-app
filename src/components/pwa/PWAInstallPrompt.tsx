@@ -8,6 +8,12 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
+declare global {
+  interface Window {
+    deferredPWAInstallPrompt?: BeforeInstallPromptEvent | null;
+  }
+}
+
 export function PWAInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
@@ -48,9 +54,10 @@ export function PWAInstallPrompt() {
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       const promptEvent = e as BeforeInstallPromptEvent;
+      window.deferredPWAInstallPrompt = promptEvent;
       setDeferredPrompt(promptEvent);
       deferredPromptRef.current = promptEvent;
-      setTimeout(() => setShowPrompt(true), 2500);
+      setTimeout(() => setShowPrompt(true), 2000);
     };
 
     const handleTriggerInstall = async () => {
