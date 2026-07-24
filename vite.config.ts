@@ -103,7 +103,8 @@ export default defineConfig({
         ],
       },
       devOptions: {
-        enabled: false, // Desactivar Service Worker en desarrollo local para evitar bloqueos de caché u offline.html
+        enabled: true,
+        suppressWarnings: true,
       },
     }),
   ],

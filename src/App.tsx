@@ -5,6 +5,7 @@ import { MemberHeader } from "./components/layout/MemberHeader";
 import { ProfileCompletionModal } from "./components/modals/ProfileCompletionModal";
 import { SupportTicketModal } from "./components/modals/SupportTicketModal";
 import { NetworkBanner } from "./components/layout/NetworkBanner";
+import { PWAInstallPrompt } from "./components/pwa/PWAInstallPrompt";
 import { useAuth } from "./context/AuthContext";
 import { warmupConnection } from "./lib/supabaseClient";
 import { ErrorBoundary } from "./components/layout/ErrorBoundary";
@@ -179,6 +180,9 @@ export default function App() {
     <div style={{ position: 'relative', minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#ffffff' }}>
       {/* Banner global de estado de red */}
       <NetworkBanner />
+
+      {/* Banner global de instalación PWA */}
+      <PWAInstallPrompt />
 
       {/* Modal de perfil completo — bloqueante */}
       {session && showProfileModal && (

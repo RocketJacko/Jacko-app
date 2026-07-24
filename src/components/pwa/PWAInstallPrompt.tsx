@@ -26,11 +26,11 @@ export function PWAInstallPrompt() {
       return;
     }
 
-    // 2. Detectar si se ha rechazado recientemente el banner
+    // 2. Detectar si se ha rechazado recientemente el banner (omitir en desarrollo)
     const dismissedTime = localStorage.getItem('jacko_pwa_prompt_dismissed');
-    if (dismissedTime) {
+    if (dismissedTime && !import.meta.env.DEV) {
       const hours = (Date.now() - parseInt(dismissedTime, 10)) / (1000 * 60 * 60);
-      if (hours < 48) return; // No volver a molestar por 48 horas
+      if (hours < 48) return; // No volver a molestar por 48 horas en producción
     }
 
     // 3. Detectar iOS (Safari mobile)
@@ -39,8 +39,8 @@ export function PWAInstallPrompt() {
     setIsIOS(isIOSDevice);
 
     if (isIOSDevice) {
-      // Mostrar sugerencia de instalación para iOS tras 4 segundos
-      const timer = setTimeout(() => setShowPrompt(true), 4000);
+      // Mostrar sugerencia de instalación para iOS tras 2 segundos
+      const timer = setTimeout(() => setShowPrompt(true), 2000);
       return () => clearTimeout(timer);
     }
 
@@ -48,13 +48,28 @@ export function PWAInstallPrompt() {
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
-      setTimeout(() => setShowPrompt(true), 3000);
+      setShowPrompt(true);
+    };
+
+    const handleForceShow = () => {
+      setShowPrompt(true);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('open-pwa-install', handleForceShow);
+
+    // En desarrollo, mostrar tras 1.5s para facilitar verificación
+    let devTimer: NodeJS.Timeout | null = null;
+    if (import.meta.env.DEV) {
+      devTimer = setTimeout(() => {
+        setShowPrompt(true);
+      }, 1500);
+    }
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('open-pwa-install', handleForceShow);
+      if (devTimer) clearTimeout(devTimer);
     };
   }, []);
 
@@ -70,19 +85,35 @@ export function PWAInstallPrompt() {
 
   const handleInstallClick = async () => {
     triggerHaptic();
-    if (!deferredPrompt) return;
+    if (deferredPrompt) {
+      try {
+        await deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
 
-    await deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-
-    if (outcome === 'accepted') {
-      setInstallSuccess(true);
-      setTimeout(() => {
-        setShowPrompt(false);
-        setIsInstalled(true);
-      }, 2500);
+        if (outcome === 'accepted') {
+          setInstallSuccess(true);
+          setTimeout(() => {
+            setShowPrompt(false);
+            setIsInstalled(true);
+          }, 2500);
+        }
+      } catch (err) {
+        console.error('Error durante la instalación PWA:', err);
+      }
+      setDeferredPrompt(null);
+    } else {
+      // Si la API nativa antes de la instalación aún no se ha disparado (o en escritorio)
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('show-toast', {
+            detail: {
+              message: 'Haz clic en el icono "Instalar" de la barra de direcciones o menú del navegador.',
+              type: 'success',
+            },
+          })
+        );
+      }
     }
-    setDeferredPrompt(null);
   };
 
   const handleDismiss = () => {
@@ -134,13 +165,13 @@ export function PWAInstallPrompt() {
 
             {!installSuccess && (
               <div className="pwa-actions">
-                {!isIOS && deferredPrompt && (
+                {!isIOS && (
                   <button
                     type="button"
                     className="pwa-install-btn"
                     onClick={handleInstallClick}
                   >
-                    <Download size={16} /> Instalar
+                    <Download size={15} /> Instalar
                   </button>
                 )}
                 <button

@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { HomePage } from "./HomePage";
 import { ActivateOverlay } from "../components/canvas/ActivateOverlay";
-import { PWAInstallPrompt } from "../components/pwa/PWAInstallPrompt";
 import { OfflineIndicator } from "../components/pwa/OfflineIndicator";
 
 export function LandingPage() {
@@ -21,7 +20,6 @@ export function LandingPage() {
       {!session && (
         <ActivateOverlay />
       )}
-      <PWAInstallPrompt />
     </div>
   );
 }
