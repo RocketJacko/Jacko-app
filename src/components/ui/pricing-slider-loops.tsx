@@ -108,9 +108,10 @@ export const PricingSwitch = ({
 export const LoopsPricingSlider: React.FC<LoopsPricingSliderProps> = ({ onSelectFree: _onSelectFree }) => {
   const pricingRef = useRef<HTMLDivElement>(null);
   const { userCurrency, exchangeRate } = useGeoLocation();
+  const remainingInfo = getRemainingProjectMonths();
   const [planType, setPlanType] = useState<"free" | "mensual" | "anual">("anual");
   const [quantity, setQuantity] = useState(1);
-  const [basePrices, setBasePrices] = useState({ mensual: 8, anual: 30 });
+  const [basePrices, setBasePrices] = useState({ mensual: 8, anual: remainingInfo.computedPriceUsd });
   const [isMobileMode, setIsMobileMode] = useState(false);
 
   useEffect(() => {
@@ -141,7 +142,7 @@ export const LoopsPricingSlider: React.FC<LoopsPricingSliderProps> = ({ onSelect
 
         setBasePrices({
           mensual: mensualProduct?.price_cop ?? (activeProd?.price_cop ?? 8),
-          anual: anualProduct?.price_cop ?? (activeProd?.price_cop ?? 30)
+          anual: anualProduct?.price_cop ?? (activeProd?.price_cop ?? remainingInfo.computedPriceUsd)
         });
       })
       .catch((err) => {
