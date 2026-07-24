@@ -3,6 +3,7 @@ import NumberFlow from "@number-flow/react";
 import { ShieldCheck, CheckCircle2, Sparkles, ArrowRight } from "lucide-react";
 import { Card, CardHeader, CardContent } from "../card";
 import { TimelineContent } from "../timeline-animation";
+import { VerticalCutReveal } from "../vertical-cut-reveal";
 import { cn } from "@/lib/utils";
 import type { PricingSharedProps } from "./PricingSharedProps";
 import "./PricingMobileView.css";
@@ -23,6 +24,13 @@ const revealVariants = {
     opacity: 0,
   },
 };
+
+const titleTransition = {
+  type: "spring",
+  stiffness: 220,
+  damping: 35,
+  delay: 0,
+} as const;
 
 export const PricingMobileView: React.FC<PricingSharedProps> = ({
   planType,
@@ -51,6 +59,40 @@ export const PricingMobileView: React.FC<PricingSharedProps> = ({
 
   return (
     <>
+      {/* Encabezado Principal */}
+      <article className="pricing-header-text">
+        <TimelineContent
+          as="div"
+          animationNum={0}
+          timelineRef={pricingRef}
+          customVariants={revealVariants}
+          style={{ width: "100%" }}
+        >
+          <h2 className="pricing-title">
+            <VerticalCutReveal
+              splitBy="words"
+              staggerDuration={0.08}
+              staggerFrom="first"
+              reverse={true}
+              containerClassName="justify-center"
+              transition={titleTransition}
+            >
+              Planes a tu medida
+            </VerticalCutReveal>
+          </h2>
+        </TimelineContent>
+
+        <TimelineContent
+          as="p"
+          animationNum={1}
+          timelineRef={pricingRef}
+          customVariants={revealVariants}
+          className="pricing-subtitle"
+        >
+          {activeProduct?.short_description || "Elige entre el acceso gratuito inicial o activa una membresía premium."}
+        </TimelineContent>
+      </article>
+
       {/* Tarjeta Única Unificada */}
       <TimelineContent
         as="div"
