@@ -36,7 +36,6 @@ export function BinancePaymentForm({
   onPaymentError,
 }: BinancePaymentFormProps) {
   const [binanceOrderId, setBinanceOrderId] = useState("");
-  const [binanceAmount, setBinanceAmount] = useState("");
   const [copied, setCopied] = useState(false);
   /*  Use metadata or default value for Destination Pay ID  */ const payId =
     selectedMethod.account_value || "0092019956";
@@ -55,7 +54,6 @@ export function BinancePaymentForm({
     onPaymentError("");
     try {
       const handler = PaymentHandlerFactory.getHandler("binance");
-      const parsedAmount = binanceAmount.trim() ? parseFloat(binanceAmount) : undefined;
       const response = await handler.initiate({
         productId,
         paymentMethodId: selectedMethod.id,
@@ -64,7 +62,6 @@ export function BinancePaymentForm({
         userId,
         planId: selectedPlan?.id,
         binanceOrderId: binanceOrderId.trim(),
-        binanceAmount: parsedAmount,
         guestEmail,
         guestName,
       });

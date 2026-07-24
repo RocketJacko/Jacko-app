@@ -157,6 +157,8 @@ export function PaymentModalDialog({
                     productTitle={product.title}
                     quantity={quantity}
                     userId={userId}
+                    guestEmail={guestEmail}
+                    guestName={guestName}
                     selectedPlan={selectedPlan}
                     totalPrice={totalPrice}
                     formatMoney={formatMoney}
@@ -179,6 +181,8 @@ export function PaymentModalDialog({
                     productTitle={product.title}
                     quantity={quantity}
                     userId={userId}
+                    guestEmail={guestEmail}
+                    guestName={guestName}
                     selectedPlan={selectedPlan}
                     totalPrice={totalPrice}
                     formatMoney={formatMoney}
@@ -215,6 +219,8 @@ export function PaymentModalDialog({
                   productTitle={product.title}
                   quantity={quantity}
                   userId={userId}
+                  guestEmail={guestEmail}
+                  guestName={guestName}
                   selectedPlan={selectedPlan}
                   totalPrice={totalPrice}
                   formatMoney={formatMoney}
