@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { m, AnimatePresence } from 'motion/react';
-import { MessageCircle, X, HelpCircle, ExternalLink } from 'lucide-react';
+import { X, HelpCircle, ExternalLink } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import './ChatBot.css';
 
@@ -81,41 +81,6 @@ const faqData = [
 export function ChatBot({ currentView, onViewChange }: ChatBotProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLandingIntroFinished, setIsLandingIntroFinished] = useState(true);
-  const [isFooterVisible, setIsFooterVisible] = useState(false);
-
-  // Escuchar visibilidad del footer mediante IntersectionObserver
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsFooterVisible(entry.isIntersecting);
-      },
-      {
-        root: null,
-        threshold: 0.05, // Trigger cuando aparezca un 5% del footer
-      }
-    );
-
-    const target = document.querySelector('.jacko-footer');
-    if (target) {
-      observer.observe(target);
-    } else {
-      const interval = setInterval(() => {
-        const tgt = document.querySelector('.jacko-footer');
-        if (tgt) {
-          observer.observe(tgt);
-          clearInterval(interval);
-        }
-      }, 500);
-      return () => {
-        clearInterval(interval);
-        observer.disconnect();
-      };
-    }
-
-    return () => {
-      observer.disconnect();
-    };
-  }, []);
 
   // Escuchar el estado de la animación de la landing page
   useEffect(() => {
