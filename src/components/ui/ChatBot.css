@@ -50,6 +50,22 @@
   animation: pulse-green 2s infinite;
 }
 
+.chatbot-close-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 20px;
+  height: 20px;
+  background-color: var(--brown-dark);
+  color: var(--white-warm);
+  border-radius: 50%;
+  border: 2px solid var(--white-warm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
 @keyframes pulse-green {
   0% {
     box-shadow: 0 0 0 0 rgba(43, 138, 98, 0.7);

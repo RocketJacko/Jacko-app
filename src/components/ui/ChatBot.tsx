@@ -411,8 +411,14 @@ export function ChatBot({ currentView, onViewChange }: ChatBotProps) {
         whileTap={{ scale: 0.93 }}
         aria-label="Abrir chat de servicio"
       >
-        {isOpen ? <X size={24} /> : <img src="/chatbot-avatar.png" alt="Soporte JACKO Bot" className="chatbot-fab-img" />}
-        {!isOpen && <span className="chatbot-pulse-dot" />}
+        <img src="/chatbot-avatar.png" alt="Soporte JACKO Bot" className="chatbot-fab-img" />
+        {isOpen ? (
+          <span className="chatbot-close-badge">
+            <X size={14} />
+          </span>
+        ) : (
+          <span className="chatbot-pulse-dot" />
+        )}
       </m.button>
 
       {/* Chat Window */}
