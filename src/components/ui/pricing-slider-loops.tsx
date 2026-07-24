@@ -118,17 +118,25 @@ export const LoopsPricingSlider: React.FC<LoopsPricingSliderProps> = ({ onSelect
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
+  const [activeSlug, setActiveSlug] = useState<string>("plan-anual");
+
   useEffect(() => {
     let active = true;
     catalogService.getCatalogData(false, false)
       .then((data) => {
         if (!active) return;
-        const mensualProduct = data.products.find((p) => p.slug === "plan-mensual");
-        const anualProduct = data.products.find((p) => p.slug === "plan-anual");
-        
+        const activeProducts = data.products.filter(p => p.is_active !== false);
+        const activeProd = activeProducts[0];
+        const mensualProduct = activeProducts.find((p) => p.slug === "plan-mensual");
+        const anualProduct = activeProducts.find((p) => p.slug === "plan-anual");
+
+        if (activeProd) {
+          setActiveSlug(activeProd.slug);
+        }
+
         setBasePrices({
-          mensual: mensualProduct?.price_cop ?? 8,
-          anual: anualProduct?.price_cop ?? 40
+          mensual: mensualProduct?.price_cop ?? (activeProd?.price_cop ?? 8),
+          anual: anualProduct?.price_cop ?? (activeProd?.price_cop ?? 30)
         });
       })
       .catch((err) => {
@@ -163,8 +171,9 @@ export const LoopsPricingSlider: React.FC<LoopsPricingSliderProps> = ({ onSelect
       localStorage.removeItem("jacko_trigger_checkout_slug");
       localStorage.removeItem("jacko_trigger_checkout_qty");
     } else {
-      const slug = planType === "anual" ? "plan-anual" : "plan-mensual";
-      localStorage.setItem("jacko_trigger_checkout_slug", slug);
+      const slug = (planType === "anual" ? "plan-anual" : "plan-mensual");
+      const targetSlug = activeSlug || slug;
+      localStorage.setItem("jacko_trigger_checkout_slug", targetSlug);
       localStorage.setItem("jacko_trigger_checkout_qty", quantity.toString());
     }
     onSelectFree();

@@ -24,9 +24,13 @@ export function CheckoutPage() {
           return;
         }
 
-        // Cargar catálogo para buscar el producto pendiente
+        // Cargar catálogo para buscar el producto activo
         const catalog = await catalogService.getCatalogData(false, false);
-        const prod = catalog.products.find((p) => p.slug === slug);
+        let prod = catalog.products.find((p) => p.slug === slug);
+        if (!prod && catalog.products.length > 0) {
+          // Si el slug específico no está activo, usar el producto activo disponible
+          prod = catalog.products[0];
+        }
         if (!prod) {
           navigate('/dashboard', { replace: true });
           return;
