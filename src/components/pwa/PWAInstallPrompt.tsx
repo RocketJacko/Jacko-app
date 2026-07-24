@@ -50,6 +50,13 @@ export function PWAInstallPrompt() {
       return () => clearTimeout(timer);
     }
 
+    // Si el evento de instalación ya fue capturado previamente
+    if (window.deferredPWAInstallPrompt) {
+      setDeferredPrompt(window.deferredPWAInstallPrompt);
+      deferredPromptRef.current = window.deferredPWAInstallPrompt;
+      setShowPrompt(true);
+    }
+
     // 4. Capturar evento nativo antes de la instalación en Android/Desktop Chrome
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
@@ -57,7 +64,7 @@ export function PWAInstallPrompt() {
       window.deferredPWAInstallPrompt = promptEvent;
       setDeferredPrompt(promptEvent);
       deferredPromptRef.current = promptEvent;
-      setTimeout(() => setShowPrompt(true), 2000);
+      setTimeout(() => setShowPrompt(true), 1500);
     };
 
     const handleTriggerInstall = async () => {
