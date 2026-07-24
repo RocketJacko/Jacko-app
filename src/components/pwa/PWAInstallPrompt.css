@@ -1,13 +1,24 @@
 /* PWAInstallPrompt.css — JACKO™ App */
 
-.pwa-install-banner {
+/* Wrapper: solo posicionamiento fijo en pantalla, Framer Motion NO altera este layout */
+.pwa-install-wrapper {
   position: fixed;
   bottom: clamp(16px, 4vh, 32px);
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
   z-index: 10010;
-  width: calc(100% - 32px);
-  max-width: min(460px, calc(100vw - 32px));
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  padding: 0 16px;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+/* Banner: solo estilos visuales de la tarjeta animada */
+.pwa-install-banner {
+  width: 100%;
+  max-width: 460px;
   background: rgba(255, 252, 248, 0.98);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -19,6 +30,7 @@
     0 0 24px rgba(212, 98, 26, 0.18);
   box-sizing: border-box;
   overflow: hidden;
+  pointer-events: auto;
 }
 
 .pwa-install-content {
@@ -143,9 +155,12 @@
 /* ── Adaptación para Pantallas Menores (Móviles) ──────────────── */
 
 @media (max-width: 580px) {
-  .pwa-install-banner {
+  .pwa-install-wrapper {
     bottom: calc(84px + env(safe-area-inset-bottom, 0px));
-    width: calc(100% - 20px);
+    padding: 0 12px;
+  }
+
+  .pwa-install-banner {
     padding: 12px 14px;
     border-radius: 18px;
   }
