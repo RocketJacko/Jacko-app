@@ -411,7 +411,7 @@ export function ChatBot({ currentView, onViewChange }: ChatBotProps) {
         whileTap={{ scale: 0.93 }}
         aria-label="Abrir chat de servicio"
       >
-        {isOpen ? <X size={24} /> : <MessageCircle size={24} />}
+        {isOpen ? <X size={24} /> : <img src="/chatbot-avatar.png" alt="Soporte JACKO Bot" className="chatbot-fab-img" />}
         {!isOpen && <span className="chatbot-pulse-dot" />}
       </m.button>
 
@@ -428,7 +428,7 @@ export function ChatBot({ currentView, onViewChange }: ChatBotProps) {
             {/* Header */}
             <div className="chatbot-header">
               <div className="chatbot-header-info">
-                <span className="chatbot-header-avatar">🤖</span>
+                <img src="/chatbot-avatar.png" alt="Soporte JACKO Bot" className="chatbot-header-avatar-img" />
                 <h3>Soporte JACKO™</h3>
               </div>
               <button
@@ -450,7 +450,7 @@ export function ChatBot({ currentView, onViewChange }: ChatBotProps) {
                 >
                   {msg.sender === 'bot' && (
                     <div className="chatbot-avatar">
-                      <span>🤖</span>
+                      <img src="/chatbot-avatar.png" alt="Soporte JACKO Bot" className="chatbot-avatar-img" />
                     </div>
                   )}
                   <div className="chatbot-bubble-wrapper">
@@ -494,7 +494,7 @@ export function ChatBot({ currentView, onViewChange }: ChatBotProps) {
               {isTyping && (
                 <div className="chatbot-msg-row msg-bot">
                   <div className="chatbot-avatar">
-                    <span>🤖</span>
+                    <img src="/chatbot-avatar.png" alt="Soporte JACKO Bot" className="chatbot-avatar-img" />
                   </div>
                   <div className="typing-bubble">
                     <span className="dot" />
