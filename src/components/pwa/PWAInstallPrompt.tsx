@@ -131,61 +131,63 @@ export function PWAInstallPrompt() {
   return (
     <AnimatePresence>
       {showPrompt && (
-        <m.div
-          className="pwa-install-banner"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          transition={{ duration: 0.2, ease: 'easeOut' }}
-        >
-          <div className="pwa-install-content">
-            <div className="pwa-app-icon">
-              <Smartphone className="icon-phone" />
-            </div>
+        <div className="pwa-install-wrapper">
+          <m.div
+            className="pwa-install-banner"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+          >
+            <div className="pwa-install-content">
+              <div className="pwa-app-icon">
+                <Smartphone className="icon-phone" />
+              </div>
 
-            <div className="pwa-text-info">
-              {installSuccess ? (
-                <>
-                  <h4 className="pwa-title success-text">
-                    <Check className="check-icon" /> ¡JACKO™ Instalado!
-                  </h4>
-                  <p className="pwa-desc">Accede directamente desde tu pantalla de inicio.</p>
-                </>
-              ) : (
-                <>
-                  <h4 className="pwa-title">Instala JACKO™ App</h4>
-                  <p className="pwa-desc">
-                    {isIOS
-                      ? 'Toca Compartir en Safari y selecciona "Agregar a inicio"'
-                      : 'Acceso instantáneo, más rápido y compatible sin red.'}
-                  </p>
-                </>
-              )}
-            </div>
+              <div className="pwa-text-info">
+                {installSuccess ? (
+                  <>
+                    <h4 className="pwa-title success-text">
+                      <Check className="check-icon" /> ¡JACKO™ Instalado!
+                    </h4>
+                    <p className="pwa-desc">Accede directamente desde tu pantalla de inicio.</p>
+                  </>
+                ) : (
+                  <>
+                    <h4 className="pwa-title">Instala JACKO™ App</h4>
+                    <p className="pwa-desc">
+                      {isIOS
+                        ? 'Toca Compartir en Safari y selecciona "Agregar a inicio"'
+                        : 'Acceso instantáneo, más rápido y compatible sin red.'}
+                    </p>
+                  </>
+                )}
+              </div>
 
-            {!installSuccess && (
-              <div className="pwa-actions">
-                {!isIOS && (
+              {!installSuccess && (
+                <div className="pwa-actions">
+                  {!isIOS && (
+                    <button
+                      type="button"
+                      className="pwa-install-btn"
+                      onClick={handleInstallClick}
+                    >
+                      <Download size={15} /> Instalar
+                    </button>
+                  )}
                   <button
                     type="button"
-                    className="pwa-install-btn"
-                    onClick={handleInstallClick}
+                    className="pwa-close-btn"
+                    onClick={handleDismiss}
+                    aria-label="Cerrar aviso"
                   >
-                    <Download size={15} /> Instalar
+                    <X size={18} />
                   </button>
-                )}
-                <button
-                  type="button"
-                  className="pwa-close-btn"
-                  onClick={handleDismiss}
-                  aria-label="Cerrar aviso"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-            )}
-          </div>
-        </m.div>
+                </div>
+              )}
+            </div>
+          </m.div>
+        </div>
       )}
     </AnimatePresence>
   );

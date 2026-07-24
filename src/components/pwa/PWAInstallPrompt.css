@@ -1,13 +1,23 @@
 /* PWAInstallPrompt.css — JACKO™ App */
 
-.pwa-install-banner {
+/* Wrapper: solo posicionamiento, Framer Motion no lo toca */
+.pwa-install-wrapper {
   position: fixed;
   bottom: clamp(16px, 4vh, 32px);
-  left: 16px;
-  right: 16px;
-  margin: 0 auto;
+  left: 0;
+  right: 0;
   z-index: 10010;
-  width: auto;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  padding: 0 16px;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+/* Banner: solo estilos visuales, sin posicionamiento */
+.pwa-install-banner {
+  width: 100%;
   max-width: 460px;
   background: rgba(255, 252, 248, 0.98);
   backdrop-filter: blur(20px);
@@ -20,6 +30,7 @@
     0 0 24px rgba(212, 98, 26, 0.18);
   box-sizing: border-box;
   overflow: hidden;
+  pointer-events: all;
 }
 
 .pwa-install-content {
@@ -142,8 +153,12 @@
 }
 
 @media (max-width: 580px) {
-  .pwa-install-banner {
+  .pwa-install-wrapper {
     bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    padding: 0 12px;
+  }
+
+  .pwa-install-banner {
     padding: 12px 14px;
     border-radius: 18px;
   }
