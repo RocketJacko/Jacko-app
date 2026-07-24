@@ -103,24 +103,30 @@ export function PWAInstallPrompt() {
 
   const handleInstallClick = async () => {
     triggerHaptic();
-    const promptEvent = deferredPrompt || deferredPromptRef.current;
-    if (!promptEvent) return;
+    const promptEvent = deferredPrompt || deferredPromptRef.current || window.deferredPWAInstallPrompt;
+    if (promptEvent) {
+      try {
+        await promptEvent.prompt();
+        const { outcome } = await promptEvent.userChoice;
 
-    try {
-      await promptEvent.prompt();
-      const { outcome } = await promptEvent.userChoice;
-
-      if (outcome === 'accepted') {
-        setInstallSuccess(true);
-        setTimeout(() => {
-          setShowPrompt(false);
-          setIsInstalled(true);
-        }, 2000);
+        if (outcome === 'accepted') {
+          setInstallSuccess(true);
+          setTimeout(() => {
+            setShowPrompt(false);
+            setIsInstalled(true);
+          }, 2000);
+        }
+        setDeferredPrompt(null);
+        deferredPromptRef.current = null;
+        window.deferredPWAInstallPrompt = null;
+      } catch (err) {
+        console.error('[PWAInstallPrompt] Prompt error:', err);
       }
-      setDeferredPrompt(null);
-      deferredPromptRef.current = null;
-    } catch (err) {
-      console.error('[PWAInstallPrompt] Prompt error:', err);
+    } else {
+      setInstallSuccess(true);
+      setTimeout(() => {
+        setShowPrompt(false);
+      }, 2000);
     }
   };
 
@@ -173,7 +179,7 @@ export function PWAInstallPrompt() {
 
             {!installSuccess && (
               <div className="pwa-actions">
-                {!isIOS && (deferredPrompt || deferredPromptRef.current) && (
+                {!isIOS && (
                   <button
                     type="button"
                     className="pwa-install-btn"
