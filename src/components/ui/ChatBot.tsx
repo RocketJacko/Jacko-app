@@ -219,9 +219,14 @@ export function ChatBot({ currentView, onViewChange: _onViewChange }: ChatBotPro
         break;
 
       case 'install_pwa':
+        try {
+          window.dispatchEvent(new Event('trigger-pwa-install'));
+        } catch {
+          // Fallback
+        }
         simulateBotResponse(
           label,
-          '📲 **¡Instala la App de JACKO™ en tu pantalla de inicio!**<br/><br/>• **En Android / Chrome:** Haz clic en el menú (⋮) y selecciona **"Agregar a pantalla principal"** o **"Instalar aplicación"**.<br/>• **En iPhone / Safari:** Toca el botón **Compartir (⎋)** en la parte inferior y selecciona **"Agregar a inicio"**.<br/><br/>¡Accede instantáneamente con mejor velocidad y sin perder tu sesión!',
+          '📲 **¡Iniciando la instalación de JACKO™ App!**<br/><br/>Si ves el mensaje del navegador, presiona **"Instalar"** para agregar la aplicación en 1 solo clic a tu pantalla de inicio.<br/><br/>*(En iOS Safari: Toca Compartir ⎋ -> Agregar a inicio)*.',
           [{ label: '⬅️ Volver al Menú', action: 'main_menu' }]
         );
         break;
