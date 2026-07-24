@@ -306,13 +306,39 @@ function useCatalogManager() {
     setProducts(prev => prev.map(p => p.id === prod.id ? { ...p, is_active: newStatus } : p));
 
     try {
-      // Usar RPC save_product_with_plans para evitar restricciones de RLS
-      // sobre la vista products_with_plans; solo se actualiza is_active.
-      const { error } = await supabase.rpc('save_product_with_plans', {
-        p_product_id: prod.id,
-        p_product_data: { is_active: newStatus },
-        p_plans_data: null,
-      });
+      // 1. Intentar actualizar directamente la columna 'is_active' en la tabla 'products'
+      let { error } = await supabase
+        .from('products')
+        .update({ is_active: newStatus })
+        .eq('id', prod.id);
+
+      // 2. Si hay restricción o se requiere RPC, llamar a save_product_with_plans pasando la carga útil completa
+      if (error) {
+        const fullPayload = {
+          title: prod.title,
+          slug: prod.slug,
+          category_id: prod.category_id || null,
+          short_description: prod.short_description || null,
+          description: prod.description || null,
+          price_cop: prod.price_cop !== undefined && prod.price_cop !== null ? Number(prod.price_cop) : 0,
+          points_price: prod.points_price !== undefined && prod.points_price !== null ? Number(prod.points_price) : null,
+          stock: prod.stock !== undefined && prod.stock !== null ? Number(prod.stock) : null,
+          is_active: newStatus,
+          thumbnail_url: prod.thumbnail_url || null,
+          file_path: prod.file_path || null,
+          external_url: prod.external_url || null,
+          credentials: prod.credentials || null,
+          accordions: prod.accordions || null,
+          visibility: prod.visibility || 'public',
+        };
+
+        const { error: rpcError } = await supabase.rpc('save_product_with_plans', {
+          p_product_id: prod.id,
+          p_product_data: fullPayload,
+          p_plans_data: prod.plans || null,
+        });
+        error = rpcError;
+      }
 
       if (error) {
         // Revertir UI si falla
