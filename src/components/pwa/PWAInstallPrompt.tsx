@@ -136,7 +136,7 @@ export function PWAInstallPrompt() {
 
             {!installSuccess && (
               <div className="pwa-actions">
-                {!isIOS && deferredPrompt && (
+                {!isIOS && (
                   <button
                     type="button"
                     className="pwa-install-btn"
