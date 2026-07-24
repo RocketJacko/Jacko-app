@@ -144,7 +144,7 @@
 
 @media (max-width: 580px) {
   .pwa-install-banner {
-    bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
     width: calc(100% - 20px);
     padding: 12px 14px;
     border-radius: 18px;
