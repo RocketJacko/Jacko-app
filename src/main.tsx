@@ -6,8 +6,9 @@ import { AuthProvider } from "./context/AuthContext.tsx";
 import { LazyMotion, domMax } from "motion/react";
 import { createClient } from "@supabase/supabase-js";
 import { getSupabaseConfig } from "./lib/supabaseConfig";
-
 import { BrowserRouter } from "react-router-dom";
+import { registerSW } from "virtual:pwa-register";
+
 // Registrar Service Worker PWA para soporte offline e instalabilidad con auto-actualización rápida
 registerSW({
   immediate: true,
@@ -15,6 +16,7 @@ registerSW({
     window.location.reload();
   },
 });
+
 
 // Prevents Rolldown from merging supabase-lib and supabase-config chunks by establishing multiple importers
 if (
