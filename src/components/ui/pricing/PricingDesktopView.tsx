@@ -5,6 +5,7 @@ import { Card, CardHeader, CardContent } from "../card";
 import { TimelineContent } from "../timeline-animation";
 import { VerticalCutReveal } from "../vertical-cut-reveal";
 import { cn } from "@/lib/utils";
+import { getRemainingProjectMonths } from "@/lib/projectDuration";
 import type { PricingSharedProps } from "./PricingSharedProps";
 import "./PricingDesktopView.css";
 
@@ -45,6 +46,8 @@ export const PricingDesktopView: React.FC<PricingSharedProps> = ({
   pricingRef,
   activeProduct,
 }) => {
+  const remainingInfo = getRemainingProjectMonths();
+
   const dynamicBenefits = React.useMemo(() => {
     if (!activeProduct) return null;
     const rawText = activeProduct.description || activeProduct.short_description || "";
@@ -216,7 +219,7 @@ export const PricingDesktopView: React.FC<PricingSharedProps> = ({
                         )}
                       </span>
                       <span className="price-period">
-                        /{planType === "anual" ? "año" : "mes"}
+                        / {planType === "anual" ? remainingInfo.label : "mes"}
                       </span>
                     </div>
                     {Number.isFinite(discountAmountLocal) && discountAmountLocal > 0 && (

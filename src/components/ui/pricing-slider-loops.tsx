@@ -3,6 +3,7 @@ import { cn } from "../../lib/utils";
 import { useGeoLocation } from "../../hooks/useGeoLocation";
 import { catalogService } from "../../services/catalogService";
 import { motion } from "motion/react";
+import { getRemainingProjectMonths } from "@/lib/projectDuration";
 import type { PricingSharedProps } from "./pricing/PricingSharedProps";
 import { PricingDesktopView } from "./pricing/PricingDesktopView";
 import { PricingMobileView } from "./pricing/PricingMobileView";
@@ -27,6 +28,8 @@ export const PricingSwitch = ({
   onSwitch: (value: "free" | "mensual" | "anual") => void;
   className?: string;
 }) => {
+  const remainingInfo = getRemainingProjectMonths();
+
   return (
     <div className={cn("flex justify-center", className)}>
       <div className="pricing-switch-container">
@@ -94,7 +97,7 @@ export const PricingSwitch = ({
             />
           )}
           <span className="relative flex items-center gap-1">
-            Membresía Anual
+            Membresía ({remainingInfo.label})
           </span>
         </button>
       </div>
