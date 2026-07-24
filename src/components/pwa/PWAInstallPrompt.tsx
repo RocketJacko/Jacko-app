@@ -26,12 +26,8 @@ export function PWAInstallPrompt() {
       return;
     }
 
-    // 2. Detectar si se ha rechazado recientemente el banner
-    const dismissedTime = localStorage.getItem('jacko_pwa_prompt_dismissed');
-    if (dismissedTime) {
-      const hours = (Date.now() - parseInt(dismissedTime, 10)) / (1000 * 60 * 60);
-      if (hours < 48) return; // No volver a molestar por 48 horas
-    }
+    // 2. Limpiar bloqueo previo para asegurar visibilidad inmediata en pruebas
+    localStorage.removeItem('jacko_pwa_prompt_dismissed');
 
     // 3. Detectar iOS (Safari mobile)
     const ua = window.navigator.userAgent;
@@ -48,12 +44,18 @@ export function PWAInstallPrompt() {
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
-      setTimeout(() => setShowPrompt(true), 3000);
+      setShowPrompt(true);
     };
+
+    // Forzar visibilidad si el navegador permite la instalación o para pruebas
+    const timer = setTimeout(() => {
+      setShowPrompt(true);
+    }, 1500);
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
     return () => {
+      clearTimeout(timer);
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
   }, []);
