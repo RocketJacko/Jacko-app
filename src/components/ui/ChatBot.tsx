@@ -29,7 +29,7 @@ const faqData = [
   {
     id: 'oferta-duracion-2026',
     question: '¿Cuál es la duración de la oferta y su precio?',
-    answer: 'La oferta cubre todos los meses restantes hasta el **31/12/2026** (5 meses en total) por un valor único de **$40 USD** (promedio de solo $8 USD/mes). Si contratas únicamente por un solo mes individual, el costo es de **$56 USD**.'
+    answer: 'La oferta cubre todos los meses restantes hasta el **31/12/2026** (5 meses en total) por un valor único de **$30 USD**.'
   },
   {
     id: 'duracion-beneficio',
@@ -54,7 +54,7 @@ const faqData = [
   {
     id: 'precio-final',
     question: '¿El precio publicado es el valor final?',
-    answer: 'Sí. El precio que ves (**$40 USD** por los 5 meses restantes) es el valor final del plan, sin cargos ni impuestos ocultos.'
+    answer: 'Sí. El precio que ves (**$30 USD** por los 5 meses restantes) es el valor final del plan, sin cargos ni impuestos ocultos.'
   },
   {
     id: 'que-incluye-precio',
@@ -65,21 +65,6 @@ const faqData = [
     id: 'costos-adicionales',
     question: '¿Hay costos adicionales después de comprar?',
     answer: 'No. Solo pagarás nuevamente si decides renovar tu acceso al finalizar el período contratado en diciembre de 2026.'
-  },
-  {
-    id: 'comparativa-mensual',
-    question: '¿Por qué pagar $56 USD al mes si puedes pagar solo $8 USD al mes?',
-    answer: 'Con nuestro plan pagas **$40 USD por 5 meses** (lo que equivale a solo **$8 USD al mes**). Comparado con el plan individual oficial mensual de **$56 USD**, ahorras **$48 USD cada mes**.'
-  },
-  {
-    id: 'comparativa-duo',
-    question: '¿Nuestro plan sigue siendo más económico que el Plan Duo?',
-    answer: 'Sí. En el Plan Expert Duo oficial, cada estudiante paga aproximadamente **$13 USD al mes**. Con nosotros pagas solo **$8 USD al mes** ($40 USD total por 5 meses), ahorrando **$5 USD mensuales** por persona.'
-  },
-  {
-    id: 'comparativa-groups',
-    question: '¿Nuestro plan sigue siendo más económico que el Plan Groups?',
-    answer: 'Sí. Incluso en el Plan Expert Groups, donde cada persona paga aprox. **$9 USD al mes**, con nuestro plan pagas solo **$8 USD al mes** ($40 USD total por 5 meses), ahorrando en cada mes por estudiante.'
   },
   {
     id: 'que-es-codificando-ando',
