@@ -1,18 +1,19 @@
 .pwa-install-banner {
   position: fixed;
-  bottom: 24px;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
   left: 50%;
   transform: translateX(-50%);
-  z-index: 9999;
+  z-index: 999999;
   width: calc(100% - 32px);
   max-width: 440px;
-  background: rgba(255, 248, 245, 0.95);
+  background: rgba(255, 248, 245, 0.98);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1.5px solid rgba(212, 98, 26, 0.3);
   border-radius: 20px;
   padding: 12px 16px;
   box-shadow: 0 20px 40px rgba(40, 24, 8, 0.25), 0 0 20px rgba(212, 98, 26, 0.15);
+  box-sizing: border-box;
 }
 
 .pwa-install-content {
@@ -110,6 +111,11 @@
 
 @media (max-width: 480px) {
   .pwa-install-banner {
-    bottom: 80px; /* Evita solapar la barra de navegación móvil */
+    position: fixed;
+    bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 24px);
+    max-width: 400px;
   }
 }
